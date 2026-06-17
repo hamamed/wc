@@ -1,0 +1,14 @@
+<%- include("partials/head", { title: "Error · WC 2026 Predictor" }) %>
+
+<div class="login-hero d-flex align-items-center text-center">
+  <div class="container">
+    <div class="login-logo mb-3 mx-auto"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h1 class="display-3 fw-bold mb-2"><%= code %></h1>
+    <p class="text-secondary mb-4"><%= message %></p>
+    <a href="/dashboard" class="btn btn-accent fw-semibold">
+      <i class="fa-solid fa-house me-1"></i> Back to fixtures
+    </a>
+  </div>
+</div>
+
+<%- include("partials/footer") %>

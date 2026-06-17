@@ -1,0 +1,100 @@
+<%- include("partials/head", { title: "Admin · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<%
+  function fmtDate(d) {
+    return d.toLocaleString("en-US", {
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit"
+    });
+  }
+%>
+
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="fa-solid fa-screwdriver-wrench text-accent me-2"></i>Admin Panel</h2>
+      <p class="text-secondary mb-0">Enter final scores to auto-score every prediction.</p>
+    </div>
+    <a href="/admin/logout" class="btn btn-outline-light btn-sm">
+      <i class="fa-solid fa-right-from-bracket me-1"></i> Exit admin
+    </a>
+  </div>
+
+  <!-- Add a new match -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body">
+      <h6 class="fw-semibold mb-3"><i class="fa-solid fa-plus text-accent me-2"></i>Add a match</h6>
+      <form action="/admin/match" method="POST" class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-secondary">Team A</label>
+          <input name="teamA" class="form-control" placeholder="e.g. Brazil" required />
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-secondary">Team B</label>
+          <input name="teamB" class="form-control" placeholder="e.g. Argentina" required />
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label small text-secondary">Kickoff time</label>
+          <input name="kickoffTime" type="datetime-local" class="form-control" required />
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+          <button class="btn btn-accent fw-semibold">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Matches list with result entry -->
+  <div class="card wc-card border-0">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-4">Match</th>
+            <th>Kickoff</th>
+            <th>Status</th>
+            <th class="text-end pe-4">Final Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (matches.length === 0) { %>
+            <tr><td colspan="4" class="text-center text-secondary py-4">No matches yet.</td></tr>
+          <% } %>
+          <% matches.forEach(function (m) { %>
+            <tr>
+              <td class="ps-4 fw-semibold"><%= m.teamA %> <span class="text-secondary">vs</span> <%= m.teamB %></td>
+              <td class="text-secondary small"><%= fmtDate(m.kickoffTime) %></td>
+              <td>
+                <% if (m.status === "completed") { %>
+                  <span class="badge wc-badge badge-done">Completed</span>
+                <% } else { %>
+                  <span class="badge wc-badge badge-open">Scheduled</span>
+                <% } %>
+              </td>
+              <td class="pe-4">
+                <form action="/admin/result/<%= m.id %>" method="POST"
+                      class="d-flex align-items-center justify-content-end gap-2">
+                  <input type="number" name="actualScoreA" min="0" max="99"
+                         class="form-control score-input text-center"
+                         value="<%= m.actualScoreA !== null && m.actualScoreA !== undefined ? m.actualScoreA : '' %>"
+                         placeholder="0" required />
+                  <span class="fw-bold text-secondary">-</span>
+                  <input type="number" name="actualScoreB" min="0" max="99"
+                         class="form-control score-input text-center"
+                         value="<%= m.actualScoreB !== null && m.actualScoreB !== undefined ? m.actualScoreB : '' %>"
+                         placeholder="0" required />
+                  <button class="btn btn-accent btn-sm fw-semibold ms-1">
+                    <i class="fa-solid fa-check"></i> Save
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include("partials/footer") %>

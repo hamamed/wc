@@ -1,0 +1,68 @@
+require("dotenv").config();
+
+const express = require("express");
+const session = require("express-session");
+const flash = require("connect-flash");
+const path = require("path");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ---- View engine ---------------------------------------------------------
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// ---- Middleware ----------------------------------------------------------
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-this-secret-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // 1 week
+  })
+);
+
+app.use(flash());
+
+// Expose common values to every view.
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
+  res.locals.isAdmin = !!req.session.isAdmin;
+  next();
+});
+
+// ---- Routes --------------------------------------------------------------
+app.use("/", require("./routes/auth"));
+app.use("/dashboard", require("./routes/dashboard"));
+app.use("/profile", require("./routes/profile"));
+app.use("/leaderboard", require("./routes/leaderboard"));
+app.use("/admin", require("./routes/admin"));
+
+// Home -> dashboard or login
+app.get("/", (req, res) => {
+  if (req.session.user) return res.redirect("/dashboard");
+  res.redirect("/login");
+});
+
+// ---- 404 + error handling ------------------------------------------------
+app.use((req, res) => {
+  res.status(404).render("error", { code: 404, message: "Page not found." });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).render("error", {
+    code: 500,
+    message: "Something went wrong on our end.",
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`\n⚽  World Cup 2026 Predictor running at http://localhost:${PORT}\n`);
+});

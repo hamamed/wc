@@ -1,0 +1,79 @@
+<nav class="navbar navbar-expand-lg sticky-top wc-navbar">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard">
+      <i class="fa-solid fa-futbol text-accent"></i>
+      <span>WC<span class="text-accent">26</span> Predictor</span>
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navMenu"
+      aria-controls="navMenu"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+        <% if (currentUser) { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/dashboard">
+              <i class="fa-solid fa-calendar-days me-1"></i> Fixtures
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/profile">
+              <i class="fa-solid fa-chart-simple me-1"></i> My Stats
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/leaderboard">
+              <i class="fa-solid fa-trophy me-1"></i> Leaderboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin">
+              <i class="fa-solid fa-screwdriver-wrench me-1"></i> Admin
+            </a>
+          </li>
+          <li class="nav-item ms-lg-2">
+            <a href="/profile" class="badge wc-userchip text-decoration-none">
+              <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="/logout">
+              <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+            </a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/login">
+              <i class="fa-solid fa-right-to-bracket me-1"></i> Login
+            </a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Flash messages -->
+<div class="container mt-3">
+  <% (success || []).forEach(function (msg) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-circle-check me-1"></i> <%= msg %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% }); %>
+  <% (error || []).forEach(function (msg) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-1"></i> <%= msg %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% }); %>
+</div>

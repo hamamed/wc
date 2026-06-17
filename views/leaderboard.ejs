@@ -1,0 +1,75 @@
+<%- include("partials/head", { title: "Leaderboard · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="fa-solid fa-trophy text-accent me-2"></i>Leaderboard</h2>
+      <p class="text-secondary mb-0"><%= users.length %> player<%= users.length === 1 ? "" : "s" %> competing.</p>
+    </div>
+    <div class="input-group search-box">
+      <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+      <input id="searchInput" type="text" class="form-control"
+             placeholder="Search players..." autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="card wc-card border-0">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0 leaderboard-table">
+        <thead>
+          <tr>
+            <th class="ps-4" style="width:80px;">Rank</th>
+            <th>Player</th>
+            <th class="text-end pe-4">Points</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <% users.forEach(function (u) { %>
+            <tr class="<%= u.isMe ? 'row-me' : '' %>" data-name="<%= u.username.toLowerCase() %>">
+              <td class="ps-4">
+                <% if (u.rank === 1) { %>
+                  <i class="fa-solid fa-medal text-gold"></i>
+                <% } else if (u.rank === 2) { %>
+                  <i class="fa-solid fa-medal text-silver"></i>
+                <% } else if (u.rank === 3) { %>
+                  <i class="fa-solid fa-medal text-bronze"></i>
+                <% } else { %>
+                  <span class="text-secondary">#<%= u.rank %></span>
+                <% } %>
+              </td>
+              <td>
+                <i class="fa-solid fa-user-circle text-secondary me-2"></i>
+                <span class="fw-semibold"><%= u.username %></span>
+                <% if (u.isMe) { %><span class="badge wc-userchip ms-2">You</span><% } %>
+              </td>
+              <td class="text-end pe-4 fw-bold text-accent"><%= u.totalPoints %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div id="noResults" class="text-center text-secondary py-4 d-none">
+      <i class="fa-solid fa-user-slash me-1"></i> No players match your search.
+    </div>
+  </div>
+</div>
+
+<script>
+  // Client-side search filter.
+  const input = document.getElementById("searchInput");
+  const rows = Array.from(document.querySelectorAll("#leaderboardBody tr"));
+  const noResults = document.getElementById("noResults");
+  input.addEventListener("input", function () {
+    const q = this.value.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((r) => {
+      const match = r.dataset.name.includes(q);
+      r.style.display = match ? "" : "none";
+      if (match) visible++;
+    });
+    noResults.classList.toggle("d-none", visible !== 0);
+  });
+</script>
+
+<%- include("partials/footer") %>

@@ -1,0 +1,128 @@
+<%- include("partials/head", { title: "Fixtures · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<%
+  function fmtDate(d) {
+    return d.toLocaleString("en-US", {
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit"
+    });
+  }
+%>
+
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-accent me-2"></i>Fixtures</h2>
+      <p class="text-secondary mb-0">Predict each score up to 30 minutes before kickoff.</p>
+    </div>
+    <div class="legend small text-secondary d-flex gap-3 flex-wrap">
+      <span><span class="dot dot-open"></span> Open</span>
+      <span><span class="dot dot-locked"></span> Locked</span>
+      <span><span class="dot dot-done"></span> Completed</span>
+    </div>
+  </div>
+
+  <% if (matches.length === 0) { %>
+    <div class="text-center text-secondary py-5">
+      <i class="fa-solid fa-futbol fa-2x mb-3 d-block"></i>
+      No fixtures yet. Check back soon!
+    </div>
+  <% } %>
+
+  <div class="row g-3">
+    <% matches.forEach(function (m) { %>
+      <div class="col-12 col-md-6 col-xl-4">
+        <div class="card wc-card h-100 border-0 match-card match-<%= m.badge.type %>">
+          <div class="card-body d-flex flex-column">
+
+            <!-- Status badge + date -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <% if (m.badge.type === "open") { %>
+                <span class="badge wc-badge badge-open">
+                  <i class="fa-solid fa-unlock me-1"></i> Open for Prediction
+                </span>
+              <% } else if (m.badge.type === "locked") { %>
+                <span class="badge wc-badge badge-locked">
+                  <i class="fa-solid fa-lock me-1"></i> Locked
+                </span>
+              <% } else { %>
+                <span class="badge wc-badge badge-done">
+                  <i class="fa-solid fa-flag-checkered me-1"></i>
+                  Completed<% if (m.badge.points !== null) { %> (+<%= m.badge.points %> pts)<% } %>
+                </span>
+              <% } %>
+              <small class="text-secondary"><%= fmtDate(m.kickoffTime) %></small>
+            </div>
+
+            <!-- Teams -->
+            <div class="d-flex align-items-center justify-content-between text-center mb-3">
+              <div class="team w-100">
+                <div class="team-flag"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="fw-semibold mt-1"><%= m.teamA %></div>
+              </div>
+              <div class="vs px-2">
+                <% if (m.status === "completed") { %>
+                  <span class="final-score"><%= m.actualScoreA %>&nbsp;-&nbsp;<%= m.actualScoreB %></span>
+                <% } else { %>
+                  <span class="text-secondary fw-bold">VS</span>
+                <% } %>
+              </div>
+              <div class="team w-100">
+                <div class="team-flag"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="fw-semibold mt-1"><%= m.teamB %></div>
+              </div>
+            </div>
+
+            <!-- Prediction form / state -->
+            <div class="mt-auto">
+              <% if (m.badge.type === "open") { %>
+                <form action="/dashboard/predict/<%= m.id %>" method="POST"
+                      class="d-flex align-items-center justify-content-center gap-2">
+                  <input type="number" name="scoreA" min="0" max="99"
+                         class="form-control score-input text-center"
+                         value="<%= m.prediction ? m.prediction.predictedScoreA : '' %>"
+                         placeholder="0" required />
+                  <span class="fw-bold text-secondary">-</span>
+                  <input type="number" name="scoreB" min="0" max="99"
+                         class="form-control score-input text-center"
+                         value="<%= m.prediction ? m.prediction.predictedScoreB : '' %>"
+                         placeholder="0" required />
+                  <button class="btn btn-accent btn-sm fw-semibold ms-1">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                  </button>
+                </form>
+                <% if (m.prediction) { %>
+                  <p class="text-center text-secondary small mt-2 mb-0">
+                    <i class="fa-solid fa-pen me-1"></i>Your pick:
+                    <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %> (editable)
+                  </p>
+                <% } %>
+              <% } else { %>
+                <!-- Locked or completed: show pick read-only -->
+                <div class="text-center small">
+                  <% if (m.prediction) { %>
+                    <span class="text-secondary">Your pick:</span>
+                    <span class="fw-semibold">
+                      <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %>
+                    </span>
+                    <% if (m.status === "completed") { %>
+                      <span class="badge bg-dark ms-1"><%= m.prediction.pointsEarned %> pts</span>
+                    <% } %>
+                  <% } else { %>
+                    <span class="text-secondary fst-italic">
+                      <i class="fa-solid fa-ban me-1"></i>No prediction submitted
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<%- include("partials/footer") %>
