@@ -8,6 +8,10 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust the hosting platform's reverse proxy (Render/Railway/etc.) so HTTPS
+// and secure cookies work correctly behind it.
+app.set("trust proxy", 1);
+
 // ---- View engine ---------------------------------------------------------
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
