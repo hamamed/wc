@@ -255,6 +255,24 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .stat-value { font-size: 2rem; font-weight: 900; line-height: 1; }
 .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; font-weight: 700; }
 
+/* ---- Champion banner ---- */
+.champion-banner {
+  background:
+    radial-gradient(420px 200px at 100% 0%, rgba(255, 201, 77, 0.14), transparent 60%),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+.form-select {
+  background-color: var(--surface);
+  border: 1px solid #dfe4ec;
+  color: var(--text);
+  border-radius: 12px;
+  font-weight: 600;
+}
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem var(--accent-soft);
+}
+
 /* ---- Champion picker ---- */
 .champion-option {
   display: flex;

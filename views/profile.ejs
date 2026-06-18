@@ -22,14 +22,7 @@
     </div>
     <div class="me-auto">
       <h2 class="fw-bold mb-0"><%= currentUser.username %></h2>
-      <p class="text-secondary mb-0">
-        Your predictions &amp; points summary
-        <% if (championPick) { %>
-          &middot; Champion pick:
-          <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
-          <span class="fw-semibold"><%= championPick %></span>
-        <% } %>
-      </p>
+      <p class="text-secondary mb-0">Your predictions &amp; points summary</p>
     </div>
     <div class="d-flex gap-2">
       <form action="/profile/avatar" method="POST">
@@ -40,6 +33,57 @@
       <a href="/logout" class="btn btn-outline-danger btn-sm">
         <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
       </a>
+    </div>
+  </div>
+
+  <!-- Champion prediction banner -->
+  <div class="card wc-card border-0 mb-4 champion-banner">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h6 class="fw-bold mb-0"><i class="fa-solid fa-crown text-accent me-2"></i>Predict the Champion</h6>
+        <% if (championLocked) { %>
+          <span class="badge wc-badge badge-locked ms-auto"><i class="fa-solid fa-lock me-1"></i> Locked</span>
+        <% } else { %>
+          <span class="badge wc-badge badge-open ms-auto">
+            <i class="fa-solid fa-hourglass-half me-1"></i> Locks in <strong id="champCountdown">…</strong>
+          </span>
+        <% } %>
+      </div>
+
+      <% if (championLocked) { %>
+        <p class="mb-0">
+          Your champion:
+          <% if (championPick) { %>
+            <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
+            <span class="fw-bold"><%= championPick %></span>
+          <% } else { %>
+            <span class="text-secondary fst-italic">no pick made</span>
+          <% } %>
+        </p>
+      <% } else if (teams.length === 0) { %>
+        <p class="text-secondary mb-0">Teams appear here once fixtures are added.</p>
+      <% } else { %>
+        <form action="/champion" method="POST" class="row g-2 align-items-center">
+          <div class="col-12 col-md">
+            <select name="champion" class="form-select" required>
+              <option value="" disabled <%= championPick ? '' : 'selected' %>>Choose a country…</option>
+              <% teams.forEach(function (t) { %>
+                <option value="<%= t.name %>" <%= championPick === t.name ? 'selected' : '' %>><%= t.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-12 col-md-auto d-grid">
+            <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> Save Pick</button>
+          </div>
+        </form>
+        <% if (championPick) { %>
+          <p class="text-secondary small mt-2 mb-0">
+            Current pick:
+            <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
+            <span class="fw-semibold"><%= championPick %></span> — you can change it until the deadline.
+          </p>
+        <% } %>
+      <% } %>
     </div>
   </div>
 
@@ -141,5 +185,26 @@
     </div>
   </div>
 </div>
+
+<% if (!championLocked) { %>
+<script>
+  (function () {
+    const el = document.getElementById("champCountdown");
+    if (!el) return;
+    const lock = <%= championLockMs %>;
+    function tick() {
+      const ms = lock - Date.now();
+      if (ms <= 0) { el.textContent = "now"; setTimeout(() => location.reload(), 1500); return; }
+      const d = Math.floor(ms / 86400000);
+      const h = Math.floor((ms % 86400000) / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      el.textContent = (d > 0 ? d + "d " : "") + h + "h " + m + "m " + s + "s";
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+<% } %>
 
 <%- include("partials/footer") %>

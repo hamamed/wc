@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require("../config/firebase");
 const { requireLogin } = require("../utils/middleware");
 const { listAvatars, pickRandom } = require("../utils/avatars");
+const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
 
 // ---- My profile: points summary + prediction history ---------------------
 router.get("/", requireLogin, async (req, res, next) => {
@@ -76,9 +77,13 @@ router.get("/", requireLogin, async (req, res, next) => {
       stats,
       history,
       avatar: udata.avatar || null,
+      hasAvatars: listAvatars().length > 0,
+      // Champion prediction (picker shown as a banner on this page)
+      teams: teamsFromMatches(Object.values(matchById)),
       championPick: udata.championPick || null,
       championFlag: udata.championFlag || null,
-      hasAvatars: listAvatars().length > 0,
+      championLockMs: LOCK_MS,
+      championLocked: Date.now() >= LOCK_MS,
     });
   } catch (err) {
     next(err);
