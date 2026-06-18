@@ -23,6 +23,15 @@
     </div>
   </div>
 
+  <!-- Day filter (chips built from the fixtures, in the visitor's timezone) -->
+  <% if (matches.length > 0) { %>
+    <div id="dayFilter" class="day-filter mb-4"></div>
+    <div id="dayEmpty" class="text-center text-secondary py-5 d-none">
+      <i class="fa-solid fa-calendar-xmark fa-2x mb-3 d-block"></i>
+      No matches on this day.
+    </div>
+  <% } %>
+
   <% if (matches.length === 0) { %>
     <div class="text-center text-secondary py-5">
       <i class="fa-solid fa-futbol fa-2x mb-3 d-block"></i>
@@ -32,7 +41,7 @@
 
   <div class="row g-3">
     <% matches.forEach(function (m) { %>
-      <div class="col-12 col-md-6 col-xl-4">
+      <div class="col-12 col-md-6 col-xl-4 match-col" data-kickoff="<%= m.kickoffMs %>">
         <div class="card wc-card h-100 border-0 match-card match-<%= m.badge.type %>">
           <div class="card-body d-flex flex-column">
 
@@ -136,5 +145,82 @@
     <% }); %>
   </div>
 </div>
+
+<script>
+  // Build day-filter chips from the rendered matches, in the visitor's timezone.
+  (function () {
+    const bar = document.getElementById("dayFilter");
+    if (!bar) return;
+    const cols = Array.from(document.querySelectorAll(".match-col"));
+    const empty = document.getElementById("dayEmpty");
+    const DAY = 86400000;
+
+    const ymd = (d) =>
+      d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+
+    const now = new Date();
+    const todayKey = ymd(now);
+    const yKey = ymd(new Date(now.getTime() - DAY));
+    const tomKey = ymd(new Date(now.getTime() + DAY));
+
+    // Tag each card with its local day key and count per day.
+    const counts = {};
+    cols.forEach((c) => {
+      const key = ymd(new Date(Number(c.dataset.kickoff)));
+      c.dataset.daykey = key;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const keys = Object.keys(counts).sort();
+
+    function label(key) {
+      if (key === todayKey) return "Today";
+      if (key === yKey) return "Yesterday";
+      if (key === tomKey) return "Tomorrow";
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric",
+      });
+    }
+
+    function chip(text, sub, val) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "day-chip";
+      b.dataset.day = val;
+      b.innerHTML =
+        '<span class="day-chip-main">' + text + "</span>" +
+        '<span class="day-chip-sub">' + sub + "</span>";
+      return b;
+    }
+
+    bar.appendChild(chip("All", cols.length + " matches", "all"));
+    keys.forEach((k) =>
+      bar.appendChild(chip(label(k), counts[k] + (counts[k] > 1 ? " matches" : " match"), k))
+    );
+
+    function select(val) {
+      bar.querySelectorAll(".day-chip").forEach((ch) =>
+        ch.classList.toggle("active", ch.dataset.day === val)
+      );
+      let shown = 0;
+      cols.forEach((c) => {
+        const vis = val === "all" || c.dataset.daykey === val;
+        c.style.display = vis ? "" : "none";
+        if (vis) shown++;
+      });
+      if (empty) empty.classList.toggle("d-none", shown !== 0);
+    }
+
+    bar.addEventListener("click", (e) => {
+      const c = e.target.closest(".day-chip");
+      if (c) select(c.dataset.day);
+    });
+
+    // Default to Today if it has matches, otherwise show everything.
+    select(counts[todayKey] ? todayKey : "all");
+  })();
+</script>
 
 <%- include("partials/footer") %>

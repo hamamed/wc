@@ -114,6 +114,39 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .score-input { -moz-appearance: textfield; }
 
+/* ---- Day filter ---- */
+.day-filter {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  scrollbar-width: thin;
+}
+.day-filter::-webkit-scrollbar { height: 6px; }
+.day-filter::-webkit-scrollbar-thumb { background: #d8dde6; border-radius: 999px; }
+.day-chip {
+  flex: 0 0 auto;
+  min-width: 92px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 0.5rem 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow);
+}
+.day-chip:hover { border-color: #cfe0f5; transform: translateY(-1px); }
+.day-chip .day-chip-main { display: block; font-weight: 800; color: var(--text); font-size: 0.95rem; }
+.day-chip .day-chip-sub { display: block; font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; }
+.day-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(31, 131, 255, 0.3);
+}
+.day-chip.active .day-chip-main,
+.day-chip.active .day-chip-sub { color: #fff; }
+
 /* ---- Match cards ---- */
 .match-card { transition: transform 0.12s ease, box-shadow 0.2s ease; }
 .match-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
