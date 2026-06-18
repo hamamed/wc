@@ -235,7 +235,10 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   font-size: 1.6rem; color: #fff;
   background: linear-gradient(135deg, var(--accent), #54a8ff);
   box-shadow: 0 10px 22px rgba(31, 131, 255, 0.3);
+  overflow: hidden;
+  flex: 0 0 auto;
 }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .stat-card { transition: transform 0.12s ease, box-shadow 0.2s ease; }
 .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
 .stat-icon {

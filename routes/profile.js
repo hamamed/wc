@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { collections } = require("../config/firebase");
 const { requireLogin } = require("../utils/middleware");
+const { listAvatars, pickRandom } = require("../utils/avatars");
 
 // ---- My profile: points summary + prediction history ---------------------
 router.get("/", requireLogin, async (req, res, next) => {
@@ -70,9 +71,41 @@ router.get("/", requireLogin, async (req, res, next) => {
         ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100)
         : 0;
 
-    res.render("profile", { stats, history });
+    const udata = userDoc.exists ? userDoc.data() : {};
+    res.render("profile", {
+      stats,
+      history,
+      avatar: udata.avatar || null,
+      championPick: udata.championPick || null,
+      championFlag: udata.championFlag || null,
+      hasAvatars: listAvatars().length > 0,
+    });
   } catch (err) {
     next(err);
+  }
+});
+
+// ---- Shuffle to a random avatar from public/avatars/ ---------------------
+router.post("/avatar", requireLogin, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const doc = await collections.users.doc(userId).get();
+    const current = doc.exists ? doc.data().avatar : null;
+
+    const next = pickRandom(current);
+    if (!next) {
+      req.flash("error", "No avatars available — add images to public/avatars/.");
+      return res.redirect("/profile");
+    }
+
+    await collections.users.doc(userId).update({ avatar: next });
+    req.session.user.avatar = next; // keep session in sync
+    req.flash("success", "Profile photo updated!");
+    res.redirect("/profile");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not change your photo.");
+    res.redirect("/profile");
   }
 });
 

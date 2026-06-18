@@ -43,23 +43,18 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/profile">
-              <i class="fa-solid fa-chart-simple me-1"></i> My Stats
+            <a class="nav-link" href="/leaderboard">
+              <i class="fa-solid fa-trophy me-1"></i> Leaderboard
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/leaderboard">
-              <i class="fa-solid fa-trophy me-1"></i> Leaderboard
+            <a class="nav-link" href="/profile">
+              <i class="fa-solid fa-user me-1"></i> Profile
             </a>
           </li>
           <li class="nav-item ms-lg-2">
             <a href="/profile" class="badge wc-userchip text-decoration-none">
               <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-danger" href="/logout">
-              <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
             </a>
           </li>
         <% } else { %>
@@ -92,10 +87,7 @@
     <i class="fa-solid fa-trophy"></i><span>Ranks</span>
   </a>
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
-    <i class="fa-solid fa-chart-simple"></i><span>Stats</span>
-  </a>
-  <a href="/logout" class="bottom-nav-item">
-    <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
+    <i class="fa-solid fa-user"></i><span>Profile</span>
   </a>
 </nav>
 <% } %>
