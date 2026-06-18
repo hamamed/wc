@@ -68,6 +68,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+const { startAutoSync } = require("./utils/syncService");
+
 app.listen(PORT, () => {
   console.log(`\n⚽  World Cup 2026 Predictor running at http://localhost:${PORT}\n`);
+  // Automatically pull fixtures, live scores, and results from the API.
+  startAutoSync();
 });

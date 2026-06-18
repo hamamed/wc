@@ -33,20 +33,25 @@ async function fetchFromApiFootball() {
   }
 
   const FINISHED = new Set(["FT", "AET", "PEN"]);
+  const LIVE = new Set(["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]);
 
   return (data.response || [])
     .filter((f) => f.teams && f.teams.home && f.teams.away && f.teams.home.name && f.teams.away.name)
-    .map((f) => ({
-      externalId: "apf-" + f.fixture.id,
-      teamA: f.teams.home.name,
-      teamB: f.teams.away.name,
-      flagA: f.teams.home.logo || null,
-      flagB: f.teams.away.logo || null,
-      kickoff: new Date(f.fixture.date),
-      finished: FINISHED.has(f.fixture.status && f.fixture.status.short),
-      scoreA: f.goals ? f.goals.home : null,
-      scoreB: f.goals ? f.goals.away : null,
-    }));
+    .map((f) => {
+      const short = f.fixture.status && f.fixture.status.short;
+      return {
+        externalId: "apf-" + f.fixture.id,
+        teamA: f.teams.home.name,
+        teamB: f.teams.away.name,
+        flagA: f.teams.home.logo || null,
+        flagB: f.teams.away.logo || null,
+        kickoff: new Date(f.fixture.date),
+        finished: FINISHED.has(short),
+        inPlay: LIVE.has(short),
+        scoreA: f.goals ? f.goals.home : null,
+        scoreB: f.goals ? f.goals.away : null,
+      };
+    });
 }
 
 // ---- Provider 2: football-data.org ---------------------------------------
@@ -70,6 +75,7 @@ async function fetchFromFootballData() {
       flagB: m.awayTeam.crest || null,
       kickoff: new Date(m.utcDate),
       finished: m.status === "FINISHED",
+      inPlay: m.status === "IN_PLAY" || m.status === "PAUSED",
       scoreA: m.score && m.score.fullTime ? m.score.fullTime.home : null,
       scoreB: m.score && m.score.fullTime ? m.score.fullTime.away : null,
     }));

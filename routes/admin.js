@@ -3,7 +3,7 @@ const router = express.Router();
 const { admin, db, collections, Timestamp } = require("../config/firebase");
 const { requireAdmin } = require("../utils/middleware");
 const { applyMatchResult } = require("../utils/scoreMatch");
-const { fetchWorldCupMatches } = require("../utils/footballApi");
+const { syncWorldCup } = require("../utils/syncService");
 const { flagUrl } = require("../utils/flags");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -189,71 +189,18 @@ router.post("/delete/:matchId", requireAdmin, async (req, res) => {
   }
 });
 
-// ---- Import fixtures from the football API -------------------------------
+// ---- Manual "sync now" (the same routine the auto-sync runs) --------------
 router.post("/import", requireAdmin, async (req, res) => {
   try {
-    const apiMatches = await fetchWorldCupMatches();
-    let created = 0;
-    let updated = 0;
-    let scored = 0;
-
-    for (const m of apiMatches) {
-      const flagA = m.flagA || flagUrl(m.teamA);
-      const flagB = m.flagB || flagUrl(m.teamB);
-
-      const snap = await collections.matches
-        .where("externalId", "==", m.externalId)
-        .limit(1)
-        .get();
-
-      if (snap.empty) {
-        const ref = await collections.matches.add({
-          externalId: m.externalId,
-          teamA: m.teamA,
-          teamB: m.teamB,
-          flagA,
-          flagB,
-          kickoffTime: Timestamp.fromDate(m.kickoff),
-          actualScoreA: null,
-          actualScoreB: null,
-          status: "scheduled",
-        });
-        created++;
-        if (m.finished && m.scoreA != null && m.scoreB != null) {
-          await applyMatchResult(ref.id, m.scoreA, m.scoreB);
-          scored++;
-        }
-      } else {
-        const doc = snap.docs[0];
-        // Refresh fixture info but never clobber an already-completed result.
-        await doc.ref.update({
-          teamA: m.teamA,
-          teamB: m.teamB,
-          flagA,
-          flagB,
-          kickoffTime: Timestamp.fromDate(m.kickoff),
-        });
-        updated++;
-        if (
-          m.finished &&
-          doc.data().status !== "completed" &&
-          m.scoreA != null &&
-          m.scoreB != null
-        ) {
-          await applyMatchResult(doc.id, m.scoreA, m.scoreB);
-          scored++;
-        }
-      }
-    }
-
+    const r = await syncWorldCup();
     req.flash(
       "success",
-      `API import done: ${created} new, ${updated} updated, ${scored} auto-scored.`
+      `Sync done: ${r.total} fixtures — ${r.created} new, ${r.updated} updated, ${r.live} live, ${r.scored} scored.`
     );
     res.redirect("/admin");
   } catch (err) {
     console.error(err);
-    req.flash("error", "API import failed: " + err.message);
+    req.flash("error", "API sync failed: " + err.message);
     res.redirect("/admin");
   }
 });
