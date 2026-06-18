@@ -27,6 +27,8 @@ const CODES = {
   "bosnia & herzegovina": "ba", "bosnia": "ba",
   "haiti": "ht", "curaçao": "cw", "curacao": "cw",
   "cape verde islands": "cv",
+  "congo dr": "cd", "democratic republic of congo": "cd",
+  "congo democratic republic": "cd",
   "japan": "jp", "korea republic": "kr", "south korea": "kr",
   "australia": "au", "iran": "ir", "iraq": "iq", "saudi arabia": "sa",
   "qatar": "qa", "united arab emirates": "ae", "uzbekistan": "uz",

@@ -39,6 +39,9 @@ const AR = {
   "haiti": "هايتي",
   "curaçao": "كوراساو", "curacao": "كوراساو",
   "cape verde islands": "الرأس الأخضر",
+  "congo dr": "الكونغو الديمقراطية", "dr congo": "الكونغو الديمقراطية",
+  "democratic republic of congo": "الكونغو الديمقراطية",
+  "congo democratic republic": "الكونغو الديمقراطية",
 };
 
 function localizeTeam(name, lang) {
