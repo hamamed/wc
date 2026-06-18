@@ -63,13 +63,26 @@
     </div>
   </div>
 
+  <!-- Bulk actions bar -->
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <span id="selCount" class="text-secondary small">0 selected</span>
+    <button id="deleteSelectedBtn" class="btn btn-outline-danger btn-sm ms-auto" disabled>
+      <i class="fa-solid fa-trash me-1"></i> Delete selected
+    </button>
+  </div>
+  <!-- Hidden form used to submit the checked match IDs -->
+  <form id="bulkForm" action="/admin/delete-selected" method="POST" class="d-none"></form>
+
   <!-- Matches list with result entry -->
   <div class="card wc-card border-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th class="ps-4">Match</th>
+            <th class="ps-3" style="width:38px;">
+              <input type="checkbox" id="selectAll" class="form-check-input" title="Select all" />
+            </th>
+            <th>Match</th>
             <th>Kickoff</th>
             <th>Status</th>
             <th class="text-end">Final Score</th>
@@ -78,11 +91,14 @@
         </thead>
         <tbody>
           <% if (matches.length === 0) { %>
-            <tr><td colspan="5" class="text-center text-secondary py-4">No matches yet.</td></tr>
+            <tr><td colspan="6" class="text-center text-secondary py-4">No matches yet.</td></tr>
           <% } %>
           <% matches.forEach(function (m) { %>
             <tr>
-              <td class="ps-4 fw-semibold">
+              <td class="ps-3">
+                <input type="checkbox" class="form-check-input row-check" value="<%= m.id %>" />
+              </td>
+              <td class="fw-semibold">
                 <% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini" alt="" /><% } %>
                 <%= m.teamA %>
                 <span class="text-secondary">vs</span>
@@ -140,5 +156,52 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const selectAll = document.getElementById("selectAll");
+    const checks = Array.from(document.querySelectorAll(".row-check"));
+    const btn = document.getElementById("deleteSelectedBtn");
+    const countEl = document.getElementById("selCount");
+    const form = document.getElementById("bulkForm");
+    if (!btn) return;
+
+    function checked() {
+      return checks.filter((c) => c.checked);
+    }
+    function refresh() {
+      const n = checked().length;
+      countEl.textContent = n + " selected";
+      btn.disabled = n === 0;
+      if (selectAll) selectAll.checked = n > 0 && n === checks.length;
+    }
+
+    checks.forEach((c) => c.addEventListener("change", refresh));
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        checks.forEach((c) => (c.checked = this.checked));
+        refresh();
+      });
+    }
+
+    btn.addEventListener("click", function () {
+      const sel = checked();
+      if (sel.length === 0) return;
+      if (!confirm("Delete " + sel.length + " match(es)? This removes their predictions and reverses any points awarded.")) return;
+      // Build hidden inputs (matchIds) and submit the hidden form.
+      form.innerHTML = "";
+      sel.forEach((c) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "matchIds";
+        input.value = c.value;
+        form.appendChild(input);
+      });
+      form.submit();
+    });
+
+    refresh();
+  })();
+</script>
 
 <%- include("partials/footer") %>

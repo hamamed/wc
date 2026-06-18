@@ -8,6 +8,28 @@ const { flagUrl } = require("../utils/flags");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
+// Delete one match: reverse any points it awarded, remove its predictions,
+// then remove the match. Returns the number of predictions removed.
+async function deleteMatchAndPredictions(matchId) {
+  const predSnap = await collections.predictions
+    .where("matchId", "==", matchId)
+    .get();
+
+  const batch = db.batch();
+  predSnap.forEach((doc) => {
+    const p = doc.data();
+    if (p.pointsEarned) {
+      batch.update(collections.users.doc(p.userId), {
+        totalPoints: admin.firestore.FieldValue.increment(-p.pointsEarned),
+      });
+    }
+    batch.delete(doc.ref);
+  });
+  batch.delete(collections.matches.doc(matchId));
+  await batch.commit();
+  return predSnap.size;
+}
+
 // ---- Admin login (simple shared password) --------------------------------
 router.get("/login", (req, res) => {
   if (req.session.isAdmin) return res.redirect("/admin");
@@ -156,35 +178,40 @@ router.post("/live/:matchId", requireAdmin, async (req, res) => {
   }
 });
 
-// ---- Delete a match (and its predictions, reversing any points) ----------
+// ---- Delete a single match -----------------------------------------------
 router.post("/delete/:matchId", requireAdmin, async (req, res) => {
-  const { matchId } = req.params;
   try {
-    const predSnap = await collections.predictions
-      .where("matchId", "==", matchId)
-      .get();
-
-    const batch = db.batch();
-
-    // Reverse any points this match awarded, then remove its predictions.
-    predSnap.forEach((doc) => {
-      const p = doc.data();
-      if (p.pointsEarned) {
-        batch.update(collections.users.doc(p.userId), {
-          totalPoints: admin.firestore.FieldValue.increment(-p.pointsEarned),
-        });
-      }
-      batch.delete(doc.ref);
-    });
-
-    batch.delete(collections.matches.doc(matchId));
-    await batch.commit();
-
-    req.flash("success", `Match deleted (${predSnap.size} prediction(s) removed).`);
+    const removed = await deleteMatchAndPredictions(req.params.matchId);
+    req.flash("success", `Match deleted (${removed} prediction(s) removed).`);
     res.redirect("/admin");
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not delete the match.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Delete several selected matches at once -----------------------------
+router.post("/delete-selected", requireAdmin, async (req, res) => {
+  // matchIds arrives as a single string or an array depending on count.
+  let ids = req.body.matchIds || [];
+  if (!Array.isArray(ids)) ids = [ids];
+  ids = ids.filter(Boolean);
+
+  if (ids.length === 0) {
+    req.flash("error", "No matches selected.");
+    return res.redirect("/admin");
+  }
+
+  try {
+    for (const id of ids) {
+      await deleteMatchAndPredictions(id);
+    }
+    req.flash("success", `Deleted ${ids.length} match(es).`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not delete the selected matches.");
     res.redirect("/admin");
   }
 });
