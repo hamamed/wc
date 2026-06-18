@@ -3,9 +3,10 @@
 
 <%
   function fmtDate(d) {
-    return d.toLocaleString("en-US", {
+    return d.toLocaleString("en-GB", {
+      timeZone: "Etc/GMT-1",            // fixed GMT+1
       weekday: "short", month: "short", day: "numeric",
-      hour: "numeric", minute: "2-digit"
+      hour: "2-digit", minute: "2-digit", hour12: false
     });
   }
 %>
@@ -155,20 +156,19 @@
     const empty = document.getElementById("dayEmpty");
     const DAY = 86400000;
 
-    const ymd = (d) =>
-      d.getFullYear() + "-" +
-      String(d.getMonth() + 1).padStart(2, "0") + "-" +
-      String(d.getDate()).padStart(2, "0");
+    // Day key in fixed GMT+1, formatted as YYYY-MM-DD (en-CA gives that order).
+    const ymd = (ms) =>
+      new Date(ms).toLocaleDateString("en-CA", { timeZone: "Etc/GMT-1" });
 
-    const now = new Date();
-    const todayKey = ymd(now);
-    const yKey = ymd(new Date(now.getTime() - DAY));
-    const tomKey = ymd(new Date(now.getTime() + DAY));
+    const nowMs = Date.now();
+    const todayKey = ymd(nowMs);
+    const yKey = ymd(nowMs - DAY);
+    const tomKey = ymd(nowMs + DAY);
 
-    // Tag each card with its local day key and count per day.
+    // Tag each card with its GMT+1 day key and count per day.
     const counts = {};
     cols.forEach((c) => {
-      const key = ymd(new Date(Number(c.dataset.kickoff)));
+      const key = ymd(Number(c.dataset.kickoff));
       c.dataset.daykey = key;
       counts[key] = (counts[key] || 0) + 1;
     });
