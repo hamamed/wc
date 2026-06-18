@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { collections, Timestamp } = require("../config/firebase");
+const { admin, db, collections, Timestamp } = require("../config/firebase");
 const { requireAdmin } = require("../utils/middleware");
 const { applyMatchResult } = require("../utils/scoreMatch");
 const { fetchWorldCupMatches } = require("../utils/footballApi");
@@ -70,7 +70,13 @@ router.post("/result/:matchId", requireAdmin, async (req, res) => {
       return res.redirect("/admin");
     }
 
-    // Record the result + (re)score every prediction (shared helper).
+    // Result is locked once set — no changing it afterwards.
+    if (matchDoc.data().status === "completed") {
+      req.flash("error", "This result is locked and can't be changed.");
+      return res.redirect("/admin");
+    }
+
+    // Record the result + score every prediction (shared helper).
     const scored = await applyMatchResult(matchId, actualA, actualB);
 
     req.flash(
@@ -108,6 +114,39 @@ router.post("/match", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not add the match.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Delete a match (and its predictions, reversing any points) ----------
+router.post("/delete/:matchId", requireAdmin, async (req, res) => {
+  const { matchId } = req.params;
+  try {
+    const predSnap = await collections.predictions
+      .where("matchId", "==", matchId)
+      .get();
+
+    const batch = db.batch();
+
+    // Reverse any points this match awarded, then remove its predictions.
+    predSnap.forEach((doc) => {
+      const p = doc.data();
+      if (p.pointsEarned) {
+        batch.update(collections.users.doc(p.userId), {
+          totalPoints: admin.firestore.FieldValue.increment(-p.pointsEarned),
+        });
+      }
+      batch.delete(doc.ref);
+    });
+
+    batch.delete(collections.matches.doc(matchId));
+    await batch.commit();
+
+    req.flash("success", `Match deleted (${predSnap.size} prediction(s) removed).`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not delete the match.");
     res.redirect("/admin");
   }
 });

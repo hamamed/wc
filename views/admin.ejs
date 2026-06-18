@@ -71,12 +71,13 @@
             <th class="ps-4">Match</th>
             <th>Kickoff</th>
             <th>Status</th>
-            <th class="text-end pe-4">Final Score</th>
+            <th class="text-end">Final Score</th>
+            <th class="text-end pe-4">Actions</th>
           </tr>
         </thead>
         <tbody>
           <% if (matches.length === 0) { %>
-            <tr><td colspan="4" class="text-center text-secondary py-4">No matches yet.</td></tr>
+            <tr><td colspan="5" class="text-center text-secondary py-4">No matches yet.</td></tr>
           <% } %>
           <% matches.forEach(function (m) { %>
             <tr>
@@ -95,20 +96,30 @@
                   <span class="badge wc-badge badge-open">Scheduled</span>
                 <% } %>
               </td>
-              <td class="pe-4">
-                <form action="/admin/result/<%= m.id %>" method="POST"
-                      class="d-flex align-items-center justify-content-end gap-2">
-                  <input type="number" name="actualScoreA" min="0" max="99"
-                         class="form-control score-input text-center"
-                         value="<%= m.actualScoreA !== null && m.actualScoreA !== undefined ? m.actualScoreA : '' %>"
-                         placeholder="0" required />
-                  <span class="fw-bold text-secondary">-</span>
-                  <input type="number" name="actualScoreB" min="0" max="99"
-                         class="form-control score-input text-center"
-                         value="<%= m.actualScoreB !== null && m.actualScoreB !== undefined ? m.actualScoreB : '' %>"
-                         placeholder="0" required />
-                  <button class="btn btn-accent btn-sm fw-semibold ms-1">
-                    <i class="fa-solid fa-check"></i> Save
+              <td class="text-end">
+                <% if (m.status === "completed") { %>
+                  <!-- Result is locked once entered -->
+                  <span class="fw-bold me-1"><%= m.actualScoreA %> - <%= m.actualScoreB %></span>
+                  <i class="fa-solid fa-lock text-secondary" title="Result locked"></i>
+                <% } else { %>
+                  <form action="/admin/result/<%= m.id %>" method="POST"
+                        class="d-flex align-items-center justify-content-end gap-2">
+                    <input type="number" name="actualScoreA" min="0" max="99"
+                           class="form-control score-input text-center" placeholder="0" required />
+                    <span class="fw-bold text-secondary">-</span>
+                    <input type="number" name="actualScoreB" min="0" max="99"
+                           class="form-control score-input text-center" placeholder="0" required />
+                    <button class="btn btn-accent btn-sm fw-semibold ms-1">
+                      <i class="fa-solid fa-check"></i> Save
+                    </button>
+                  </form>
+                <% } %>
+              </td>
+              <td class="text-end pe-4">
+                <form action="/admin/delete/<%= m.id %>" method="POST"
+                      onsubmit="return confirm('Delete this match? This also removes all predictions for it and reverses any points awarded.');">
+                  <button class="btn btn-outline-danger btn-sm" title="Delete match">
+                    <i class="fa-solid fa-trash"></i>
                   </button>
                 </form>
               </td>

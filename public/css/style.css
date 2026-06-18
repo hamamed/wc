@@ -66,7 +66,7 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 }
 .btn-accent:hover { background: var(--accent-dark); color: #fff; transform: translateY(-1px); box-shadow: 0 10px 22px rgba(31, 131, 255, 0.36); }
 .btn-accent:active { transform: translateY(0); }
-.btn-outline-secondary { border-radius: 12px; font-weight: 700; }
+.btn-outline-secondary, .btn-outline-danger { border-radius: 12px; font-weight: 700; }
 
 /* ---- Cards / panels ---- */
 .wc-card {
