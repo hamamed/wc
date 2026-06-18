@@ -42,8 +42,9 @@ app.use((req, res, next) => {
   res.locals.isAdmin = !!req.session.isAdmin;
   res.locals.currentPath = req.path;
 
-  // Language / i18n
-  const lang = req.session.lang || "en";
+  // Language / i18n — prefer session, fall back to a persistent cookie so the
+  // choice survives server restarts/deploys.
+  const lang = req.session.lang || readCookie(req, "lang") || "en";
   res.locals.lang = lang;
   res.locals.dir = lang === "ar" ? "rtl" : "ltr";
   res.locals.langs = i18nLangs;
@@ -52,10 +53,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// Switch language and return to the previous page.
+// Read a single cookie value from the raw header (no extra dependency).
+function readCookie(req, name) {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  const found = header
+    .split(";")
+    .map((s) => s.trim())
+    .find((s) => s.startsWith(name + "="));
+  return found ? decodeURIComponent(found.split("=").slice(1).join("=")) : null;
+}
+
+// Switch language: remember it in the session AND a 1-year cookie.
 app.get("/lang/:code", (req, res) => {
   const code = req.params.code;
-  if (["en", "fr", "ar"].includes(code)) req.session.lang = code;
+  if (["en", "fr", "ar"].includes(code)) {
+    req.session.lang = code;
+    res.cookie("lang", code, {
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
+      sameSite: "lax",
+      httpOnly: false,
+    });
+  }
   res.redirect(req.get("referer") || "/");
 });
 

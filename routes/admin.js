@@ -276,6 +276,45 @@ router.get("/users", requireAdmin, async (req, res, next) => {
   }
 });
 
+// A single user's predictions (JSON, for the admin modal).
+router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [userDoc, predSnap, matchSnap] = await Promise.all([
+      collections.users.doc(id).get(),
+      collections.predictions.where("userId", "==", id).get(),
+      collections.matches.get(),
+    ]);
+
+    const matchById = {};
+    matchSnap.forEach((d) => (matchById[d.id] = d.data()));
+
+    const predictions = predSnap.docs
+      .map((d) => {
+        const p = d.data();
+        const m = matchById[p.matchId];
+        const completed = m && m.status === "completed";
+        return {
+          match: m ? `${m.teamA} vs ${m.teamB}` : "(deleted match)",
+          kickoffMs: m && m.kickoffTime ? m.kickoffTime.toMillis() : 0,
+          pick: `${p.predictedScoreA}-${p.predictedScoreB}`,
+          result: completed ? `${m.actualScoreA}-${m.actualScoreB}` : "—",
+          points: p.pointsEarned || 0,
+          completed: !!completed,
+        };
+      })
+      .sort((a, b) => b.kickoffMs - a.kickoffMs);
+
+    res.json({
+      username: userDoc.exists ? userDoc.data().username : "User",
+      predictions,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
 // Rename a user (keeps the case-insensitive uniqueness rule).
 router.post("/users/rename/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;

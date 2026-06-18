@@ -58,6 +58,10 @@
               </td>
               <td class="text-end pe-4">
                 <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm view-preds"
+                          data-id="<%= u.id %>" data-name="<%= u.username %>" title="View predictions">
+                    <i class="fa-solid fa-list-check"></i>
+                  </button>
                   <form action="/admin/users/reset/<%= u.id %>" method="POST"
                         onsubmit="return confirm('Reset this user\'s points to 0?');">
                     <button class="btn btn-outline-secondary btn-sm" title="Reset points">
@@ -79,5 +83,89 @@
     </div>
   </div>
 </div>
+
+<!-- Predictions modal -->
+<div class="modal fade" id="predsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content wc-card border-0">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="predsTitle">Predictions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="predsLoading" class="text-center text-secondary py-4">
+          <i class="fa-solid fa-spinner fa-spin me-1"></i> Loading…
+        </div>
+        <div class="table-responsive d-none" id="predsWrap">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Match</th>
+                <th class="text-center">Pick</th>
+                <th class="text-center">Result</th>
+                <th class="text-end">Pts</th>
+              </tr>
+            </thead>
+            <tbody id="predsBody"></tbody>
+          </table>
+        </div>
+        <div id="predsEmpty" class="text-center text-secondary py-4 d-none">No predictions yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modalEl = document.getElementById("predsModal");
+    const modal = new bootstrap.Modal(modalEl);
+    const title = document.getElementById("predsTitle");
+    const loading = document.getElementById("predsLoading");
+    const wrap = document.getElementById("predsWrap");
+    const empty = document.getElementById("predsEmpty");
+    const body = document.getElementById("predsBody");
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    document.querySelectorAll(".view-preds").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        title.textContent = btn.dataset.name + " — predictions";
+        loading.classList.remove("d-none");
+        wrap.classList.add("d-none");
+        empty.classList.add("d-none");
+        body.innerHTML = "";
+        modal.show();
+
+        fetch("/admin/users/" + btn.dataset.id + "/predictions")
+          .then((r) => r.json())
+          .then(function (j) {
+            loading.classList.add("d-none");
+            if (!j.predictions || j.predictions.length === 0) {
+              empty.classList.remove("d-none");
+              return;
+            }
+            j.predictions.forEach(function (p) {
+              const tr = document.createElement("tr");
+              tr.innerHTML =
+                '<td>' + esc(p.match) + '</td>' +
+                '<td class="text-center fw-semibold">' + esc(p.pick) + '</td>' +
+                '<td class="text-center">' + esc(p.result) + '</td>' +
+                '<td class="text-end fw-bold text-accent">' + esc(p.points) + '</td>';
+              body.appendChild(tr);
+            });
+            wrap.classList.remove("d-none");
+          })
+          .catch(function () {
+            loading.classList.add("d-none");
+            empty.textContent = "Failed to load.";
+            empty.classList.remove("d-none");
+          });
+      });
+    });
+  })();
+</script>
 
 <%- include("partials/footer") %>
