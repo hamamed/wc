@@ -16,15 +16,32 @@
       <h2 class="fw-bold mb-0"><i class="fa-solid fa-screwdriver-wrench text-accent me-2"></i>Admin Panel</h2>
       <p class="text-secondary mb-0">Enter final scores to auto-score every prediction.</p>
     </div>
-    <a href="/admin/logout" class="btn btn-outline-light btn-sm">
+    <a href="/admin/logout" class="btn btn-outline-secondary btn-sm">
       <i class="fa-solid fa-right-from-bracket me-1"></i> Exit admin
     </a>
+  </div>
+
+  <!-- Import fixtures from the football API -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h6 class="fw-semibold mb-1"><i class="fa-solid fa-cloud-arrow-down text-accent me-2"></i>Import World Cup fixtures</h6>
+        <p class="text-secondary small mb-0">
+          Pulls matches &amp; flags from the football API. Finished matches are auto-scored.
+        </p>
+      </div>
+      <form action="/admin/import" method="POST">
+        <button class="btn btn-accent fw-semibold">
+          <i class="fa-solid fa-rotate me-1"></i> Import / Refresh
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Add a new match -->
   <div class="card wc-card border-0 mb-4">
     <div class="card-body">
-      <h6 class="fw-semibold mb-3"><i class="fa-solid fa-plus text-accent me-2"></i>Add a match</h6>
+      <h6 class="fw-semibold mb-3"><i class="fa-solid fa-plus text-accent me-2"></i>Add a match manually</h6>
       <form action="/admin/match" method="POST" class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
           <label class="form-label small text-secondary">Team A</label>
@@ -48,7 +65,7 @@
   <!-- Matches list with result entry -->
   <div class="card wc-card border-0">
     <div class="table-responsive">
-      <table class="table table-dark table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
             <th class="ps-4">Match</th>
@@ -63,7 +80,13 @@
           <% } %>
           <% matches.forEach(function (m) { %>
             <tr>
-              <td class="ps-4 fw-semibold"><%= m.teamA %> <span class="text-secondary">vs</span> <%= m.teamB %></td>
+              <td class="ps-4 fw-semibold">
+                <% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini" alt="" /><% } %>
+                <%= m.teamA %>
+                <span class="text-secondary">vs</span>
+                <% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini" alt="" /><% } %>
+                <%= m.teamB %>
+              </td>
               <td class="text-secondary small"><%= fmtDate(m.kickoffTime) %></td>
               <td>
                 <% if (m.status === "completed") { %>

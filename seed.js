@@ -4,6 +4,7 @@
  */
 require("dotenv").config();
 const { collections, Timestamp } = require("./config/firebase");
+const { flagUrl } = require("./utils/flags");
 
 function hoursFromNow(h) {
   return Timestamp.fromDate(new Date(Date.now() + h * 60 * 60 * 1000));
@@ -23,6 +24,8 @@ async function seed() {
   for (const f of fixtures) {
     await collections.matches.add({
       ...f,
+      flagA: flagUrl(f.teamA),
+      flagB: flagUrl(f.teamB),
       actualScoreA: null,
       actualScoreB: null,
       status: "scheduled",

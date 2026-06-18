@@ -58,7 +58,13 @@
             <!-- Teams -->
             <div class="d-flex align-items-center justify-content-between text-center mb-3">
               <div class="team w-100">
-                <div class="team-flag"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="team-flag">
+                  <% if (m.flagA) { %>
+                    <img src="<%= m.flagA %>" alt="<%= m.teamA %>" class="flag-img" />
+                  <% } else { %>
+                    <i class="fa-solid fa-shield-halved"></i>
+                  <% } %>
+                </div>
                 <div class="fw-semibold mt-1"><%= m.teamA %></div>
               </div>
               <div class="vs px-2">
@@ -69,7 +75,13 @@
                 <% } %>
               </div>
               <div class="team w-100">
-                <div class="team-flag"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="team-flag">
+                  <% if (m.flagB) { %>
+                    <img src="<%= m.flagB %>" alt="<%= m.teamB %>" class="flag-img" />
+                  <% } else { %>
+                    <i class="fa-solid fa-shield-halved"></i>
+                  <% } %>
+                </div>
                 <div class="fw-semibold mt-1"><%= m.teamB %></div>
               </div>
             </div>
@@ -107,7 +119,7 @@
                       <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %>
                     </span>
                     <% if (m.status === "completed") { %>
-                      <span class="badge bg-dark ms-1"><%= m.prediction.pointsEarned %> pts</span>
+                      <span class="badge wc-badge badge-open ms-1"><%= m.prediction.pointsEarned %> pts</span>
                     <% } %>
                   <% } else { %>
                     <span class="text-secondary fst-italic">

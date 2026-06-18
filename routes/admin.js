@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { admin, db, collections, Timestamp } = require("../config/firebase");
+const { collections, Timestamp } = require("../config/firebase");
 const { requireAdmin } = require("../utils/middleware");
-const { computePoints } = require("../utils/scoring");
+const { applyMatchResult } = require("../utils/scoreMatch");
+const { fetchWorldCupMatches } = require("../utils/footballApi");
+const { flagUrl } = require("../utils/flags");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -36,6 +38,8 @@ router.get("/", requireAdmin, async (req, res, next) => {
         id: doc.id,
         teamA: m.teamA,
         teamB: m.teamB,
+        flagA: m.flagA || null,
+        flagB: m.flagB || null,
         kickoffTime: m.kickoffTime.toDate(),
         status: m.status,
         actualScoreA: m.actualScoreA,
@@ -60,55 +64,18 @@ router.post("/result/:matchId", requireAdmin, async (req, res) => {
       return res.redirect("/admin");
     }
 
-    const matchRef = collections.matches.doc(matchId);
-    const matchDoc = await matchRef.get();
+    const matchDoc = await collections.matches.doc(matchId).get();
     if (!matchDoc.exists) {
       req.flash("error", "Match not found.");
       return res.redirect("/admin");
     }
 
-    // 1) Record the actual result on the match.
-    await matchRef.update({
-      actualScoreA: actualA,
-      actualScoreB: actualB,
-      status: "completed",
-    });
-
-    // 2) Fetch every prediction for this match.
-    const predSnap = await collections.predictions
-      .where("matchId", "==", matchId)
-      .get();
-
-    // 3) Re-score each prediction and adjust the user's total by the DELTA,
-    //    so re-submitting a corrected result stays consistent (idempotent).
-    const batch = db.batch();
-    predSnap.forEach((doc) => {
-      const p = doc.data();
-      const newPoints = computePoints(
-        p.predictedScoreA,
-        p.predictedScoreB,
-        actualA,
-        actualB
-      );
-      const delta = newPoints - (p.pointsEarned || 0);
-
-      batch.update(doc.ref, {
-        pointsEarned: newPoints,
-        updatedAt: Timestamp.now(),
-      });
-
-      if (delta !== 0) {
-        batch.update(collections.users.doc(p.userId), {
-          totalPoints: admin.firestore.FieldValue.increment(delta),
-        });
-      }
-    });
-
-    await batch.commit();
+    // Record the result + (re)score every prediction (shared helper).
+    const scored = await applyMatchResult(matchId, actualA, actualB);
 
     req.flash(
       "success",
-      `Result saved (${actualA}-${actualB}). Scored ${predSnap.size} prediction(s).`
+      `Result saved (${actualA}-${actualB}). Scored ${scored} prediction(s).`
     );
     res.redirect("/admin");
   } catch (err) {
@@ -129,6 +96,8 @@ router.post("/match", requireAdmin, async (req, res) => {
     await collections.matches.add({
       teamA: teamA.trim(),
       teamB: teamB.trim(),
+      flagA: flagUrl(teamA),
+      flagB: flagUrl(teamB),
       kickoffTime: Timestamp.fromDate(new Date(kickoffTime)),
       actualScoreA: null,
       actualScoreB: null,
@@ -139,6 +108,75 @@ router.post("/match", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not add the match.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Import fixtures from the football API -------------------------------
+router.post("/import", requireAdmin, async (req, res) => {
+  try {
+    const apiMatches = await fetchWorldCupMatches();
+    let created = 0;
+    let updated = 0;
+    let scored = 0;
+
+    for (const m of apiMatches) {
+      const flagA = m.flagA || flagUrl(m.teamA);
+      const flagB = m.flagB || flagUrl(m.teamB);
+
+      const snap = await collections.matches
+        .where("externalId", "==", m.externalId)
+        .limit(1)
+        .get();
+
+      if (snap.empty) {
+        const ref = await collections.matches.add({
+          externalId: m.externalId,
+          teamA: m.teamA,
+          teamB: m.teamB,
+          flagA,
+          flagB,
+          kickoffTime: Timestamp.fromDate(m.kickoff),
+          actualScoreA: null,
+          actualScoreB: null,
+          status: "scheduled",
+        });
+        created++;
+        if (m.finished && m.scoreA != null && m.scoreB != null) {
+          await applyMatchResult(ref.id, m.scoreA, m.scoreB);
+          scored++;
+        }
+      } else {
+        const doc = snap.docs[0];
+        // Refresh fixture info but never clobber an already-completed result.
+        await doc.ref.update({
+          teamA: m.teamA,
+          teamB: m.teamB,
+          flagA,
+          flagB,
+          kickoffTime: Timestamp.fromDate(m.kickoff),
+        });
+        updated++;
+        if (
+          m.finished &&
+          doc.data().status !== "completed" &&
+          m.scoreA != null &&
+          m.scoreB != null
+        ) {
+          await applyMatchResult(doc.id, m.scoreA, m.scoreB);
+          scored++;
+        }
+      }
+    }
+
+    req.flash(
+      "success",
+      `API import done: ${created} new, ${updated} updated, ${scored} auto-scored.`
+    );
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "API import failed: " + err.message);
     res.redirect("/admin");
   }
 });

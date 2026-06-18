@@ -50,6 +50,8 @@ router.get("/", requireLogin, async (req, res, next) => {
         id: doc.id,
         teamA: m.teamA,
         teamB: m.teamB,
+        flagA: m.flagA || null,
+        flagB: m.flagB || null,
         kickoffTime: m.kickoffTime.toDate(),
         kickoffMs,
         status: m.status,
