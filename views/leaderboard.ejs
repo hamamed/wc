@@ -19,7 +19,8 @@
       <table class="table table-hover align-middle mb-0 leaderboard-table">
         <thead>
           <tr>
-            <th class="ps-4" style="width:80px;"><%= t('lb.rank') %></th>
+            <th class="ps-4" style="width:70px;"><%= t('lb.rank') %></th>
+            <th style="width:54px;" class="text-center"><i class="fa-solid fa-arrows-up-down"></i></th>
             <th><%= t('lb.player') %></th>
             <th class="text-end pe-4"><%= t('lb.points') %></th>
           </tr>
@@ -36,6 +37,15 @@
                   <i class="fa-solid fa-medal text-bronze"></i>
                 <% } else { %>
                   <span class="text-secondary">#<%= u.rank %></span>
+                <% } %>
+              </td>
+              <td class="text-center small fw-bold">
+                <% if (u.move > 0) { %>
+                  <span class="text-success"><i class="fa-solid fa-caret-up"></i> <%= u.move %></span>
+                <% } else if (u.move < 0) { %>
+                  <span class="text-danger"><i class="fa-solid fa-caret-down"></i> <%= -u.move %></span>
+                <% } else { %>
+                  <span class="text-secondary"><i class="fa-solid fa-minus"></i></span>
                 <% } %>
               </td>
               <td>

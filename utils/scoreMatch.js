@@ -14,6 +14,14 @@ async function applyMatchResult(matchId, actualA, actualB) {
   try {
     await client.query("BEGIN");
 
+    // Snapshot each user's current rank BEFORE points change, so the leaderboard
+    // can show how they moved as a result of this match.
+    await client.query(
+      `UPDATE users u SET last_rank = r.rk
+       FROM (SELECT id, RANK() OVER (ORDER BY total_points DESC) AS rk FROM users) r
+       WHERE u.id = r.id`
+    );
+
     await client.query(
       "UPDATE matches SET actual_score_a = $1, actual_score_b = $2, status = 'completed' WHERE id = $3",
       [actualA, actualB, matchId]

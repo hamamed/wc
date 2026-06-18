@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   champion_bonus     INTEGER NOT NULL DEFAULT 0,
   champion_picked_at TIMESTAMPTZ,
   api_token          TEXT,
+  last_rank          INTEGER,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS users_points_idx ON users (total_points DESC);

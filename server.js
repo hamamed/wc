@@ -82,6 +82,7 @@ app.get("/lang/:code", (req, res) => {
 app.use("/api", require("./routes/api"));
 app.use("/", require("./routes/auth"));
 app.use("/dashboard", require("./routes/dashboard"));
+app.use("/match", require("./routes/match"));
 app.use("/profile", require("./routes/profile"));
 app.use("/champion", require("./routes/champion"));
 app.use("/standings", require("./routes/standings"));

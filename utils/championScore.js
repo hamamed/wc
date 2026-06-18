@@ -18,6 +18,13 @@ async function applyChampion(team) {
   try {
     await client.query("BEGIN");
 
+    // Snapshot ranks before the bonus changes points (for leaderboard movement).
+    await client.query(
+      `UPDATE users u SET last_rank = r.rk
+       FROM (SELECT id, RANK() OVER (ORDER BY total_points DESC) AS rk FROM users) r
+       WHERE u.id = r.id`
+    );
+
     await client.query(
       `INSERT INTO settings (key, value) VALUES ('actualChampion', to_jsonb($1::text))
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
