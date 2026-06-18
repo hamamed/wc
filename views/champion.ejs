@@ -1,0 +1,106 @@
+<%- include("partials/head", { title: "Champion · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<div class="container py-4">
+  <div class="mb-4">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-crown text-accent me-2"></i>Predict the Champion</h2>
+    <p class="text-secondary mb-0">Who lifts the 2026 World Cup? Pick one team — editable until 25 June.</p>
+  </div>
+
+  <!-- Lock / deadline banner -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+      <% if (locked) { %>
+        <span class="badge wc-badge badge-locked"><i class="fa-solid fa-lock me-1"></i> Predictions locked</span>
+        <% if (pick) { %>
+          <span class="ms-auto">
+            Your pick:
+            <% if (pickFlag) { %><img src="<%= pickFlag %>" class="flag-mini" alt="" /><% } %>
+            <span class="fw-bold"><%= pick %></span>
+          </span>
+        <% } else { %>
+          <span class="ms-auto text-secondary">You didn't pick a champion.</span>
+        <% } %>
+      <% } else { %>
+        <span class="badge wc-badge badge-open"><i class="fa-solid fa-hourglass-half me-1"></i> Open until 25 June</span>
+        <span class="text-secondary">Locks in <strong id="countdown">…</strong></span>
+        <% if (pick) { %>
+          <span class="ms-auto">
+            Current pick:
+            <% if (pickFlag) { %><img src="<%= pickFlag %>" class="flag-mini" alt="" /><% } %>
+            <span class="fw-bold"><%= pick %></span>
+          </span>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (teams.length === 0) { %>
+    <div class="card wc-card border-0">
+      <div class="card-body text-center text-secondary py-5">
+        <i class="fa-solid fa-users-slash fa-2x mb-3 d-block"></i>
+        Teams appear here once fixtures are added.
+      </div>
+    </div>
+  <% } else { %>
+    <form method="POST" action="/champion">
+      <div class="row g-2">
+        <% teams.forEach(function (t) { %>
+          <div class="col-6 col-md-4 col-lg-3">
+            <label class="champion-option <%= pick === t.name ? 'selected' : '' %> <%= locked ? 'disabled' : '' %>">
+              <input type="radio" name="champion" value="<%= t.name %>"
+                     <%= pick === t.name ? 'checked' : '' %> <%= locked ? 'disabled' : '' %> hidden />
+              <span class="champion-flag">
+                <% if (t.flag) { %>
+                  <img src="<%= t.flag %>" alt="<%= t.name %>" />
+                <% } else { %>
+                  <i class="fa-solid fa-shield-halved"></i>
+                <% } %>
+              </span>
+              <span class="champion-name"><%= t.name %></span>
+              <i class="fa-solid fa-circle-check champion-tick"></i>
+            </label>
+          </div>
+        <% }); %>
+      </div>
+
+      <% if (!locked) { %>
+        <div class="mt-4">
+          <button class="btn btn-accent btn-lg w-100 fw-semibold">
+            <i class="fa-solid fa-crown me-1"></i> Save Champion Pick
+          </button>
+        </div>
+      <% } %>
+    </form>
+  <% } %>
+</div>
+
+<script>
+  // Highlight the selected team card.
+  document.querySelectorAll('input[name="champion"]').forEach(function (input) {
+    input.addEventListener("change", function () {
+      document.querySelectorAll(".champion-option").forEach((o) => o.classList.remove("selected"));
+      if (this.checked) this.closest(".champion-option").classList.add("selected");
+    });
+  });
+
+  // Countdown to the lock time.
+  (function () {
+    const el = document.getElementById("countdown");
+    if (!el) return;
+    const lock = <%= lockMs %>;
+    function tick() {
+      const ms = lock - Date.now();
+      if (ms <= 0) { el.textContent = "now — refreshing…"; setTimeout(() => location.reload(), 1500); return; }
+      const d = Math.floor(ms / 86400000);
+      const h = Math.floor((ms % 86400000) / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      el.textContent = (d > 0 ? d + "d " : "") + h + "h " + m + "m " + s + "s";
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+
+<%- include("partials/footer") %>

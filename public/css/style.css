@@ -252,6 +252,45 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .stat-value { font-size: 2rem; font-weight: 900; line-height: 1; }
 .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; font-weight: 700; }
 
+/* ---- Champion picker ---- */
+.champion-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.9rem 0.5rem;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.champion-option:hover { border-color: #cfe0f5; transform: translateY(-2px); }
+.champion-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 6px 16px rgba(31, 131, 255, 0.18);
+}
+.champion-option.disabled { cursor: default; opacity: 0.7; }
+.champion-option.disabled:hover { transform: none; border-color: var(--line); }
+.champion-flag {
+  width: 54px; height: 38px;
+  display: grid; place-items: center;
+  overflow: hidden; border-radius: 7px;
+  color: var(--accent); font-size: 1.2rem;
+}
+.champion-flag img { width: 54px; height: 38px; object-fit: cover; }
+.champion-name { font-weight: 800; font-size: 0.9rem; color: var(--text); }
+.champion-tick {
+  position: absolute; top: 8px; right: 8px;
+  color: var(--accent); opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.champion-option.selected .champion-tick { opacity: 1; }
+
 /* ---- Bottom app nav (mobile) ---- */
 .bottom-nav {
   position: fixed;
@@ -268,6 +307,7 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 }
 .bottom-nav-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -276,12 +316,18 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   text-decoration: none;
   color: var(--text-secondary);
   font-weight: 800;
-  font-size: 0.68rem;
-  padding: 0.35rem 0;
+  font-size: 0.6rem;
+  padding: 0.35rem 0.1rem;
   border-radius: 12px;
   transition: color 0.15s ease, background 0.15s ease;
 }
-.bottom-nav-item i { font-size: 1.2rem; }
+.bottom-nav-item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bottom-nav-item i { font-size: 1.15rem; }
 .bottom-nav-item.active { color: var(--accent); }
 .bottom-nav-item:active { background: var(--accent-soft); }
 
