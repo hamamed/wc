@@ -114,6 +114,7 @@ const en = {
   "st.qualifies": "Qualifies",
   "st.third": "3rd place (best-thirds race)",
   "st.computed": "Computed from results",
+  "st.p": "P", "st.w": "W", "st.d": "D", "st.l": "L", "st.gd": "GD", "st.pts": "Pts",
 
   "home.signInBtn": "Sign In",
   "home.cta": "Get Started",
@@ -243,6 +244,7 @@ const fr = {
   "st.qualifies": "Qualifié",
   "st.third": "3e place (course des troisièmes)",
   "st.computed": "Calculé d'après les résultats",
+  "st.p": "J", "st.w": "G", "st.d": "N", "st.l": "P", "st.gd": "Diff", "st.pts": "Pts",
 
   "home.signInBtn": "Se connecter",
   "home.cta": "Commencer",
@@ -372,6 +374,7 @@ const ar = {
   "st.qualifies": "متأهل",
   "st.third": "المركز الثالث (سباق الثوالث)",
   "st.computed": "محسوب من النتائج",
+  "st.p": "لعب", "st.w": "فوز", "st.d": "تعادل", "st.l": "خسارة", "st.gd": "الفارق", "st.pts": "نقاط",
 
   "home.signInBtn": "تسجيل الدخول",
   "home.cta": "ابدأ",

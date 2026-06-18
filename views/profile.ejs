@@ -55,7 +55,7 @@
           <%= t('champ.your') %>
           <% if (championPick) { %>
             <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
-            <span class="fw-bold"><%= championPick %></span>
+            <span class="fw-bold"><%= tn(championPick) %></span>
           <% } else { %>
             <span class="text-secondary fst-italic"><%= t('champ.noPick') %></span>
           <% } %>
@@ -68,7 +68,7 @@
             <select name="champion" class="form-select" required>
               <option value="" disabled <%= championPick ? '' : 'selected' %>><%= t('champ.choose') %></option>
               <% teams.forEach(function (tm) { %>
-                <option value="<%= tm.name %>" <%= championPick === tm.name ? 'selected' : '' %>><%= tm.name %></option>
+                <option value="<%= tm.name %>" <%= championPick === tm.name ? 'selected' : '' %>><%= tn(tm.name) %></option>
               <% }); %>
             </select>
           </div>
@@ -89,7 +89,7 @@
       <% if (actualChampion) { %>
         <hr class="my-3" />
         <p class="mb-0">
-          <%= t('champ.actual') %> <span class="fw-bold"><%= actualChampion %></span>
+          <%= t('champ.actual') %> <span class="fw-bold"><%= tn(actualChampion) %></span>
           <% if (championPick) { %>
             <% if (championPick === actualChampion) { %>
               <span class="badge wc-badge badge-done ms-2"><i class="fa-solid fa-circle-check me-1"></i><%= t('champ.correct') %></span>
@@ -172,7 +172,7 @@
           <% } %>
           <% history.forEach(function (h) { %>
             <tr>
-              <td class="ps-4 fw-semibold"><%= h.teamA %> <span class="text-secondary">vs</span> <%= h.teamB %></td>
+              <td class="ps-4 fw-semibold"><%= tn(h.teamA) %> <span class="text-secondary"><%= t('common.vs') %></span> <%= tn(h.teamB) %></td>
               <td class="text-secondary small"><%= fmtDate(h.kickoffTime) %></td>
               <td class="text-center fw-semibold"><%= h.predictedScoreA %>-<%= h.predictedScoreB %></td>
               <td class="text-center">

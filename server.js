@@ -5,6 +5,7 @@ const session = require("express-session");
 const flash = require("connect-flash");
 const path = require("path");
 const { t: translate, LANGS: i18nLangs } = require("./utils/i18n");
+const { localizeTeam } = require("./utils/countries");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,7 @@ app.use((req, res, next) => {
   res.locals.dir = lang === "ar" ? "rtl" : "ltr";
   res.locals.langs = i18nLangs;
   res.locals.t = (key) => translate(lang, key);
+  res.locals.tn = (name) => localizeTeam(name, lang); // localized team/country name
   next();
 });
 
