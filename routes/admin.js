@@ -256,4 +256,80 @@ router.post("/import", requireAdmin, async (req, res) => {
   }
 });
 
+// ---- User management -----------------------------------------------------
+router.get("/users", requireAdmin, async (req, res, next) => {
+  try {
+    const snap = await collections.users.orderBy("createdAt", "desc").get();
+    const users = snap.docs.map((d) => {
+      const u = d.data();
+      return {
+        id: d.id,
+        username: u.username,
+        totalPoints: u.totalPoints || 0,
+        createdAt: u.createdAt ? u.createdAt.toDate() : null,
+        championPick: u.championPick || null,
+      };
+    });
+    res.render("admin-users", { users });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Rename a user (keeps the case-insensitive uniqueness rule).
+router.post("/users/rename/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const raw = (req.body.username || "").trim();
+  try {
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(raw)) {
+      req.flash("error", "Username must be 3-20 chars (letters, numbers, _ or -).");
+      return res.redirect("/admin/users");
+    }
+    const lower = raw.toLowerCase();
+    const clash = await collections.users.where("usernameLower", "==", lower).limit(1).get();
+    if (!clash.empty && clash.docs[0].id !== id) {
+      req.flash("error", `Username "${raw}" is already taken.`);
+      return res.redirect("/admin/users");
+    }
+    await collections.users.doc(id).update({ username: raw, usernameLower: lower });
+    req.flash("success", `User renamed to ${raw}.`);
+    res.redirect("/admin/users");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not rename the user.");
+    res.redirect("/admin/users");
+  }
+});
+
+// Reset a user's points to zero.
+router.post("/users/reset/:id", requireAdmin, async (req, res) => {
+  try {
+    await collections.users.doc(req.params.id).update({ totalPoints: 0, championBonus: 0 });
+    req.flash("success", "User points reset to 0.");
+    res.redirect("/admin/users");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not reset points.");
+    res.redirect("/admin/users");
+  }
+});
+
+// Delete a user and all their predictions.
+router.post("/users/delete/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const predSnap = await collections.predictions.where("userId", "==", id).get();
+    const batch = db.batch();
+    predSnap.forEach((d) => batch.delete(d.ref));
+    batch.delete(collections.users.doc(id));
+    await batch.commit();
+    req.flash("success", `User deleted (${predSnap.size} prediction(s) removed).`);
+    res.redirect("/admin/users");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not delete the user.");
+    res.redirect("/admin/users");
+  }
+});
+
 module.exports = router;
