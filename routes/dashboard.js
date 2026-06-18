@@ -81,31 +81,32 @@ router.post("/predict/:matchId", requireLogin, async (req, res) => {
   const scoreA = parseInt(req.body.scoreA, 10);
   const scoreB = parseInt(req.body.scoreB, 10);
 
+  // AJAX requests get JSON; normal form posts get a redirect (graceful fallback).
+  const wantsJson = req.xhr || (req.headers.accept || "").includes("application/json");
+  const reply = (ok, message) => {
+    if (wantsJson) return res.json({ ok, message });
+    req.flash(ok ? "success" : "error", message);
+    return res.redirect("/dashboard");
+  };
+
   try {
     if (
-      Number.isNaN(scoreA) ||
-      Number.isNaN(scoreB) ||
-      scoreA < 0 ||
-      scoreB < 0 ||
-      scoreA > 99 ||
-      scoreB > 99
+      Number.isNaN(scoreA) || Number.isNaN(scoreB) ||
+      scoreA < 0 || scoreB < 0 || scoreA > 99 || scoreB > 99
     ) {
-      req.flash("error", "Please enter a valid score (0-99) for both teams.");
-      return res.redirect("/dashboard");
+      return reply(false, res.locals.t("dash.invalid"));
     }
 
     const matchDoc = await collections.matches.doc(matchId).get();
     if (!matchDoc.exists) {
-      req.flash("error", "That match no longer exists.");
-      return res.redirect("/dashboard");
+      return reply(false, "That match no longer exists.");
     }
 
     const match = matchDoc.data();
 
     // Server-side lock enforcement — never trust the client.
     if (match.status === "completed" || isLocked(match.kickoffTime.toMillis())) {
-      req.flash("error", "Predictions for this match are locked.");
-      return res.redirect("/dashboard");
+      return reply(false, res.locals.t("dash.lockedMsg"));
     }
 
     // One prediction per user per match — upsert.
@@ -130,12 +131,10 @@ router.post("/predict/:matchId", requireLogin, async (req, res) => {
       await collections.predictions.doc(existing.docs[0].id).update(payload);
     }
 
-    req.flash("success", "Prediction saved! Good luck. ⚽");
-    res.redirect("/dashboard");
+    return reply(true, res.locals.t("dash.saved"));
   } catch (err) {
     console.error(err);
-    req.flash("error", "Could not save your prediction. Try again.");
-    res.redirect("/dashboard");
+    return reply(false, "Could not save your prediction. Try again.");
   }
 });
 

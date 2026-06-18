@@ -147,6 +147,29 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   background: var(--accent-soft);
 }
 
+/* ---- Toast notifications ---- */
+.toast-box {
+  position: fixed;
+  bottom: 84px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 1080;
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.toast-msg {
+  background: var(--text); color: #fff;
+  padding: 0.6rem 1.1rem; border-radius: 12px;
+  font-weight: 800; font-size: 0.9rem;
+  box-shadow: var(--shadow-hover);
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  max-width: 90vw;
+}
+.toast-msg.show { opacity: 1; transform: translateY(0); }
+.toast-ok { background: #19c37d; }
+.toast-err { background: #e0394e; }
+.btn-saved { background: #19c37d !important; box-shadow: none !important; }
+
 /* ---- How it works card ---- */
 .how-card { background: linear-gradient(180deg, var(--surface-2), var(--surface)); }
 .how-card .row > div { display: flex; align-items: flex-start; }

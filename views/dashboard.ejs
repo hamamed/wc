@@ -273,4 +273,69 @@
   }
 </script>
 
+<!-- Smooth AJAX prediction saving (no page reload) -->
+<script>
+  (function () {
+    const T_UPDATE = "<%= t('dash.update') %>";
+
+    function toast(msg, ok) {
+      let box = document.getElementById("toastBox");
+      if (!box) {
+        box = document.createElement("div");
+        box.id = "toastBox";
+        box.className = "toast-box";
+        document.body.appendChild(box);
+      }
+      const el = document.createElement("div");
+      el.className = "toast-msg " + (ok ? "toast-ok" : "toast-err");
+      el.textContent = msg;
+      box.appendChild(el);
+      requestAnimationFrame(() => el.classList.add("show"));
+      setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 300); }, 2400);
+    }
+
+    document.querySelectorAll('form[action^="/dashboard/predict/"]').forEach(function (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const btn = form.querySelector("button");
+        if (btn.disabled) return;
+        const original = btn.innerHTML;
+        btn.disabled = true;
+
+        fetch(form.action, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams(new FormData(form)).toString(),
+        })
+          .then((r) => r.json())
+          .then(function (j) {
+            if (j.ok) {
+              btn.innerHTML = '<i class="fa-solid fa-check me-1"></i>' + j.message;
+              btn.classList.add("btn-saved");
+              toast(j.message, true);
+              setTimeout(function () {
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>' + T_UPDATE;
+                btn.classList.remove("btn-saved");
+                btn.disabled = false;
+              }, 1500);
+            } else {
+              toast(j.message || "Error", false);
+              btn.innerHTML = original;
+              btn.disabled = false;
+            }
+          })
+          .catch(function () {
+            toast("Network error", false);
+            btn.innerHTML = original;
+            btn.disabled = false;
+          });
+      });
+    });
+  })();
+</script>
+
 <%- include("partials/footer") %>
