@@ -142,11 +142,13 @@ router.post("/predict", apiAuth, async (req, res) => {
 router.get("/leaderboard", apiAuth, async (req, res) => {
   try {
     const rows = await many(
-      "SELECT id, username, total_points FROM users ORDER BY total_points DESC, username ASC"
+      "SELECT id, username, total_points, last_rank FROM users ORDER BY total_points DESC, username ASC"
     );
-    const users = rows.map((u, i) => ({
-      rank: i + 1, username: u.username, totalPoints: u.total_points || 0, me: u.id === req.userId,
-    }));
+    const users = rows.map((u, i) => {
+      const rank = i + 1;
+      const move = u.last_rank != null ? u.last_rank - rank : 0;
+      return { rank, username: u.username, totalPoints: u.total_points || 0, move, me: u.id === req.userId };
+    });
     res.json({ users });
   } catch (err) {
     console.error(err);
@@ -250,6 +252,28 @@ router.post("/champion", apiAuth, async (req, res) => {
       [pick, flag, req.userId]
     );
     res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
+// ---- All predictions for a locked match ----------------------------------
+router.get("/match/:id/predictions", apiAuth, async (req, res) => {
+  try {
+    const m = await one("SELECT team_a, team_b, kickoff_time, status FROM matches WHERE id = $1", [req.params.id]);
+    if (!m) return res.status(404).json({ error: "not_found" });
+    const k = new Date(m.kickoff_time).getTime();
+    const locked = Date.now() >= k - LOCK || m.status === "completed";
+    if (!locked) return res.status(403).json({ error: "locked" });
+    const preds = await many(
+      `SELECT u.username, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
+       FROM predictions p JOIN users u ON u.id = p.user_id
+       WHERE p.match_id = $1 ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
+      [req.params.id]
+    );
+    const L = (n) => localizeTeam(n, req.query.lang || "en");
+    res.json({ teamA: L(m.team_a), teamB: L(m.team_b), completed: m.status === "completed", preds });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "server" });
