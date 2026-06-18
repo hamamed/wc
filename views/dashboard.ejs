@@ -107,19 +107,21 @@
             <!-- Prediction form / state -->
             <div class="mt-auto">
               <% if (m.badge.type === "open") { %>
-                <form action="/dashboard/predict/<%= m.id %>" method="POST"
-                      class="d-flex align-items-center justify-content-center gap-2">
-                  <input type="number" name="scoreA" min="0" max="99"
-                         class="form-control score-input text-center"
-                         value="<%= m.prediction ? m.prediction.predictedScoreA : '' %>"
-                         placeholder="0" required />
-                  <span class="fw-bold text-secondary">-</span>
-                  <input type="number" name="scoreB" min="0" max="99"
-                         class="form-control score-input text-center"
-                         value="<%= m.prediction ? m.prediction.predictedScoreB : '' %>"
-                         placeholder="0" required />
-                  <button class="btn btn-accent btn-sm fw-semibold ms-1">
-                    <i class="fa-solid fa-floppy-disk"></i>
+                <form action="/dashboard/predict/<%= m.id %>" method="POST">
+                  <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                    <input type="number" name="scoreA" min="0" max="99"
+                           class="form-control score-input text-center"
+                           value="<%= m.prediction ? m.prediction.predictedScoreA : '' %>"
+                           placeholder="0" required />
+                    <span class="fw-bold text-secondary">-</span>
+                    <input type="number" name="scoreB" min="0" max="99"
+                           class="form-control score-input text-center"
+                           value="<%= m.prediction ? m.prediction.predictedScoreB : '' %>"
+                           placeholder="0" required />
+                  </div>
+                  <button class="btn btn-accent w-100 fw-semibold">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>
+                    <%= m.prediction ? 'Update Prediction' : 'Save Prediction' %>
                   </button>
                 </form>
                 <% if (m.prediction) { %>
