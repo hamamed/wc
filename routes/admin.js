@@ -42,6 +42,8 @@ router.get("/", requireAdmin, async (req, res, next) => {
         flagB: m.flagB || null,
         kickoffTime: m.kickoffTime.toDate(),
         status: m.status,
+        liveScoreA: m.liveScoreA != null ? m.liveScoreA : null,
+        liveScoreB: m.liveScoreB != null ? m.liveScoreB : null,
         actualScoreA: m.actualScoreA,
         actualScoreB: m.actualScoreB,
       };
@@ -114,6 +116,42 @@ router.post("/match", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not add the match.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Update the LIVE score (does NOT lock or score predictions) ----------
+router.post("/live/:matchId", requireAdmin, async (req, res) => {
+  const { matchId } = req.params;
+  const a = parseInt(req.body.actualScoreA, 10);
+  const b = parseInt(req.body.actualScoreB, 10);
+
+  try {
+    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
+      req.flash("error", "Enter a valid live score for both teams.");
+      return res.redirect("/admin");
+    }
+
+    const matchDoc = await collections.matches.doc(matchId).get();
+    if (!matchDoc.exists) {
+      req.flash("error", "Match not found.");
+      return res.redirect("/admin");
+    }
+    if (matchDoc.data().status === "completed") {
+      req.flash("error", "Match is finished — live score can't be changed.");
+      return res.redirect("/admin");
+    }
+
+    await collections.matches.doc(matchId).update({
+      liveScoreA: a,
+      liveScoreB: b,
+    });
+
+    req.flash("success", `Live score updated to ${a}-${b}.`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not update the live score.");
     res.redirect("/admin");
   }
 });

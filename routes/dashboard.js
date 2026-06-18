@@ -32,6 +32,7 @@ router.get("/", requireLogin, async (req, res, next) => {
       const m = doc.data();
       const kickoffMs = m.kickoffTime.toMillis();
       const locked = isLocked(kickoffMs);
+      const started = Date.now() >= kickoffMs; // kickoff time has passed
       const pred = predByMatch[doc.id] || null;
 
       let badge;
@@ -40,6 +41,8 @@ router.get("/", requireLogin, async (req, res, next) => {
           type: "completed",
           points: pred ? pred.pointsEarned : null,
         };
+      } else if (started) {
+        badge = { type: "live" };
       } else if (locked) {
         badge = { type: "locked" };
       } else {
@@ -57,6 +60,8 @@ router.get("/", requireLogin, async (req, res, next) => {
         status: m.status,
         actualScoreA: m.actualScoreA,
         actualScoreB: m.actualScoreB,
+        liveScoreA: m.liveScoreA != null ? m.liveScoreA : null,
+        liveScoreB: m.liveScoreB != null ? m.liveScoreB : null,
         locked,
         prediction: pred,
         badge,

@@ -170,6 +170,23 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .badge-open { background: var(--accent-soft); color: var(--accent-dark); }
 .badge-locked { background: #eef1f5; color: var(--text-secondary); }
 .badge-done { background: #fff3d6; color: #b07d00; }
+.badge-live { background: #ffe7e7; color: #e03131; }
+
+/* live score + pulsing dot */
+.live-score { font-size: 1.45rem; font-weight: 900; color: #e03131; white-space: nowrap; }
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e03131;
+  margin-right: 5px;
+  vertical-align: 1px;
+  animation: live-pulse 1.2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.5); opacity: 1; }
+  50% { box-shadow: 0 0 0 5px rgba(224, 49, 49, 0); opacity: 0.6; }
+}
 
 /* ---- Legend dots ---- */
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }

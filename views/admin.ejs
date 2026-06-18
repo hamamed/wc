@@ -99,19 +99,28 @@
               </td>
               <td class="text-end">
                 <% if (m.status === "completed") { %>
-                  <!-- Result is locked once entered -->
+                  <!-- Result is locked once finalized -->
                   <span class="fw-bold me-1"><%= m.actualScoreA %> - <%= m.actualScoreB %></span>
                   <i class="fa-solid fa-lock text-secondary" title="Result locked"></i>
                 <% } else { %>
-                  <form action="/admin/result/<%= m.id %>" method="POST"
-                        class="d-flex align-items-center justify-content-end gap-2">
+                  <!-- Shared inputs; "Live" updates the on-air score, "Final" locks + scores -->
+                  <form method="POST" class="d-flex align-items-center justify-content-end gap-2 flex-wrap"
+                        onsubmit="return this.__final ? confirm('Finalize this result? It locks the match and scores all predictions.') : true;">
                     <input type="number" name="actualScoreA" min="0" max="99"
-                           class="form-control score-input text-center" placeholder="0" required />
+                           class="form-control score-input text-center"
+                           value="<%= m.liveScoreA != null ? m.liveScoreA : '' %>" placeholder="0" required />
                     <span class="fw-bold text-secondary">-</span>
                     <input type="number" name="actualScoreB" min="0" max="99"
-                           class="form-control score-input text-center" placeholder="0" required />
-                    <button class="btn btn-accent btn-sm fw-semibold ms-1">
-                      <i class="fa-solid fa-check"></i> Save
+                           class="form-control score-input text-center"
+                           value="<%= m.liveScoreB != null ? m.liveScoreB : '' %>" placeholder="0" required />
+                    <button class="btn btn-outline-danger btn-sm fw-semibold"
+                            formaction="/admin/live/<%= m.id %>" title="Update live score">
+                      <span class="live-dot"></span> Live
+                    </button>
+                    <button class="btn btn-accent btn-sm fw-semibold"
+                            formaction="/admin/result/<%= m.id %>"
+                            onclick="this.form.__final=true;" title="Finalize result">
+                      <i class="fa-solid fa-check"></i> Final
                     </button>
                   </form>
                 <% } %>

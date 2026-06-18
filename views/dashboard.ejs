@@ -52,6 +52,10 @@
                 <span class="badge wc-badge badge-open">
                   <i class="fa-solid fa-unlock me-1"></i> Open for Prediction
                 </span>
+              <% } else if (m.badge.type === "live") { %>
+                <span class="badge wc-badge badge-live">
+                  <span class="live-dot"></span> LIVE
+                </span>
               <% } else if (m.badge.type === "locked") { %>
                 <span class="badge wc-badge badge-locked">
                   <i class="fa-solid fa-lock me-1"></i> Locked
@@ -80,6 +84,10 @@
               <div class="vs px-2">
                 <% if (m.status === "completed") { %>
                   <span class="final-score"><%= m.actualScoreA %>&nbsp;-&nbsp;<%= m.actualScoreB %></span>
+                <% } else if (m.badge.type === "live") { %>
+                  <span class="live-score">
+                    <%= m.liveScoreA != null ? m.liveScoreA : 0 %>&nbsp;-&nbsp;<%= m.liveScoreB != null ? m.liveScoreB : 0 %>
+                  </span>
                 <% } else { %>
                   <span class="text-secondary fw-bold">VS</span>
                 <% } %>
@@ -233,6 +241,11 @@
     // Default to Today if it has matches, otherwise show everything.
     select(counts[todayKey] ? todayKey : "all", "auto");
   })();
+
+  // If a match is LIVE, refresh periodically so the score stays current.
+  if (document.querySelector(".badge-live")) {
+    setTimeout(function () { location.reload(); }, 45000);
+  }
 </script>
 
 <%- include("partials/footer") %>
