@@ -1,0 +1,53 @@
+-- World Cup 2026 Predictor — PostgreSQL schema
+-- Run once:  psql "$DATABASE_URL" -f schema.sql
+
+CREATE TABLE IF NOT EXISTS users (
+  id                 BIGSERIAL PRIMARY KEY,
+  username           TEXT NOT NULL,
+  username_lower     TEXT UNIQUE NOT NULL,
+  total_points       INTEGER NOT NULL DEFAULT 0,
+  avatar             TEXT,
+  champion_pick      TEXT,
+  champion_flag      TEXT,
+  champion_bonus     INTEGER NOT NULL DEFAULT 0,
+  champion_picked_at TIMESTAMPTZ,
+  api_token          TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS users_points_idx ON users (total_points DESC);
+CREATE INDEX IF NOT EXISTS users_token_idx  ON users (api_token);
+
+CREATE TABLE IF NOT EXISTS matches (
+  id              BIGSERIAL PRIMARY KEY,
+  external_id     TEXT UNIQUE,
+  team_a          TEXT NOT NULL,
+  team_b          TEXT NOT NULL,
+  flag_a          TEXT,
+  flag_b          TEXT,
+  kickoff_time    TIMESTAMPTZ NOT NULL,
+  actual_score_a  INTEGER,
+  actual_score_b  INTEGER,
+  live_score_a    INTEGER,
+  live_score_b    INTEGER,
+  status          TEXT NOT NULL DEFAULT 'scheduled',
+  grp             TEXT
+);
+CREATE INDEX IF NOT EXISTS matches_kickoff_idx ON matches (kickoff_time);
+
+CREATE TABLE IF NOT EXISTS predictions (
+  id                BIGSERIAL PRIMARY KEY,
+  user_id           BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  match_id          BIGINT NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  predicted_score_a INTEGER NOT NULL,
+  predicted_score_b INTEGER NOT NULL,
+  points_earned     INTEGER NOT NULL DEFAULT 0,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, match_id)
+);
+CREATE INDEX IF NOT EXISTS predictions_match_idx ON predictions (match_id);
+CREATE INDEX IF NOT EXISTS predictions_user_idx  ON predictions (user_id);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value JSONB
+);

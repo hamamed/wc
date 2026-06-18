@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { collections } = require("../config/firebase");
+const { many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { fetchStandings } = require("../utils/footballApi");
 const { computeStandings, bestThirds } = require("../utils/standings");
@@ -10,21 +10,16 @@ router.get("/", requireLogin, async (req, res, next) => {
     let groups;
     let source;
 
-    // Prefer the API's grouped standings; fall back to computing from results.
     try {
       groups = await fetchStandings();
       source = "api";
     } catch (apiErr) {
-      const snap = await collections.matches.get();
-      const matches = snap.docs.map((d) => {
-        const m = d.data();
-        return {
-          teamA: m.teamA, teamB: m.teamB,
-          flagA: m.flagA, flagB: m.flagB,
-          actualScoreA: m.actualScoreA, actualScoreB: m.actualScoreB,
-          status: m.status, group: m.group || null,
-        };
-      });
+      const matches = await many(
+        `SELECT team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB",
+                actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
+                status, grp AS "group"
+         FROM matches`
+      );
       groups = computeStandings(matches);
       source = "local";
     }

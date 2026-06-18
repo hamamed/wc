@@ -1,46 +1,47 @@
 const express = require("express");
 const router = express.Router();
-const { collections } = require("../config/firebase");
+const { one, many, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { listAvatars, pickRandom } = require("../utils/avatars");
 const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
 const { getActualChampion } = require("../utils/championScore");
 
-// ---- My profile: points summary + prediction history ---------------------
 router.get("/", requireLogin, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
 
-    const [userDoc, predSnap, matchSnap] = await Promise.all([
-      collections.users.doc(userId).get(),
-      collections.predictions.where("userId", "==", userId).get(),
-      collections.matches.get(),
+    const [user, rows, allMatches, actualChampion] = await Promise.all([
+      one(
+        `SELECT total_points AS "totalPoints", avatar,
+                champion_pick AS "championPick", champion_flag AS "championFlag"
+         FROM users WHERE id = $1`,
+        [userId]
+      ),
+      many(
+        `SELECT p.predicted_score_a AS "predictedScoreA", p.predicted_score_b AS "predictedScoreB",
+                p.points_earned AS "pointsEarned",
+                m.team_a AS "teamA", m.team_b AS "teamB",
+                m.kickoff_time AS "kickoffTime", m.status,
+                m.actual_score_a AS "actualScoreA", m.actual_score_b AS "actualScoreB"
+         FROM predictions p JOIN matches m ON m.id = p.match_id
+         WHERE p.user_id = $1`,
+        [userId]
+      ),
+      many(
+        `SELECT team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB" FROM matches`
+      ),
+      getActualChampion(),
     ]);
 
-    // Map matches by id for joining onto predictions.
-    const matchById = {};
-    matchSnap.forEach((d) => (matchById[d.id] = d.data()));
-
-    // Build the history rows + tally stats.
+    const u = user || {};
     const stats = {
-      totalPoints: userDoc.exists ? userDoc.data().totalPoints || 0 : 0,
-      made: 0, // predictions submitted
-      scored: 0, // predictions on completed matches
-      pending: 0, // predictions on matches not yet completed
-      exact: 0, // 2 pts
-      outcome: 0, // 1 pt
-      missed: 0, // 0 pts
+      totalPoints: u.totalPoints || 0,
+      made: 0, scored: 0, pending: 0, exact: 0, outcome: 0, missed: 0,
     };
 
-    const history = [];
-    predSnap.forEach((d) => {
-      const p = d.data();
-      const m = matchById[p.matchId];
-      if (!m) return; // match was deleted — skip orphan prediction
-
+    const history = rows.map((p) => {
       stats.made++;
-      const completed = m.status === "completed";
-
+      const completed = p.status === "completed";
       if (completed) {
         stats.scored++;
         if (p.pointsEarned === 2) stats.exact++;
@@ -49,41 +50,33 @@ router.get("/", requireLogin, async (req, res, next) => {
       } else {
         stats.pending++;
       }
-
-      history.push({
-        teamA: m.teamA,
-        teamB: m.teamB,
-        kickoffTime: m.kickoffTime.toDate(),
-        kickoffMs: m.kickoffTime.toMillis(),
-        status: m.status,
+      return {
+        teamA: p.teamA, teamB: p.teamB,
+        kickoffTime: new Date(p.kickoffTime),
+        kickoffMs: new Date(p.kickoffTime).getTime(),
+        status: p.status,
         predictedScoreA: p.predictedScoreA,
         predictedScoreB: p.predictedScoreB,
-        actualScoreA: m.actualScoreA,
-        actualScoreB: m.actualScoreB,
+        actualScoreA: p.actualScoreA,
+        actualScoreB: p.actualScoreB,
         pointsEarned: completed ? p.pointsEarned : null,
-      });
+      };
     });
-
-    // Most recent first.
     history.sort((a, b) => b.kickoffMs - a.kickoffMs);
 
-    // Hit rate = exact + outcome out of scored matches.
     stats.hitRate =
       stats.scored > 0
         ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100)
         : 0;
 
-    const udata = userDoc.exists ? userDoc.data() : {};
-    const actualChampion = await getActualChampion();
     res.render("profile", {
       stats,
       history,
-      avatar: udata.avatar || null,
+      avatar: u.avatar || null,
       hasAvatars: listAvatars().length > 0,
-      // Champion prediction (picker shown as a banner on this page)
-      teams: teamsFromMatches(Object.values(matchById)),
-      championPick: udata.championPick || null,
-      championFlag: udata.championFlag || null,
+      teams: teamsFromMatches(allMatches),
+      championPick: u.championPick || null,
+      championFlag: u.championFlag || null,
       championLockMs: LOCK_MS,
       championLocked: Date.now() >= LOCK_MS,
       actualChampion,
@@ -97,17 +90,16 @@ router.get("/", requireLogin, async (req, res, next) => {
 router.post("/avatar", requireLogin, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const doc = await collections.users.doc(userId).get();
-    const current = doc.exists ? doc.data().avatar : null;
+    const current = await one("SELECT avatar FROM users WHERE id = $1", [userId]);
 
-    const next = pickRandom(current);
+    const next = pickRandom(current ? current.avatar : null);
     if (!next) {
       req.flash("error", "No avatars available — add images to public/avatars/.");
       return res.redirect("/profile");
     }
 
-    await collections.users.doc(userId).update({ avatar: next });
-    req.session.user.avatar = next; // keep session in sync
+    await query("UPDATE users SET avatar = $1 WHERE id = $2", [next, userId]);
+    req.session.user.avatar = next;
     req.flash("success", "Profile photo updated!");
     res.redirect("/profile");
   } catch (err) {

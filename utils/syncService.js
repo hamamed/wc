@@ -1,83 +1,45 @@
 /**
- * Automatic sync from the football API. Pulls fixtures, live scores, and final
- * results, and auto-scores predictions when a match finishes — no admin needed.
- *
- * startAutoSync() runs it once at boot, then on a timer (SYNC_INTERVAL_SECONDS).
+ * Automatic sync from the football API into PostgreSQL: fixtures, live scores,
+ * and final results (which auto-score predictions). No admin needed.
  */
-const { collections, Timestamp } = require("../config/firebase");
+const { query, one } = require("../config/db");
 const { fetchWorldCupMatches } = require("./footballApi");
 const { flagUrl } = require("./flags");
 const { applyMatchResult } = require("./scoreMatch");
 
 async function syncWorldCup() {
   const apiMatches = await fetchWorldCupMatches();
-
-  // One read of existing matches; index by externalId to avoid per-match queries.
-  const existingSnap = await collections.matches.get();
-  const byExternal = {};
-  existingSnap.forEach((doc) => {
-    const ext = doc.data().externalId;
-    if (ext) byExternal[ext] = doc;
-  });
-
   let created = 0, updated = 0, scored = 0, live = 0;
 
   for (const m of apiMatches) {
     const flagA = m.flagA || flagUrl(m.teamA);
     const flagB = m.flagB || flagUrl(m.teamB);
-    const existing = byExternal[m.externalId];
+    const kickoff = m.kickoff instanceof Date ? m.kickoff.toISOString() : m.kickoff;
 
-    if (!existing) {
-      // New fixture.
-      const ref = await collections.matches.add({
-        externalId: m.externalId,
-        teamA: m.teamA,
-        teamB: m.teamB,
-        flagA,
-        flagB,
-        kickoffTime: Timestamp.fromDate(m.kickoff),
-        group: m.group || null,
-        actualScoreA: null,
-        actualScoreB: null,
-        liveScoreA: null,
-        liveScoreB: null,
-        status: "scheduled",
-      });
-      created++;
+    // Upsert by external_id. xmax = 0 means a fresh INSERT (vs an UPDATE).
+    const row = await one(
+      `INSERT INTO matches (external_id, team_a, team_b, flag_a, flag_b, kickoff_time, grp, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'scheduled')
+       ON CONFLICT (external_id) DO UPDATE
+         SET team_a = EXCLUDED.team_a, team_b = EXCLUDED.team_b,
+             flag_a = EXCLUDED.flag_a, flag_b = EXCLUDED.flag_b,
+             kickoff_time = EXCLUDED.kickoff_time,
+             grp = COALESCE(EXCLUDED.grp, matches.grp)
+       RETURNING id, status, (xmax = 0) AS inserted`,
+      [m.externalId, m.teamA, m.teamB, flagA, flagB, kickoff, m.group || null]
+    );
 
-      if (m.finished && m.scoreA != null && m.scoreB != null) {
-        await applyMatchResult(ref.id, m.scoreA, m.scoreB);
-        scored++;
-      } else if (m.inPlay && m.scoreA != null) {
-        await ref.update({ liveScoreA: m.scoreA, liveScoreB: m.scoreB });
-        live++;
-      }
-      continue;
-    }
+    if (row.inserted) created++; else updated++;
 
-    // Existing fixture — refresh info; never touch an already-completed match.
-    const cur = existing.data();
-    if (cur.status === "completed") continue;
-
-    const update = {
-      teamA: m.teamA,
-      teamB: m.teamB,
-      flagA,
-      flagB,
-      kickoffTime: Timestamp.fromDate(m.kickoff),
-      group: m.group || cur.group || null,
-    };
-    if (m.inPlay && m.scoreA != null) {
-      update.liveScoreA = m.scoreA;
-      update.liveScoreB = m.scoreB;
-      live++;
-    }
-    await existing.ref.update(update);
-    updated++;
-
-    if (m.finished && m.scoreA != null && m.scoreB != null) {
-      await applyMatchResult(existing.id, m.scoreA, m.scoreB);
+    if (m.finished && row.status !== "completed" && m.scoreA != null && m.scoreB != null) {
+      await applyMatchResult(row.id, m.scoreA, m.scoreB);
       scored++;
+    } else if (m.inPlay && row.status !== "completed" && m.scoreA != null) {
+      await query(
+        "UPDATE matches SET live_score_a = $1, live_score_b = $2 WHERE id = $3 AND status <> 'completed'",
+        [m.scoreA, m.scoreB, row.id]
+      );
+      live++;
     }
   }
 
@@ -87,11 +49,9 @@ async function syncWorldCup() {
 function startAutoSync() {
   const hasKey = process.env.API_FOOTBALL_KEY || process.env.FOOTBALL_API_KEY;
   if (!hasKey) {
-    console.log("⏸  Auto-sync disabled — no football API key set (API_FOOTBALL_KEY / FOOTBALL_API_KEY).");
+    console.log("⏸  Auto-sync disabled — no football API key set.");
     return;
   }
-
-  // Mind your API quota: free plans allow limited requests/day.
   const secs = Math.max(60, parseInt(process.env.SYNC_INTERVAL_SECONDS || "300", 10));
 
   const run = async () => {
@@ -105,7 +65,7 @@ function startAutoSync() {
     }
   };
 
-  run(); // immediately at startup
+  run();
   setInterval(run, secs * 1000);
   console.log(`✅ Auto-sync running every ${secs}s.`);
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "migrate": "node migrate.js"
   },
   "keywords": ["worldcup", "2026", "predictor", "football", "soccer"],
   "author": "",
@@ -17,6 +18,9 @@
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "pg": "^8.12.0"
+  },
+  "optionalDependencies": {
     "firebase-admin": "^12.3.0"
   },
   "devDependencies": {

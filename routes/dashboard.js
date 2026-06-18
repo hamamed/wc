@@ -1,12 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { collections, Timestamp } = require("../config/firebase");
+const { one, many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 
-const LOCK_MINUTES = 30;
-const LOCK_MS = LOCK_MINUTES * 60 * 1000;
-
-// A match locks 30 minutes before kickoff.
+const LOCK_MS = 30 * 60 * 1000;
 function isLocked(kickoffMs) {
   return Date.now() >= kickoffMs - LOCK_MS;
 }
@@ -16,31 +13,39 @@ router.get("/", requireLogin, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
 
-    const [matchSnap, predSnap] = await Promise.all([
-      collections.matches.orderBy("kickoffTime", "asc").get(),
-      collections.predictions.where("userId", "==", userId).get(),
+    const [rows, preds] = await Promise.all([
+      many(
+        `SELECT id, team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB",
+                kickoff_time AS "kickoffTime", status,
+                actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
+                live_score_a AS "liveScoreA", live_score_b AS "liveScoreB"
+         FROM matches ORDER BY kickoff_time ASC`
+      ),
+      many(
+        `SELECT match_id, predicted_score_a AS a, predicted_score_b AS b, points_earned AS pts
+         FROM predictions WHERE user_id = $1`,
+        [userId]
+      ),
     ]);
 
-    // Map predictions by matchId for quick lookup.
     const predByMatch = {};
-    predSnap.forEach((d) => {
-      const p = d.data();
-      predByMatch[p.matchId] = { id: d.id, ...p };
+    preds.forEach((p) => {
+      predByMatch[p.match_id] = {
+        predictedScoreA: p.a,
+        predictedScoreB: p.b,
+        pointsEarned: p.pts,
+      };
     });
 
-    const matches = matchSnap.docs.map((doc) => {
-      const m = doc.data();
-      const kickoffMs = m.kickoffTime.toMillis();
+    const matches = rows.map((m) => {
+      const kickoffMs = new Date(m.kickoffTime).getTime();
       const locked = isLocked(kickoffMs);
-      const started = Date.now() >= kickoffMs; // kickoff time has passed
-      const pred = predByMatch[doc.id] || null;
+      const started = Date.now() >= kickoffMs;
+      const pred = predByMatch[m.id] || null;
 
       let badge;
       if (m.status === "completed") {
-        badge = {
-          type: "completed",
-          points: pred ? pred.pointsEarned : null,
-        };
+        badge = { type: "completed", points: pred ? pred.pointsEarned : null };
       } else if (started) {
         badge = { type: "live" };
       } else if (locked) {
@@ -50,12 +55,12 @@ router.get("/", requireLogin, async (req, res, next) => {
       }
 
       return {
-        id: doc.id,
+        id: m.id,
         teamA: m.teamA,
         teamB: m.teamB,
         flagA: m.flagA || null,
         flagB: m.flagB || null,
-        kickoffTime: m.kickoffTime.toDate(),
+        kickoffTime: new Date(m.kickoffTime),
         kickoffMs,
         status: m.status,
         actualScoreA: m.actualScoreA,
@@ -81,7 +86,6 @@ router.post("/predict/:matchId", requireLogin, async (req, res) => {
   const scoreA = parseInt(req.body.scoreA, 10);
   const scoreB = parseInt(req.body.scoreB, 10);
 
-  // AJAX requests get JSON; normal form posts get a redirect (graceful fallback).
   const wantsJson = req.xhr || (req.headers.accept || "").includes("application/json");
   const reply = (ok, message) => {
     if (wantsJson) return res.json({ ok, message });
@@ -97,39 +101,26 @@ router.post("/predict/:matchId", requireLogin, async (req, res) => {
       return reply(false, res.locals.t("dash.invalid"));
     }
 
-    const matchDoc = await collections.matches.doc(matchId).get();
-    if (!matchDoc.exists) {
-      return reply(false, "That match no longer exists.");
-    }
+    const match = await one(
+      "SELECT status, kickoff_time FROM matches WHERE id = $1",
+      [matchId]
+    );
+    if (!match) return reply(false, "That match no longer exists.");
 
-    const match = matchDoc.data();
-
-    // Server-side lock enforcement — never trust the client.
-    if (match.status === "completed" || isLocked(match.kickoffTime.toMillis())) {
+    if (match.status === "completed" || isLocked(new Date(match.kickoff_time).getTime())) {
       return reply(false, res.locals.t("dash.lockedMsg"));
     }
 
-    // One prediction per user per match — upsert.
-    const existing = await collections.predictions
-      .where("userId", "==", userId)
-      .where("matchId", "==", matchId)
-      .limit(1)
-      .get();
-
-    const payload = {
-      userId,
-      matchId,
-      predictedScoreA: scoreA,
-      predictedScoreB: scoreB,
-      pointsEarned: 0,
-      updatedAt: Timestamp.now(),
-    };
-
-    if (existing.empty) {
-      await collections.predictions.add(payload);
-    } else {
-      await collections.predictions.doc(existing.docs[0].id).update(payload);
-    }
+    await one(
+      `INSERT INTO predictions (user_id, match_id, predicted_score_a, predicted_score_b, points_earned, updated_at)
+       VALUES ($1, $2, $3, $4, 0, now())
+       ON CONFLICT (user_id, match_id)
+       DO UPDATE SET predicted_score_a = EXCLUDED.predicted_score_a,
+                     predicted_score_b = EXCLUDED.predicted_score_b,
+                     updated_at = now()
+       RETURNING id`,
+      [userId, matchId, scoreA, scoreB]
+    );
 
     return reply(true, res.locals.t("dash.saved"));
   } catch (err) {

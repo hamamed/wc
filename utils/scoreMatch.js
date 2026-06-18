@@ -1,48 +1,54 @@
 /**
- * Records a match's final result and (re)scores every prediction for it,
- * adjusting each user's totalPoints by the DELTA so re-running stays correct
- * (idempotent). Shared by the admin manual-entry route and the API import.
- *
- * Returns the number of predictions scored.
+ * Records a match result and (re)scores every prediction for it, adjusting each
+ * user's total_points by the DELTA so re-running stays correct (idempotent).
+ * Runs inside a transaction.
  */
-const { admin, db, collections, Timestamp } = require("../config/firebase");
+const { pool } = require("../config/db");
 const { computePoints } = require("./scoring");
 
 async function applyMatchResult(matchId, actualA, actualB) {
   actualA = Number(actualA);
   actualB = Number(actualB);
 
-  await collections.matches.doc(matchId).update({
-    actualScoreA: actualA,
-    actualScoreB: actualB,
-    status: "completed",
-  });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const predSnap = await collections.predictions
-    .where("matchId", "==", matchId)
-    .get();
-
-  const batch = db.batch();
-  predSnap.forEach((doc) => {
-    const p = doc.data();
-    const newPoints = computePoints(
-      p.predictedScoreA,
-      p.predictedScoreB,
-      actualA,
-      actualB
+    await client.query(
+      "UPDATE matches SET actual_score_a = $1, actual_score_b = $2, status = 'completed' WHERE id = $3",
+      [actualA, actualB, matchId]
     );
-    const delta = newPoints - (p.pointsEarned || 0);
 
-    batch.update(doc.ref, { pointsEarned: newPoints, updatedAt: Timestamp.now() });
-    if (delta !== 0) {
-      batch.update(collections.users.doc(p.userId), {
-        totalPoints: admin.firestore.FieldValue.increment(delta),
-      });
+    const { rows: preds } = await client.query(
+      "SELECT id, user_id, predicted_score_a, predicted_score_b, points_earned FROM predictions WHERE match_id = $1",
+      [matchId]
+    );
+
+    for (const p of preds) {
+      const newPoints = computePoints(
+        p.predicted_score_a, p.predicted_score_b, actualA, actualB
+      );
+      const delta = newPoints - (p.points_earned || 0);
+      if (delta !== 0) {
+        await client.query(
+          "UPDATE predictions SET points_earned = $1, updated_at = now() WHERE id = $2",
+          [newPoints, p.id]
+        );
+        await client.query(
+          "UPDATE users SET total_points = total_points + $1 WHERE id = $2",
+          [delta, p.user_id]
+        );
+      }
     }
-  });
 
-  await batch.commit();
-  return predSnap.size;
+    await client.query("COMMIT");
+    return preds.length;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 module.exports = { applyMatchResult };

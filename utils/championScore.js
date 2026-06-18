@@ -1,51 +1,54 @@
 /**
- * Champion bonus: when the admin sets the actual World Cup winner, every user
- * who predicted that team gets a one-time bonus added to their totalPoints.
- *
- * Idempotent: each user's awarded bonus is tracked in `championBonus`, so
- * changing the actual champion re-adjusts totals by the delta.
+ * Champion bonus: when the admin sets the actual winner, every user who picked
+ * that team gets a one-time bonus. Idempotent via the champion_bonus column.
  */
-const { admin, db, collections } = require("../config/firebase");
+const { pool, one } = require("../config/db");
 
 const BONUS = parseInt(process.env.CHAMPION_BONUS || "10", 10);
-const SETTINGS_DOC = "worldcup";
 
 async function getActualChampion() {
-  const doc = await collections.settings.doc(SETTINGS_DOC).get();
-  return doc.exists ? doc.data().actualChampion || null : null;
+  const row = await one("SELECT value FROM settings WHERE key = 'actualChampion'");
+  return row && row.value ? row.value : null;
 }
 
 async function applyChampion(team) {
   const actual = (team || "").trim() || null;
 
-  // Save the actual champion.
-  await collections.settings.doc(SETTINGS_DOC).set(
-    { actualChampion: actual },
-    { merge: true }
-  );
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  // Re-score every user's champion bonus by the delta.
-  const usersSnap = await collections.users.get();
-  const batch = db.batch();
-  let winners = 0;
+    await client.query(
+      `INSERT INTO settings (key, value) VALUES ('actualChampion', to_jsonb($1::text))
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [actual]
+    );
 
-  usersSnap.forEach((doc) => {
-    const u = doc.data();
-    const newBonus = actual && u.championPick === actual ? BONUS : 0;
-    const delta = newBonus - (u.championBonus || 0);
-    if (newBonus > 0) winners++;
-    if (delta !== 0) {
-      batch.update(doc.ref, {
-        championBonus: newBonus,
-        totalPoints: admin.firestore.FieldValue.increment(delta),
-      });
-    } else if (u.championBonus == null) {
-      batch.update(doc.ref, { championBonus: 0 });
+    const { rows: users } = await client.query(
+      "SELECT id, champion_pick, champion_bonus FROM users"
+    );
+
+    let winners = 0;
+    for (const u of users) {
+      const newBonus = actual && u.champion_pick === actual ? BONUS : 0;
+      const delta = newBonus - (u.champion_bonus || 0);
+      if (newBonus > 0) winners++;
+      if (delta !== 0) {
+        await client.query(
+          "UPDATE users SET champion_bonus = $1, total_points = total_points + $2 WHERE id = $3",
+          [newBonus, delta, u.id]
+        );
+      }
     }
-  });
 
-  await batch.commit();
-  return { winners, bonus: BONUS };
+    await client.query("COMMIT");
+    return { winners, bonus: BONUS };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 module.exports = { applyChampion, getActualChampion, BONUS };

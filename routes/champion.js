@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { collections, Timestamp } = require("../config/firebase");
+const { one, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { LOCK_MS } = require("../utils/champion");
 
@@ -21,18 +21,17 @@ router.post("/", requireLogin, async (req, res) => {
 
     // Find the team's flag from the fixtures (either side).
     let flag = null;
-    let s = await collections.matches.where("teamA", "==", pick).limit(1).get();
-    if (!s.empty) flag = s.docs[0].data().flagA || null;
+    const a = await one("SELECT flag_a FROM matches WHERE team_a = $1 LIMIT 1", [pick]);
+    if (a) flag = a.flag_a || null;
     else {
-      s = await collections.matches.where("teamB", "==", pick).limit(1).get();
-      if (!s.empty) flag = s.docs[0].data().flagB || null;
+      const b = await one("SELECT flag_b FROM matches WHERE team_b = $1 LIMIT 1", [pick]);
+      if (b) flag = b.flag_b || null;
     }
 
-    await collections.users.doc(req.session.user.id).update({
-      championPick: pick,
-      championFlag: flag,
-      championPickedAt: Timestamp.now(),
-    });
+    await query(
+      "UPDATE users SET champion_pick = $1, champion_flag = $2, champion_picked_at = now() WHERE id = $3",
+      [pick, flag, req.session.user.id]
+    );
 
     req.flash("success", `Champion pick saved: ${pick}! 🏆`);
     res.redirect("/profile");

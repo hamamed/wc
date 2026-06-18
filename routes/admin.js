@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { admin, db, collections, Timestamp } = require("../config/firebase");
+const { pool, one, many, query } = require("../config/db");
 const { requireAdmin } = require("../utils/middleware");
 const { applyMatchResult } = require("../utils/scoreMatch");
 const { syncWorldCup } = require("../utils/syncService");
@@ -10,26 +10,33 @@ const { applyChampion, getActualChampion, BONUS } = require("../utils/championSc
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-// Delete one match: reverse any points it awarded, remove its predictions,
-// then remove the match. Returns the number of predictions removed.
+// Delete one match: reverse points it awarded, then delete it (predictions
+// cascade-delete). Returns the number of predictions removed.
 async function deleteMatchAndPredictions(matchId) {
-  const predSnap = await collections.predictions
-    .where("matchId", "==", matchId)
-    .get();
-
-  const batch = db.batch();
-  predSnap.forEach((doc) => {
-    const p = doc.data();
-    if (p.pointsEarned) {
-      batch.update(collections.users.doc(p.userId), {
-        totalPoints: admin.firestore.FieldValue.increment(-p.pointsEarned),
-      });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      "SELECT user_id, points_earned FROM predictions WHERE match_id = $1",
+      [matchId]
+    );
+    for (const p of rows) {
+      if (p.points_earned) {
+        await client.query(
+          "UPDATE users SET total_points = total_points - $1 WHERE id = $2",
+          [p.points_earned, p.user_id]
+        );
+      }
     }
-    batch.delete(doc.ref);
-  });
-  batch.delete(collections.matches.doc(matchId));
-  await batch.commit();
-  return predSnap.size;
+    await client.query("DELETE FROM matches WHERE id = $1", [matchId]);
+    await client.query("COMMIT");
+    return rows.length;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ---- Admin login (simple shared password) --------------------------------
@@ -37,7 +44,6 @@ router.get("/login", (req, res) => {
   if (req.session.isAdmin) return res.redirect("/admin");
   res.render("admin-login");
 });
-
 router.post("/login", (req, res) => {
   if ((req.body.password || "") === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
@@ -46,36 +52,25 @@ router.post("/login", (req, res) => {
   req.flash("error", "Incorrect admin password.");
   res.redirect("/admin/login");
 });
-
 router.get("/logout", (req, res) => {
   req.session.isAdmin = false;
   res.redirect("/dashboard");
 });
 
-// ---- Admin panel: list matches, enter results ----------------------------
+// ---- Admin panel ---------------------------------------------------------
 router.get("/", requireAdmin, async (req, res, next) => {
   try {
-    const snap = await collections.matches.orderBy("kickoffTime", "asc").get();
-    const matches = snap.docs.map((doc) => {
-      const m = doc.data();
-      return {
-        id: doc.id,
-        teamA: m.teamA,
-        teamB: m.teamB,
-        flagA: m.flagA || null,
-        flagB: m.flagB || null,
-        kickoffTime: m.kickoffTime.toDate(),
-        status: m.status,
-        liveScoreA: m.liveScoreA != null ? m.liveScoreA : null,
-        liveScoreB: m.liveScoreB != null ? m.liveScoreB : null,
-        actualScoreA: m.actualScoreA,
-        actualScoreB: m.actualScoreB,
-      };
-    });
+    const matches = await many(
+      `SELECT id, team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB",
+              kickoff_time AS "kickoffTime", status,
+              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB",
+              actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB"
+       FROM matches ORDER BY kickoff_time ASC`
+    );
     const actualChampion = await getActualChampion();
     res.render("admin", {
       matches,
-      teams: teamsFromMatches(snap.docs.map((d) => d.data())),
+      teams: teamsFromMatches(matches),
       actualChampion,
       championBonus: BONUS,
     });
@@ -84,37 +79,27 @@ router.get("/", requireAdmin, async (req, res, next) => {
   }
 });
 
-// ---- Submit a final result + run the scoring engine ----------------------
+// ---- Submit a final result -----------------------------------------------
 router.post("/result/:matchId", requireAdmin, async (req, res) => {
   const { matchId } = req.params;
   const actualA = parseInt(req.body.actualScoreA, 10);
   const actualB = parseInt(req.body.actualScoreB, 10);
-
   try {
     if (Number.isNaN(actualA) || Number.isNaN(actualB) || actualA < 0 || actualB < 0) {
       req.flash("error", "Enter a valid final score for both teams.");
       return res.redirect("/admin");
     }
-
-    const matchDoc = await collections.matches.doc(matchId).get();
-    if (!matchDoc.exists) {
+    const match = await one("SELECT status FROM matches WHERE id = $1", [matchId]);
+    if (!match) {
       req.flash("error", "Match not found.");
       return res.redirect("/admin");
     }
-
-    // Result is locked once set — no changing it afterwards.
-    if (matchDoc.data().status === "completed") {
+    if (match.status === "completed") {
       req.flash("error", "This result is locked and can't be changed.");
       return res.redirect("/admin");
     }
-
-    // Record the result + score every prediction (shared helper).
     const scored = await applyMatchResult(matchId, actualA, actualB);
-
-    req.flash(
-      "success",
-      `Result saved (${actualA}-${actualB}). Scored ${scored} prediction(s).`
-    );
+    req.flash("success", `Result saved (${actualA}-${actualB}). Scored ${scored} prediction(s).`);
     res.redirect("/admin");
   } catch (err) {
     console.error(err);
@@ -123,7 +108,49 @@ router.post("/result/:matchId", requireAdmin, async (req, res) => {
   }
 });
 
-// ---- Optional: quickly add a new match -----------------------------------
+// ---- Update the LIVE score (no lock, no scoring) -------------------------
+router.post("/live/:matchId", requireAdmin, async (req, res) => {
+  const { matchId } = req.params;
+  const a = parseInt(req.body.actualScoreA, 10);
+  const b = parseInt(req.body.actualScoreB, 10);
+  try {
+    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
+      req.flash("error", "Enter a valid live score for both teams.");
+      return res.redirect("/admin");
+    }
+    const match = await one("SELECT status FROM matches WHERE id = $1", [matchId]);
+    if (!match) {
+      req.flash("error", "Match not found.");
+      return res.redirect("/admin");
+    }
+    if (match.status === "completed") {
+      req.flash("error", "Match is finished — live score can't be changed.");
+      return res.redirect("/admin");
+    }
+    await query("UPDATE matches SET live_score_a = $1, live_score_b = $2 WHERE id = $3", [a, b, matchId]);
+    req.flash("success", `Live score updated to ${a}-${b}.`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not update the live score.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Set the actual champion + award bonus -------------------------------
+router.post("/champion", requireAdmin, async (req, res) => {
+  try {
+    const { winners, bonus } = await applyChampion(req.body.champion);
+    req.flash("success", `Champion set. Awarded +${bonus} to ${winners} correct prediction(s).`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not set the champion.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Add a match manually ------------------------------------------------
 router.post("/match", requireAdmin, async (req, res) => {
   const { teamA, teamB, kickoffTime } = req.body;
   try {
@@ -131,57 +158,16 @@ router.post("/match", requireAdmin, async (req, res) => {
       req.flash("error", "Team A, Team B and kickoff time are required.");
       return res.redirect("/admin");
     }
-    await collections.matches.add({
-      teamA: teamA.trim(),
-      teamB: teamB.trim(),
-      flagA: flagUrl(teamA),
-      flagB: flagUrl(teamB),
-      kickoffTime: Timestamp.fromDate(new Date(kickoffTime)),
-      actualScoreA: null,
-      actualScoreB: null,
-      status: "scheduled",
-    });
+    await query(
+      `INSERT INTO matches (team_a, team_b, flag_a, flag_b, kickoff_time, status)
+       VALUES ($1, $2, $3, $4, $5, 'scheduled')`,
+      [teamA.trim(), teamB.trim(), flagUrl(teamA), flagUrl(teamB), new Date(kickoffTime).toISOString()]
+    );
     req.flash("success", `Match added: ${teamA} vs ${teamB}.`);
     res.redirect("/admin");
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not add the match.");
-    res.redirect("/admin");
-  }
-});
-
-// ---- Update the LIVE score (does NOT lock or score predictions) ----------
-router.post("/live/:matchId", requireAdmin, async (req, res) => {
-  const { matchId } = req.params;
-  const a = parseInt(req.body.actualScoreA, 10);
-  const b = parseInt(req.body.actualScoreB, 10);
-
-  try {
-    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
-      req.flash("error", "Enter a valid live score for both teams.");
-      return res.redirect("/admin");
-    }
-
-    const matchDoc = await collections.matches.doc(matchId).get();
-    if (!matchDoc.exists) {
-      req.flash("error", "Match not found.");
-      return res.redirect("/admin");
-    }
-    if (matchDoc.data().status === "completed") {
-      req.flash("error", "Match is finished — live score can't be changed.");
-      return res.redirect("/admin");
-    }
-
-    await collections.matches.doc(matchId).update({
-      liveScoreA: a,
-      liveScoreB: b,
-    });
-
-    req.flash("success", `Live score updated to ${a}-${b}.`);
-    res.redirect("/admin");
-  } catch (err) {
-    console.error(err);
-    req.flash("error", "Could not update the live score.");
     res.redirect("/admin");
   }
 });
@@ -199,22 +185,17 @@ router.post("/delete/:matchId", requireAdmin, async (req, res) => {
   }
 });
 
-// ---- Delete several selected matches at once -----------------------------
+// ---- Delete several selected matches -------------------------------------
 router.post("/delete-selected", requireAdmin, async (req, res) => {
-  // matchIds arrives as a single string or an array depending on count.
   let ids = req.body.matchIds || [];
   if (!Array.isArray(ids)) ids = [ids];
   ids = ids.filter(Boolean);
-
   if (ids.length === 0) {
     req.flash("error", "No matches selected.");
     return res.redirect("/admin");
   }
-
   try {
-    for (const id of ids) {
-      await deleteMatchAndPredictions(id);
-    }
+    for (const id of ids) await deleteMatchAndPredictions(id);
     req.flash("success", `Deleted ${ids.length} match(es).`);
     res.redirect("/admin");
   } catch (err) {
@@ -224,23 +205,7 @@ router.post("/delete-selected", requireAdmin, async (req, res) => {
   }
 });
 
-// ---- Set the actual World Cup champion + award the bonus -----------------
-router.post("/champion", requireAdmin, async (req, res) => {
-  try {
-    const { winners, bonus } = await applyChampion(req.body.champion);
-    req.flash(
-      "success",
-      `Champion set. Awarded +${bonus} to ${winners} correct prediction(s).`
-    );
-    res.redirect("/admin");
-  } catch (err) {
-    console.error(err);
-    req.flash("error", "Could not set the champion.");
-    res.redirect("/admin");
-  }
-});
-
-// ---- Manual "sync now" (the same routine the auto-sync runs) --------------
+// ---- Sync from the football API ------------------------------------------
 router.post("/import", requireAdmin, async (req, res) => {
   try {
     const r = await syncWorldCup();
@@ -259,63 +224,54 @@ router.post("/import", requireAdmin, async (req, res) => {
 // ---- User management -----------------------------------------------------
 router.get("/users", requireAdmin, async (req, res, next) => {
   try {
-    const snap = await collections.users.orderBy("createdAt", "desc").get();
-    const users = snap.docs.map((d) => {
-      const u = d.data();
-      return {
-        id: d.id,
-        username: u.username,
-        totalPoints: u.totalPoints || 0,
-        createdAt: u.createdAt ? u.createdAt.toDate() : null,
-        championPick: u.championPick || null,
-      };
-    });
+    const rows = await many(
+      `SELECT id, username, total_points AS "totalPoints", created_at AS "createdAt",
+              champion_pick AS "championPick"
+       FROM users ORDER BY created_at DESC`
+    );
+    const users = rows.map((u) => ({
+      id: String(u.id),
+      username: u.username,
+      totalPoints: u.totalPoints || 0,
+      createdAt: u.createdAt ? new Date(u.createdAt) : null,
+      championPick: u.championPick || null,
+    }));
     res.render("admin-users", { users });
   } catch (err) {
     next(err);
   }
 });
 
-// A single user's predictions (JSON, for the admin modal).
 router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const [userDoc, predSnap, matchSnap] = await Promise.all([
-      collections.users.doc(id).get(),
-      collections.predictions.where("userId", "==", id).get(),
-      collections.matches.get(),
-    ]);
-
-    const matchById = {};
-    matchSnap.forEach((d) => (matchById[d.id] = d.data()));
-
-    const predictions = predSnap.docs
-      .map((d) => {
-        const p = d.data();
-        const m = matchById[p.matchId];
-        const completed = m && m.status === "completed";
-        return {
-          match: m ? `${m.teamA} vs ${m.teamB}` : "(deleted match)",
-          kickoffMs: m && m.kickoffTime ? m.kickoffTime.toMillis() : 0,
-          pick: `${p.predictedScoreA}-${p.predictedScoreB}`,
-          result: completed ? `${m.actualScoreA}-${m.actualScoreB}` : "—",
-          points: p.pointsEarned || 0,
-          completed: !!completed,
-        };
-      })
-      .sort((a, b) => b.kickoffMs - a.kickoffMs);
-
-    res.json({
-      username: userDoc.exists ? userDoc.data().username : "User",
-      predictions,
+    const user = await one("SELECT username FROM users WHERE id = $1", [id]);
+    const rows = await many(
+      `SELECT m.team_a, m.team_b, m.kickoff_time, m.status,
+              m.actual_score_a, m.actual_score_b,
+              p.predicted_score_a, p.predicted_score_b, p.points_earned
+       FROM predictions p JOIN matches m ON m.id = p.match_id
+       WHERE p.user_id = $1 ORDER BY m.kickoff_time DESC`,
+      [id]
+    );
+    const predictions = rows.map((p) => {
+      const completed = p.status === "completed";
+      return {
+        match: `${p.team_a} vs ${p.team_b}`,
+        kickoffMs: p.kickoff_time ? new Date(p.kickoff_time).getTime() : 0,
+        pick: `${p.predicted_score_a}-${p.predicted_score_b}`,
+        result: completed ? `${p.actual_score_a}-${p.actual_score_b}` : "—",
+        points: p.points_earned || 0,
+        completed,
+      };
     });
+    res.json({ username: user ? user.username : "User", predictions });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "failed" });
   }
 });
 
-// Rename a user (keeps the case-insensitive uniqueness rule).
 router.post("/users/rename/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const raw = (req.body.username || "").trim();
@@ -325,12 +281,12 @@ router.post("/users/rename/:id", requireAdmin, async (req, res) => {
       return res.redirect("/admin/users");
     }
     const lower = raw.toLowerCase();
-    const clash = await collections.users.where("usernameLower", "==", lower).limit(1).get();
-    if (!clash.empty && clash.docs[0].id !== id) {
+    const clash = await one("SELECT id FROM users WHERE username_lower = $1", [lower]);
+    if (clash && String(clash.id) !== id) {
       req.flash("error", `Username "${raw}" is already taken.`);
       return res.redirect("/admin/users");
     }
-    await collections.users.doc(id).update({ username: raw, usernameLower: lower });
+    await query("UPDATE users SET username = $1, username_lower = $2 WHERE id = $3", [raw, lower, id]);
     req.flash("success", `User renamed to ${raw}.`);
     res.redirect("/admin/users");
   } catch (err) {
@@ -340,10 +296,9 @@ router.post("/users/rename/:id", requireAdmin, async (req, res) => {
   }
 });
 
-// Reset a user's points to zero.
 router.post("/users/reset/:id", requireAdmin, async (req, res) => {
   try {
-    await collections.users.doc(req.params.id).update({ totalPoints: 0, championBonus: 0 });
+    await query("UPDATE users SET total_points = 0, champion_bonus = 0 WHERE id = $1", [req.params.id]);
     req.flash("success", "User points reset to 0.");
     res.redirect("/admin/users");
   } catch (err) {
@@ -353,16 +308,11 @@ router.post("/users/reset/:id", requireAdmin, async (req, res) => {
   }
 });
 
-// Delete a user and all their predictions.
 router.post("/users/delete/:id", requireAdmin, async (req, res) => {
-  const { id } = req.params;
   try {
-    const predSnap = await collections.predictions.where("userId", "==", id).get();
-    const batch = db.batch();
-    predSnap.forEach((d) => batch.delete(d.ref));
-    batch.delete(collections.users.doc(id));
-    await batch.commit();
-    req.flash("success", `User deleted (${predSnap.size} prediction(s) removed).`);
+    const c = await one("SELECT count(*)::int AS n FROM predictions WHERE user_id = $1", [req.params.id]);
+    await query("DELETE FROM users WHERE id = $1", [req.params.id]);
+    req.flash("success", `User deleted (${c ? c.n : 0} prediction(s) removed).`);
     res.redirect("/admin/users");
   } catch (err) {
     console.error(err);
