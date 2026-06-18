@@ -41,7 +41,9 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   border-bottom: 1px solid var(--line);
   box-shadow: 0 2px 12px rgba(17, 34, 63, 0.04);
 }
-.wc-navbar .navbar-brand { font-size: 1.3rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.wc-navbar .navbar-brand { font-size: 1.3rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; padding-top: 0; padding-bottom: 0; }
+.brand-logo { height: 46px; width: auto; display: block; }
+.login-logo-img { width: 200px; max-width: 70%; height: auto; }
 .wc-navbar .nav-link { color: #41506b; font-weight: 700; border-radius: 10px; padding: 0.45rem 0.85rem; }
 .wc-navbar .nav-link:hover { color: var(--accent); background: var(--accent-soft); }
 .wc-navbar .nav-link.text-danger:hover { background: #ffeef0; }
