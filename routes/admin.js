@@ -5,6 +5,8 @@ const { requireAdmin } = require("../utils/middleware");
 const { applyMatchResult } = require("../utils/scoreMatch");
 const { syncWorldCup } = require("../utils/syncService");
 const { flagUrl } = require("../utils/flags");
+const { teamsFromMatches } = require("../utils/champion");
+const { applyChampion, getActualChampion, BONUS } = require("../utils/championScore");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -70,7 +72,13 @@ router.get("/", requireAdmin, async (req, res, next) => {
         actualScoreB: m.actualScoreB,
       };
     });
-    res.render("admin", { matches });
+    const actualChampion = await getActualChampion();
+    res.render("admin", {
+      matches,
+      teams: teamsFromMatches(snap.docs.map((d) => d.data())),
+      actualChampion,
+      championBonus: BONUS,
+    });
   } catch (err) {
     next(err);
   }
@@ -212,6 +220,22 @@ router.post("/delete-selected", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not delete the selected matches.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Set the actual World Cup champion + award the bonus -----------------
+router.post("/champion", requireAdmin, async (req, res) => {
+  try {
+    const { winners, bonus } = await applyChampion(req.body.champion);
+    req.flash(
+      "success",
+      `Champion set. Awarded +${bonus} to ${winners} correct prediction(s).`
+    );
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not set the champion.");
     res.redirect("/admin");
   }
 });

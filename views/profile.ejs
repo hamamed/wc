@@ -84,6 +84,21 @@
           </p>
         <% } %>
       <% } %>
+
+      <!-- Result once the actual champion is set -->
+      <% if (actualChampion) { %>
+        <hr class="my-3" />
+        <p class="mb-0">
+          <%= t('champ.actual') %> <span class="fw-bold"><%= actualChampion %></span>
+          <% if (championPick) { %>
+            <% if (championPick === actualChampion) { %>
+              <span class="badge wc-badge badge-done ms-2"><i class="fa-solid fa-circle-check me-1"></i><%= t('champ.correct') %></span>
+            <% } else { %>
+              <span class="badge wc-badge badge-locked ms-2"><i class="fa-solid fa-circle-xmark me-1"></i><%= t('champ.wrong') %></span>
+            <% } %>
+          <% } %>
+        </p>
+      <% } %>
     </div>
   </div>
 

@@ -39,6 +39,31 @@
     </div>
   </div>
 
+  <!-- Set the World Cup champion (awards the bonus) -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body">
+      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-crown text-accent me-2"></i>Set the World Cup Champion</h6>
+      <p class="text-secondary small mb-3">
+        Awards <strong>+<%= championBonus %></strong> points to every user who predicted this team.
+        <% if (actualChampion) { %>Current: <strong><%= actualChampion %></strong>.<% } %>
+      </p>
+      <form action="/admin/champion" method="POST" class="row g-2 align-items-center"
+            onsubmit="return confirm('Set champion and award the bonus to correct predictions?');">
+        <div class="col-12 col-md">
+          <select name="champion" class="form-select">
+            <option value="">— Not decided yet —</option>
+            <% teams.forEach(function (t) { %>
+              <option value="<%= t.name %>" <%= actualChampion === t.name ? 'selected' : '' %>><%= t.name %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto d-grid">
+          <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> Save Champion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Add a new match -->
   <div class="card wc-card border-0 mb-4">
     <div class="card-body">

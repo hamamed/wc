@@ -4,6 +4,7 @@ const { collections } = require("../config/firebase");
 const { requireLogin } = require("../utils/middleware");
 const { listAvatars, pickRandom } = require("../utils/avatars");
 const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
+const { getActualChampion } = require("../utils/championScore");
 
 // ---- My profile: points summary + prediction history ---------------------
 router.get("/", requireLogin, async (req, res, next) => {
@@ -73,6 +74,7 @@ router.get("/", requireLogin, async (req, res, next) => {
         : 0;
 
     const udata = userDoc.exists ? userDoc.data() : {};
+    const actualChampion = await getActualChampion();
     res.render("profile", {
       stats,
       history,
@@ -84,6 +86,7 @@ router.get("/", requireLogin, async (req, res, next) => {
       championFlag: udata.championFlag || null,
       championLockMs: LOCK_MS,
       championLocked: Date.now() >= LOCK_MS,
+      actualChampion,
     });
   } catch (err) {
     next(err);

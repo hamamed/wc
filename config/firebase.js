@@ -47,6 +47,7 @@ const collections = {
   users: db.collection("users"),
   matches: db.collection("matches"),
   predictions: db.collection("predictions"),
+  settings: db.collection("settings"),
 };
 
 module.exports = { admin, db, collections, Timestamp: admin.firestore.Timestamp };

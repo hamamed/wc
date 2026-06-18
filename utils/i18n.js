@@ -61,6 +61,9 @@ const en = {
   "champ.noPick": "no pick made",
   "champ.teamsAppear": "Teams appear here once fixtures are added.",
   "champ.canChange": "you can change it until the deadline.",
+  "champ.actual": "Actual champion:",
+  "champ.correct": "Correct — bonus earned! 🏆",
+  "champ.wrong": "Wrong pick this time.",
 
   "stat.totalPoints": "Total Points",
   "stat.exact": "Exact Scores",
@@ -159,6 +162,9 @@ const fr = {
   "champ.noPick": "aucun choix",
   "champ.teamsAppear": "Les équipes apparaîtront une fois les matchs ajoutés.",
   "champ.canChange": "vous pouvez le modifier jusqu'à la date limite.",
+  "champ.actual": "Champion réel :",
+  "champ.correct": "Correct — bonus gagné ! 🏆",
+  "champ.wrong": "Mauvais choix cette fois.",
 
   "stat.totalPoints": "Points totaux",
   "stat.exact": "Scores exacts",
@@ -257,6 +263,9 @@ const ar = {
   "champ.noPick": "لم تختر",
   "champ.teamsAppear": "تظهر الفرق هنا بعد إضافة المباريات.",
   "champ.canChange": "يمكنك تغييره حتى الموعد النهائي.",
+  "champ.actual": "البطل الفعلي:",
+  "champ.correct": "صحيح — حصلت على المكافأة! 🏆",
+  "champ.wrong": "اختيار خاطئ هذه المرة.",
 
   "stat.totalPoints": "مجموع النقاط",
   "stat.exact": "النتائج المضبوطة",
