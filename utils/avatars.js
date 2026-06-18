@@ -25,4 +25,4 @@ function pickRandom(current) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-module.exports = { listAvatars, pickRandom };
+module.exports = { listAvatars, pickRandom }; 
