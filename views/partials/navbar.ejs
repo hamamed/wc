@@ -5,8 +5,15 @@
       <span>WC<span class="text-accent">26</span> Predictor</span>
     </a>
 
+    <% if (currentUser) { %>
+      <!-- On phones the bottom app-nav replaces the hamburger; show the user chip instead -->
+      <span class="badge wc-userchip d-lg-none">
+        <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
+      </span>
+    <% } %>
+
     <button
-      class="navbar-toggler"
+      class="navbar-toggler d-none"
       type="button"
       data-bs-toggle="collapse"
       data-bs-target="#navMenu"
@@ -56,6 +63,26 @@
     </div>
   </div>
 </nav>
+
+<% if (currentUser) {
+     function navActive(prefix) { return (currentPath || "").indexOf(prefix) === 0 ? "active" : ""; }
+%>
+<!-- Bottom app-style nav (phones/tablets only) -->
+<nav class="bottom-nav d-lg-none">
+  <a href="/dashboard" class="bottom-nav-item <%= navActive('/dashboard') %>">
+    <i class="fa-solid fa-calendar-days"></i><span>Fixtures</span>
+  </a>
+  <a href="/leaderboard" class="bottom-nav-item <%= navActive('/leaderboard') %>">
+    <i class="fa-solid fa-trophy"></i><span>Ranks</span>
+  </a>
+  <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
+    <i class="fa-solid fa-chart-simple"></i><span>Stats</span>
+  </a>
+  <a href="/logout" class="bottom-nav-item">
+    <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
+  </a>
+</nav>
+<% } %>
 
 <!-- Flash messages -->
 <div class="container mt-3">

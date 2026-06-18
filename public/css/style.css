@@ -119,11 +119,12 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
-  padding-bottom: 0.4rem;
-  scrollbar-width: thin;
+  padding: 0.2rem 0.1rem;
+  scroll-padding: 0 50%;            /* helps centering snap */
+  -ms-overflow-style: none;         /* hide scrollbar (IE/Edge) */
+  scrollbar-width: none;            /* hide scrollbar (Firefox) */
 }
-.day-filter::-webkit-scrollbar { height: 6px; }
-.day-filter::-webkit-scrollbar-thumb { background: #d8dde6; border-radius: 999px; }
+.day-filter::-webkit-scrollbar { display: none; } /* hide scrollbar (Chrome/Safari) */
 .day-chip {
   flex: 0 0 auto;
   min-width: 92px;
@@ -219,6 +220,44 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .stat-card:nth-child(4) .stat-icon { background: #f0e9ff; color: var(--purple); }
 .stat-value { font-size: 2rem; font-weight: 900; line-height: 1; }
 .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; font-weight: 700; }
+
+/* ---- Bottom app nav (mobile) ---- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 24px rgba(17, 34, 63, 0.08);
+  padding: 0.35rem 0.25rem;
+  padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  z-index: 1040;
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 800;
+  font-size: 0.68rem;
+  padding: 0.35rem 0;
+  border-radius: 12px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.bottom-nav-item i { font-size: 1.2rem; }
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item:active { background: var(--accent-soft); }
+
+/* keep page content clear of the fixed bottom bar on small screens */
+@media (max-width: 991.98px) {
+  body { padding-bottom: 70px; }
+}
 
 /* ---- Footer ---- */
 .wc-footer { border-top: 1px solid var(--line); background: var(--surface); }

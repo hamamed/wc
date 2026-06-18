@@ -200,10 +200,13 @@
       bar.appendChild(chip(label(k), counts[k] + (counts[k] > 1 ? " matches" : " match"), k))
     );
 
-    function select(val) {
-      bar.querySelectorAll(".day-chip").forEach((ch) =>
-        ch.classList.toggle("active", ch.dataset.day === val)
-      );
+    function select(val, behavior) {
+      let activeChip = null;
+      bar.querySelectorAll(".day-chip").forEach((ch) => {
+        const on = ch.dataset.day === val;
+        ch.classList.toggle("active", on);
+        if (on) activeChip = ch;
+      });
       let shown = 0;
       cols.forEach((c) => {
         const vis = val === "all" || c.dataset.daykey === val;
@@ -211,6 +214,15 @@
         if (vis) shown++;
       });
       if (empty) empty.classList.toggle("d-none", shown !== 0);
+
+      // Scroll the chosen chip to the center of the filter bar.
+      if (activeChip) {
+        activeChip.scrollIntoView({
+          inline: "center",
+          block: "nearest",
+          behavior: behavior || "smooth",
+        });
+      }
     }
 
     bar.addEventListener("click", (e) => {
@@ -219,7 +231,7 @@
     });
 
     // Default to Today if it has matches, otherwise show everything.
-    select(counts[todayKey] ? todayKey : "all");
+    select(counts[todayKey] ? todayKey : "all", "auto");
   })();
 </script>
 
