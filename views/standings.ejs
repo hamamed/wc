@@ -9,17 +9,15 @@
 
 <div class="container py-4">
   <div class="mb-4">
-    <h2 class="fw-bold mb-0"><i class="fa-solid fa-table-cells-large text-accent me-2"></i>Groups &amp; Standings</h2>
-    <p class="text-secondary mb-0">
-      Top 2 of each group qualify. The best 3rd-placed teams round out the knockouts.
-    </p>
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-table-cells-large text-accent me-2"></i><%= t('st.title') %></h2>
+    <p class="text-secondary mb-0"><%= t('st.subtitle') %></p>
   </div>
 
   <% if (!groups || groups.length === 0 || groups.every(function(g){return g.rows.length===0})) { %>
     <div class="card wc-card border-0">
       <div class="card-body text-center text-secondary py-5">
         <i class="fa-solid fa-table-list fa-2x mb-3 d-block"></i>
-        No standings yet — they'll appear once group-stage results come in.
+        <%= t('st.none') %>
       </div>
     </div>
   <% } else { %>
@@ -37,13 +35,13 @@
                   <thead>
                     <tr>
                       <th style="width:34px;">#</th>
-                      <th>Team</th>
+                      <th><%= t('st.team') %></th>
                       <th class="text-center" title="Played">P</th>
                       <th class="text-center" title="Won">W</th>
                       <th class="text-center" title="Drawn">D</th>
                       <th class="text-center" title="Lost">L</th>
                       <th class="text-center" title="Goal difference">GD</th>
-                      <th class="text-center" title="Points">Pts</th>
+                      <th class="text-center" title="Points"><%= t('common.pts') %></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -73,20 +71,20 @@
   <% if (thirds && thirds.length) { %>
     <div class="card wc-card border-0 mt-4">
       <div class="card-body">
-        <h6 class="fw-bold mb-1"><i class="fa-solid fa-ranking-star text-accent me-2"></i>Best 3rd-Placed Teams</h6>
-        <p class="text-secondary small mb-3">The top finishers here advance alongside the group winners and runners-up.</p>
+        <h6 class="fw-bold mb-1"><i class="fa-solid fa-ranking-star text-accent me-2"></i><%= t('st.bestThirds') %></h6>
+        <p class="text-secondary small mb-3"><%= t('st.bestThirdsSub') %></p>
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 standings-table">
             <thead>
               <tr>
                 <th style="width:34px;">#</th>
-                <th>Team</th>
+                <th><%= t('st.team') %></th>
                 <th class="text-center">P</th>
                 <th class="text-center">W</th>
                 <th class="text-center">D</th>
                 <th class="text-center">L</th>
                 <th class="text-center">GD</th>
-                <th class="text-center">Pts</th>
+                <th class="text-center"><%= t('common.pts') %></th>
               </tr>
             </thead>
             <tbody>
@@ -111,10 +109,10 @@
 
   <!-- Legend -->
   <div class="d-flex gap-3 flex-wrap small text-secondary mt-3">
-    <span><span class="legend-box qualify"></span> Qualifies</span>
-    <span><span class="legend-box playoff"></span> 3rd place (best-thirds race)</span>
+    <span><span class="legend-box qualify"></span> <%= t('st.qualifies') %></span>
+    <span><span class="legend-box playoff"></span> <%= t('st.third') %></span>
     <% if (source === "local") { %>
-      <span class="ms-auto"><i class="fa-solid fa-circle-info me-1"></i>Computed from results</span>
+      <span class="ms-auto"><i class="fa-solid fa-circle-info me-1"></i><%= t('st.computed') %></span>
     <% } %>
   </div>
 

@@ -22,16 +22,16 @@
     </div>
     <div class="me-auto">
       <h2 class="fw-bold mb-0"><%= currentUser.username %></h2>
-      <p class="text-secondary mb-0">Your predictions &amp; points summary</p>
+      <p class="text-secondary mb-0"><%= t('profile.summary') %></p>
     </div>
     <div class="d-flex gap-2">
       <form action="/profile/avatar" method="POST">
         <button class="btn btn-outline-secondary btn-sm" <%= hasAvatars ? '' : 'disabled title="Add images to public/avatars/"' %>>
-          <i class="fa-solid fa-shuffle me-1"></i> Change Photo
+          <i class="fa-solid fa-shuffle me-1"></i> <%= t('profile.changePhoto') %>
         </button>
       </form>
       <a href="/logout" class="btn btn-outline-danger btn-sm">
-        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+        <i class="fa-solid fa-right-from-bracket me-1"></i> <%= t('profile.logout') %>
       </a>
     </div>
   </div>
@@ -40,47 +40,47 @@
   <div class="card wc-card border-0 mb-4 champion-banner">
     <div class="card-body">
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <h6 class="fw-bold mb-0"><i class="fa-solid fa-crown text-accent me-2"></i>Predict the Champion</h6>
+        <h6 class="fw-bold mb-0"><i class="fa-solid fa-crown text-accent me-2"></i><%= t('champ.title') %></h6>
         <% if (championLocked) { %>
-          <span class="badge wc-badge badge-locked ms-auto"><i class="fa-solid fa-lock me-1"></i> Locked</span>
+          <span class="badge wc-badge badge-locked ms-auto"><i class="fa-solid fa-lock me-1"></i> <%= t('champ.locked') %></span>
         <% } else { %>
           <span class="badge wc-badge badge-open ms-auto">
-            <i class="fa-solid fa-hourglass-half me-1"></i> Locks in <strong id="champCountdown">…</strong>
+            <i class="fa-solid fa-hourglass-half me-1"></i> <%= t('champ.locksIn') %> <strong id="champCountdown">…</strong>
           </span>
         <% } %>
       </div>
 
       <% if (championLocked) { %>
         <p class="mb-0">
-          Your champion:
+          <%= t('champ.your') %>
           <% if (championPick) { %>
             <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
             <span class="fw-bold"><%= championPick %></span>
           <% } else { %>
-            <span class="text-secondary fst-italic">no pick made</span>
+            <span class="text-secondary fst-italic"><%= t('champ.noPick') %></span>
           <% } %>
         </p>
       <% } else if (teams.length === 0) { %>
-        <p class="text-secondary mb-0">Teams appear here once fixtures are added.</p>
+        <p class="text-secondary mb-0"><%= t('champ.teamsAppear') %></p>
       <% } else { %>
         <form action="/champion" method="POST" class="row g-2 align-items-center">
           <div class="col-12 col-md">
             <select name="champion" class="form-select" required>
-              <option value="" disabled <%= championPick ? '' : 'selected' %>>Choose a country…</option>
-              <% teams.forEach(function (t) { %>
-                <option value="<%= t.name %>" <%= championPick === t.name ? 'selected' : '' %>><%= t.name %></option>
+              <option value="" disabled <%= championPick ? '' : 'selected' %>><%= t('champ.choose') %></option>
+              <% teams.forEach(function (tm) { %>
+                <option value="<%= tm.name %>" <%= championPick === tm.name ? 'selected' : '' %>><%= tm.name %></option>
               <% }); %>
             </select>
           </div>
           <div class="col-12 col-md-auto d-grid">
-            <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> Save Pick</button>
+            <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> <%= t('champ.save') %></button>
           </div>
         </form>
         <% if (championPick) { %>
           <p class="text-secondary small mt-2 mb-0">
-            Current pick:
+            <%= t('champ.current') %>
             <% if (championFlag) { %><img src="<%= championFlag %>" class="flag-mini" alt="" /><% } %>
-            <span class="fw-semibold"><%= championPick %></span> — you can change it until the deadline.
+            <span class="fw-semibold"><%= championPick %></span> — <%= t('champ.canChange') %>
           </p>
         <% } %>
       <% } %>
@@ -94,7 +94,7 @@
         <div class="card-body">
           <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
           <div class="stat-value text-accent"><%= stats.totalPoints %></div>
-          <div class="stat-label">Total Points</div>
+          <div class="stat-label"><%= t('stat.totalPoints') %></div>
         </div>
       </div>
     </div>
@@ -103,7 +103,7 @@
         <div class="card-body">
           <div class="stat-icon"><i class="fa-solid fa-bullseye"></i></div>
           <div class="stat-value text-gold"><%= stats.exact %></div>
-          <div class="stat-label">Exact Scores <span class="text-secondary">(2 pts)</span></div>
+          <div class="stat-label"><%= t('stat.exact') %> <span class="text-secondary"><%= t('stat.pts2') %></span></div>
         </div>
       </div>
     </div>
@@ -112,7 +112,7 @@
         <div class="card-body">
           <div class="stat-icon"><i class="fa-solid fa-check-double"></i></div>
           <div class="stat-value"><%= stats.outcome %></div>
-          <div class="stat-label">Correct Outcomes <span class="text-secondary">(1 pt)</span></div>
+          <div class="stat-label"><%= t('stat.outcomes') %> <span class="text-secondary"><%= t('stat.pt1') %></span></div>
         </div>
       </div>
     </div>
@@ -121,7 +121,7 @@
         <div class="card-body">
           <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
           <div class="stat-value"><%= stats.hitRate %>%</div>
-          <div class="stat-label">Hit Rate <span class="text-secondary">(scored)</span></div>
+          <div class="stat-label"><%= t('stat.hitRate') %> <span class="text-secondary"><%= t('stat.scoredParen') %></span></div>
         </div>
       </div>
     </div>
@@ -129,30 +129,30 @@
 
   <!-- Secondary tallies -->
   <div class="d-flex flex-wrap gap-2 mb-4">
-    <span class="badge wc-badge badge-open"><i class="fa-solid fa-list-check me-1"></i><%= stats.made %> Predictions made</span>
-    <span class="badge wc-badge badge-done"><i class="fa-solid fa-flag-checkered me-1"></i><%= stats.scored %> Scored</span>
-    <span class="badge wc-badge badge-locked"><i class="fa-solid fa-hourglass-half me-1"></i><%= stats.pending %> Pending</span>
-    <span class="badge wc-badge badge-locked"><i class="fa-solid fa-xmark me-1"></i><%= stats.missed %> Missed</span>
+    <span class="badge wc-badge badge-open"><i class="fa-solid fa-list-check me-1"></i><%= stats.made %> <%= t('stat.made') %></span>
+    <span class="badge wc-badge badge-done"><i class="fa-solid fa-flag-checkered me-1"></i><%= stats.scored %> <%= t('stat.scored') %></span>
+    <span class="badge wc-badge badge-locked"><i class="fa-solid fa-hourglass-half me-1"></i><%= stats.pending %> <%= t('stat.pending') %></span>
+    <span class="badge wc-badge badge-locked"><i class="fa-solid fa-xmark me-1"></i><%= stats.missed %> <%= t('stat.missed') %></span>
   </div>
 
   <!-- Prediction history -->
-  <h5 class="fw-semibold mb-3"><i class="fa-solid fa-clock-rotate-left text-accent me-2"></i>Prediction History</h5>
+  <h5 class="fw-semibold mb-3"><i class="fa-solid fa-clock-rotate-left text-accent me-2"></i><%= t('hist.title') %></h5>
   <div class="card wc-card border-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th class="ps-4">Match</th>
-            <th>Kickoff</th>
-            <th class="text-center">Your Pick</th>
-            <th class="text-center">Result</th>
-            <th class="text-end pe-4">Points</th>
+            <th class="ps-4"><%= t('hist.match') %></th>
+            <th><%= t('hist.kickoff') %></th>
+            <th class="text-center"><%= t('hist.yourPick') %></th>
+            <th class="text-center"><%= t('hist.result') %></th>
+            <th class="text-end pe-4"><%= t('hist.points') %></th>
           </tr>
         </thead>
         <tbody>
           <% if (history.length === 0) { %>
             <tr><td colspan="5" class="text-center text-secondary py-4">
-              No predictions yet. <a href="/dashboard" class="text-accent">Make your first pick →</a>
+              <%= t('hist.none') %> <a href="/dashboard" class="text-accent"><%= t('hist.makeFirst') %></a>
             </td></tr>
           <% } %>
           <% history.forEach(function (h) { %>
@@ -169,11 +169,11 @@
               </td>
               <td class="text-end pe-4">
                 <% if (h.pointsEarned === null) { %>
-                  <span class="badge wc-badge badge-locked">Pending</span>
+                  <span class="badge wc-badge badge-locked"><%= t('hist.pending') %></span>
                 <% } else if (h.pointsEarned === 2) { %>
-                  <span class="badge wc-badge badge-done">+2 Exact</span>
+                  <span class="badge wc-badge badge-done"><%= t('hist.exact') %></span>
                 <% } else if (h.pointsEarned === 1) { %>
-                  <span class="badge wc-badge badge-open">+1 Outcome</span>
+                  <span class="badge wc-badge badge-open"><%= t('hist.outcome') %></span>
                 <% } else { %>
                   <span class="badge wc-badge badge-locked">0</span>
                 <% } %>

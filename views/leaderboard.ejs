@@ -4,13 +4,13 @@
 <div class="container py-4">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
-      <h2 class="fw-bold mb-0"><i class="fa-solid fa-trophy text-accent me-2"></i>Leaderboard</h2>
-      <p class="text-secondary mb-0"><%= users.length %> player<%= users.length === 1 ? "" : "s" %> competing.</p>
+      <h2 class="fw-bold mb-0"><i class="fa-solid fa-trophy text-accent me-2"></i><%= t('lb.title') %></h2>
+      <p class="text-secondary mb-0"><%= users.length %> <%= users.length === 1 ? t('lb.competing1') : t('lb.competingP') %></p>
     </div>
     <div class="input-group search-box">
       <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
       <input id="searchInput" type="text" class="form-control"
-             placeholder="Search players..." autocomplete="off" />
+             placeholder="<%= t('lb.search') %>" autocomplete="off" />
     </div>
   </div>
 
@@ -19,9 +19,9 @@
       <table class="table table-hover align-middle mb-0 leaderboard-table">
         <thead>
           <tr>
-            <th class="ps-4" style="width:80px;">Rank</th>
-            <th>Player</th>
-            <th class="text-end pe-4">Points</th>
+            <th class="ps-4" style="width:80px;"><%= t('lb.rank') %></th>
+            <th><%= t('lb.player') %></th>
+            <th class="text-end pe-4"><%= t('lb.points') %></th>
           </tr>
         </thead>
         <tbody id="leaderboardBody">
@@ -41,7 +41,7 @@
               <td>
                 <i class="fa-solid fa-user-circle text-secondary me-2"></i>
                 <span class="fw-semibold"><%= u.username %></span>
-                <% if (u.isMe) { %><span class="badge wc-userchip ms-2">You</span><% } %>
+                <% if (u.isMe) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>
               <td class="text-end pe-4 fw-bold text-accent"><%= u.totalPoints %></td>
             </tr>
@@ -50,7 +50,7 @@
       </table>
     </div>
     <div id="noResults" class="text-center text-secondary py-4 d-none">
-      <i class="fa-solid fa-user-slash me-1"></i> No players match your search.
+      <i class="fa-solid fa-user-slash me-1"></i> <%= t('lb.noMatch') %>
     </div>
   </div>
 </div>

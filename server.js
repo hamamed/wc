@@ -4,6 +4,7 @@ const express = require("express");
 const session = require("express-session");
 const flash = require("connect-flash");
 const path = require("path");
+const { t: translate, LANGS: i18nLangs } = require("./utils/i18n");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,7 +40,21 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.isAdmin = !!req.session.isAdmin;
   res.locals.currentPath = req.path;
+
+  // Language / i18n
+  const lang = req.session.lang || "en";
+  res.locals.lang = lang;
+  res.locals.dir = lang === "ar" ? "rtl" : "ltr";
+  res.locals.langs = i18nLangs;
+  res.locals.t = (key) => translate(lang, key);
   next();
+});
+
+// Switch language and return to the previous page.
+app.get("/lang/:code", (req, res) => {
+  const code = req.params.code;
+  if (["en", "fr", "ar"].includes(code)) req.session.lang = code;
+  res.redirect(req.get("referer") || "/");
 });
 
 // ---- Routes --------------------------------------------------------------

@@ -19,6 +19,11 @@
 
 * { font-family: "Nunito", system-ui, -apple-system, sans-serif; }
 
+/* Arabic uses the Cairo font and right-to-left layout */
+[dir="rtl"] * { font-family: "Cairo", "Nunito", system-ui, sans-serif; }
+.lang-toggle { cursor: pointer; }
+.dropdown-item.active { background-color: var(--accent); }
+
 body {
   background: var(--bg);
   color: var(--text);

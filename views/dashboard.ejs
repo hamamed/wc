@@ -14,13 +14,13 @@
 <div class="container py-4">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
-      <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-accent me-2"></i>Fixtures</h2>
-      <p class="text-secondary mb-0">Predict each score up to 30 minutes before kickoff.</p>
+      <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-accent me-2"></i><%= t('dash.title') %></h2>
+      <p class="text-secondary mb-0"><%= t('dash.subtitle') %></p>
     </div>
     <div class="legend small text-secondary d-flex gap-3 flex-wrap">
-      <span><span class="dot dot-open"></span> Open</span>
-      <span><span class="dot dot-locked"></span> Locked</span>
-      <span><span class="dot dot-done"></span> Completed</span>
+      <span><span class="dot dot-open"></span> <%= t('dash.open') %></span>
+      <span><span class="dot dot-locked"></span> <%= t('dash.locked') %></span>
+      <span><span class="dot dot-done"></span> <%= t('dash.completed') %></span>
     </div>
   </div>
 
@@ -29,14 +29,14 @@
     <div id="dayFilter" class="day-filter mb-4"></div>
     <div id="dayEmpty" class="text-center text-secondary py-5 d-none">
       <i class="fa-solid fa-calendar-xmark fa-2x mb-3 d-block"></i>
-      No matches on this day.
+      <%= t('dash.noMatchesDay') %>
     </div>
   <% } %>
 
   <% if (matches.length === 0) { %>
     <div class="text-center text-secondary py-5">
       <i class="fa-solid fa-futbol fa-2x mb-3 d-block"></i>
-      No fixtures yet. Check back soon!
+      <%= t('dash.noFixtures') %>
     </div>
   <% } %>
 
@@ -50,20 +50,20 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <% if (m.badge.type === "open") { %>
                 <span class="badge wc-badge badge-open">
-                  <i class="fa-solid fa-unlock me-1"></i> Open for Prediction
+                  <i class="fa-solid fa-unlock me-1"></i> <%= t('dash.badgeOpen') %>
                 </span>
               <% } else if (m.badge.type === "live") { %>
                 <span class="badge wc-badge badge-live">
-                  <span class="live-dot"></span> LIVE
+                  <span class="live-dot"></span> <%= t('dash.badgeLive') %>
                 </span>
               <% } else if (m.badge.type === "locked") { %>
                 <span class="badge wc-badge badge-locked">
-                  <i class="fa-solid fa-lock me-1"></i> Locked
+                  <i class="fa-solid fa-lock me-1"></i> <%= t('dash.locked') %>
                 </span>
               <% } else { %>
                 <span class="badge wc-badge badge-done">
                   <i class="fa-solid fa-flag-checkered me-1"></i>
-                  Completed<% if (m.badge.points !== null) { %> (+<%= m.badge.points %> pts)<% } %>
+                  <%= t('dash.completed') %><% if (m.badge.points !== null) { %> (+<%= m.badge.points %> <%= t('common.pts') %>)<% } %>
                 </span>
               <% } %>
               <small class="text-secondary"><%= fmtDate(m.kickoffTime) %></small>
@@ -89,7 +89,7 @@
                     <%= m.liveScoreA != null ? m.liveScoreA : 0 %>&nbsp;-&nbsp;<%= m.liveScoreB != null ? m.liveScoreB : 0 %>
                   </span>
                 <% } else { %>
-                  <span class="text-secondary fw-bold">VS</span>
+                  <span class="text-secondary fw-bold"><%= t('common.vs') %></span>
                 <% } %>
               </div>
               <div class="team w-100">
@@ -121,29 +121,29 @@
                   </div>
                   <button class="btn btn-accent w-100 fw-semibold">
                     <i class="fa-solid fa-floppy-disk me-1"></i>
-                    <%= m.prediction ? 'Update Prediction' : 'Save Prediction' %>
+                    <%= m.prediction ? t('dash.update') : t('dash.save') %>
                   </button>
                 </form>
                 <% if (m.prediction) { %>
                   <p class="text-center text-secondary small mt-2 mb-0">
-                    <i class="fa-solid fa-pen me-1"></i>Your pick:
-                    <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %> (editable)
+                    <i class="fa-solid fa-pen me-1"></i><%= t('dash.yourPick') %>:
+                    <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %> (<%= t('dash.editable') %>)
                   </p>
                 <% } %>
               <% } else { %>
                 <!-- Locked or completed: show pick read-only -->
                 <div class="text-center small">
                   <% if (m.prediction) { %>
-                    <span class="text-secondary">Your pick:</span>
+                    <span class="text-secondary"><%= t('dash.yourPick') %>:</span>
                     <span class="fw-semibold">
                       <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %>
                     </span>
                     <% if (m.status === "completed") { %>
-                      <span class="badge wc-badge badge-open ms-1"><%= m.prediction.pointsEarned %> pts</span>
+                      <span class="badge wc-badge badge-open ms-1"><%= m.prediction.pointsEarned %> <%= t('common.pts') %></span>
                     <% } %>
                   <% } else { %>
                     <span class="text-secondary fst-italic">
-                      <i class="fa-solid fa-ban me-1"></i>No prediction submitted
+                      <i class="fa-solid fa-ban me-1"></i><%= t('dash.noPrediction') %>
                     </span>
                   <% } %>
                 </div>
@@ -166,6 +166,14 @@
     const empty = document.getElementById("dayEmpty");
     const DAY = 86400000;
 
+    // Translations + locale for date labels.
+    const T = {
+      all: "<%= t('day.all') %>", today: "<%= t('day.today') %>",
+      yesterday: "<%= t('day.yesterday') %>", tomorrow: "<%= t('day.tomorrow') %>",
+      matches: "<%= t('day.matches') %>", match: "<%= t('day.match') %>",
+    };
+    const LOCALE = { en: "en-GB", fr: "fr-FR", ar: "ar" }["<%= lang %>"] || "en-GB";
+
     // Day key in fixed GMT+1, formatted as YYYY-MM-DD (en-CA gives that order).
     const ymd = (ms) =>
       new Date(ms).toLocaleDateString("en-CA", { timeZone: "Etc/GMT-1" });
@@ -185,11 +193,11 @@
     const keys = Object.keys(counts).sort();
 
     function label(key) {
-      if (key === todayKey) return "Today";
-      if (key === yKey) return "Yesterday";
-      if (key === tomKey) return "Tomorrow";
+      if (key === todayKey) return T.today;
+      if (key === yKey) return T.yesterday;
+      if (key === tomKey) return T.tomorrow;
       const [y, m, d] = key.split("-").map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+      return new Date(y, m - 1, d).toLocaleDateString(LOCALE, {
         weekday: "short", month: "short", day: "numeric",
       });
     }
@@ -205,9 +213,9 @@
       return b;
     }
 
-    bar.appendChild(chip("All", cols.length + " matches", "all"));
+    bar.appendChild(chip(T.all, cols.length + " " + T.matches, "all"));
     keys.forEach((k) =>
-      bar.appendChild(chip(label(k), counts[k] + (counts[k] > 1 ? " matches" : " match"), k))
+      bar.appendChild(chip(label(k), counts[k] + " " + (counts[k] > 1 ? T.matches : T.match), k))
     );
 
     function select(val, behavior) {

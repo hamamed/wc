@@ -4,9 +4,22 @@
       <img src="/logo.png" alt="HAMA World Cup Predictor 2026" class="brand-logo" />
     </a>
 
+    <!-- Language switcher (mobile: standalone in the top bar) -->
+    <div class="dropdown ms-auto d-lg-none">
+      <a class="nav-link dropdown-toggle lang-toggle d-flex align-items-center" href="#" role="button"
+         data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fa-solid fa-globe me-1"></i><%= lang.toUpperCase() %>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <% langs.forEach(function (l) { %>
+          <li><a class="dropdown-item <%= l.code === lang ? 'active' : '' %>" href="/lang/<%= l.code %>"><%= l.label %></a></li>
+        <% }); %>
+      </ul>
+    </div>
+
     <% if (currentUser) { %>
       <!-- On phones the bottom app-nav replaces the hamburger; show the user chip instead -->
-      <span class="badge wc-userchip d-lg-none">
+      <span class="badge wc-userchip d-lg-none ms-2">
         <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
       </span>
     <% } %>
@@ -28,22 +41,22 @@
         <% if (currentUser) { %>
           <li class="nav-item">
             <a class="nav-link" href="/dashboard">
-              <i class="fa-solid fa-calendar-days me-1"></i> Fixtures
+              <i class="fa-solid fa-calendar-days me-1"></i> <%= t('nav.fixtures') %>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/standings">
-              <i class="fa-solid fa-table-cells-large me-1"></i> Groups
+              <i class="fa-solid fa-table-cells-large me-1"></i> <%= t('nav.groups') %>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/leaderboard">
-              <i class="fa-solid fa-trophy me-1"></i> Leaderboard
+              <i class="fa-solid fa-trophy me-1"></i> <%= t('nav.leaderboard') %>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/profile">
-              <i class="fa-solid fa-user me-1"></i> Profile
+              <i class="fa-solid fa-user me-1"></i> <%= t('nav.profile') %>
             </a>
           </li>
           <li class="nav-item ms-lg-2">
@@ -54,10 +67,21 @@
         <% } else { %>
           <li class="nav-item">
             <a class="nav-link" href="/login">
-              <i class="fa-solid fa-right-to-bracket me-1"></i> Login
+              <i class="fa-solid fa-right-to-bracket me-1"></i> <%= t('nav.login') %>
             </a>
           </li>
         <% } %>
+        <!-- Language switcher (desktop: inside the menu) -->
+        <li class="nav-item dropdown d-none d-lg-block ms-lg-1">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-globe me-1"></i><%= lang.toUpperCase() %>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <% langs.forEach(function (l) { %>
+              <li><a class="dropdown-item <%= l.code === lang ? 'active' : '' %>" href="/lang/<%= l.code %>"><%= l.label %></a></li>
+            <% }); %>
+          </ul>
+        </li>
       </ul>
     </div>
   </div>
@@ -69,16 +93,16 @@
 <!-- Bottom app-style nav (phones/tablets only) -->
 <nav class="bottom-nav d-lg-none">
   <a href="/dashboard" class="bottom-nav-item <%= navActive('/dashboard') %>">
-    <i class="fa-solid fa-calendar-days"></i><span>Fixtures</span>
+    <i class="fa-solid fa-calendar-days"></i><span><%= t('nav.fixtures') %></span>
   </a>
   <a href="/standings" class="bottom-nav-item <%= navActive('/standings') %>">
-    <i class="fa-solid fa-table-cells-large"></i><span>Groups</span>
+    <i class="fa-solid fa-table-cells-large"></i><span><%= t('nav.groups') %></span>
   </a>
   <a href="/leaderboard" class="bottom-nav-item <%= navActive('/leaderboard') %>">
-    <i class="fa-solid fa-trophy"></i><span>Ranks</span>
+    <i class="fa-solid fa-trophy"></i><span><%= t('nav.ranks') %></span>
   </a>
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
-    <i class="fa-solid fa-user"></i><span>Profile</span>
+    <i class="fa-solid fa-user"></i><span><%= t('nav.profile') %></span>
   </a>
 </nav>
 <% } %>
