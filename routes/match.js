@@ -50,4 +50,38 @@ router.get("/:id/predictions", requireLogin, async (req, res, next) => {
   }
 });
 
+// JSON variant for the dashboard modal.
+router.get("/:id/predictions.json", requireLogin, async (req, res) => {
+  try {
+    const m = await one(
+      "SELECT team_a, team_b, kickoff_time, status FROM matches WHERE id = $1",
+      [req.params.id]
+    );
+    if (!m) return res.status(404).json({ error: "not_found" });
+
+    const kickoffMs = new Date(m.kickoff_time).getTime();
+    const locked = Date.now() >= kickoffMs - LOCK || m.status === "completed";
+    if (!locked) return res.status(403).json({ error: "locked" });
+
+    const preds = await many(
+      `SELECT u.username, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
+       FROM predictions p JOIN users u ON u.id = p.user_id
+       WHERE p.match_id = $1
+       ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
+      [req.params.id]
+    );
+
+    res.json({
+      teamA: res.locals.tn(m.team_a),
+      teamB: res.locals.tn(m.team_b),
+      completed: m.status === "completed",
+      preds,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
 module.exports = router;
+
