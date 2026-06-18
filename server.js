@@ -79,6 +79,7 @@ app.get("/lang/:code", (req, res) => {
 });
 
 // ---- Routes --------------------------------------------------------------
+app.use("/api", require("./routes/api"));
 app.use("/", require("./routes/auth"));
 app.use("/dashboard", require("./routes/dashboard"));
 app.use("/profile", require("./routes/profile"));
