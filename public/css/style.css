@@ -257,7 +257,23 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
   font-weight: 800;
   border-bottom: 1px solid var(--line);
 }
-.standings-table td, .standings-table th { border-color: var(--line); padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.standings-table td, .standings-table th { border-color: var(--line); padding: 0.5rem 0.3rem; }
+/* Long country names (2nd column) wrap instead of overflowing the box */
+.standings-table th:nth-child(2), .standings-table td:nth-child(2) {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  min-width: 90px;
+}
+.standings-table th:not(:nth-child(2)), .standings-table td:not(:nth-child(2)) {
+  white-space: nowrap;
+}
+.standings-table .flag-mini {
+  vertical-align: middle;
+  margin-inline-end: 4px;   /* correct side in both LTR and RTL */
+  margin-right: 0;
+}
 .standings-table tr.qualify { background: rgba(0, 200, 120, 0.10); }
 .standings-table tr.qualify td:first-child { box-shadow: inset 3px 0 0 #19c37d; }
 .standings-table tr.playoff { background: rgba(255, 180, 0, 0.10); }
