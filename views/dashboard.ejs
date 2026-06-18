@@ -24,6 +24,21 @@
     </div>
   </div>
 
+  <!-- How it works (explanation, translated) -->
+  <div class="card wc-card border-0 mb-4 how-card">
+    <div class="card-body">
+      <h6 class="fw-bold mb-3"><i class="fa-solid fa-circle-info text-accent me-2"></i><%= t('how.title') %></h6>
+      <div class="row g-2 small">
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-pen text-accent me-2"></i><%= t('how.predict') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-lock text-accent me-2"></i><%= t('how.lock') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-bullseye text-accent me-2"></i><%= t('how.exact') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-check-double text-accent me-2"></i><%= t('how.outcome') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-xmark text-accent me-2"></i><%= t('how.wrong') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-crown text-accent me-2"></i><%= t('how.champion') %></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Day filter (chips built from the fixtures, in the visitor's timezone) -->
   <% if (matches.length > 0) { %>
     <div id="dayFilter" class="day-filter mb-4"></div>

@@ -125,6 +125,11 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .score-input { -moz-appearance: textfield; }
 
+/* ---- How it works card ---- */
+.how-card { background: linear-gradient(180deg, var(--surface-2), var(--surface)); }
+.how-card .row > div { display: flex; align-items: flex-start; }
+.how-card .row > div i { margin-top: 2px; }
+
 /* ---- Day filter ---- */
 .day-filter {
   display: flex;
