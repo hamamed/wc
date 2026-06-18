@@ -34,6 +34,11 @@ const AR = {
   "india": "الهند", "indonesia": "إندونيسيا", "new zealand": "نيوزيلندا",
   "costa rica": "كوستاريكا", "panama": "بنما", "jamaica": "جامايكا",
   "honduras": "هندوراس", "el salvador": "السلفادور", "guatemala": "غواتيمالا",
+  "bosnia-herzegovina": "البوسنة والهرسك", "bosnia and herzegovina": "البوسنة والهرسك",
+  "bosnia & herzegovina": "البوسنة والهرسك", "bosnia": "البوسنة والهرسك",
+  "haiti": "هايتي",
+  "curaçao": "كوراساو", "curacao": "كوراساو",
+  "cape verde islands": "الرأس الأخضر",
 };
 
 function localizeTeam(name, lang) {
