@@ -66,10 +66,10 @@ app.use("/standings", require("./routes/standings"));
 app.use("/leaderboard", require("./routes/leaderboard"));
 app.use("/admin", require("./routes/admin"));
 
-// Home -> dashboard or login
+// Home -> dashboard when logged in, otherwise the public landing page.
 app.get("/", (req, res) => {
   if (req.session.user) return res.redirect("/dashboard");
-  res.redirect("/login");
+  res.render("home");
 });
 
 // ---- 404 + error handling ------------------------------------------------

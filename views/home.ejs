@@ -1,0 +1,115 @@
+<%- include("partials/head", { title: "HAMA · World Cup 2026 Predictor" }) %>
+
+<!-- Top bar -->
+<nav class="navbar sticky-top wc-navbar">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <img src="/logo.png" alt="HAMA World Cup Predictor 2026" class="brand-logo" />
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <div class="dropdown">
+        <a class="nav-link dropdown-toggle lang-toggle d-flex align-items-center" href="#" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa-solid fa-globe me-1"></i><%= lang.toUpperCase() %>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <% langs.forEach(function (l) { %>
+            <li><a class="dropdown-item <%= l.code === lang ? 'active' : '' %>" href="/lang/<%= l.code %>"><%= l.label %></a></li>
+          <% }); %>
+        </ul>
+      </div>
+      <a href="/login" class="btn btn-accent btn-sm fw-semibold"><%= t('home.signInBtn') %></a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero with quick sign-up -->
+<div class="home-hero text-center">
+  <div class="container py-5">
+    <img src="/logo.png" alt="HAMA World Cup Predictor 2026" class="home-logo mb-4" />
+    <p class="lead text-secondary mb-4"><%= t('login.tagline') %></p>
+
+    <form action="/login" method="POST" class="row justify-content-center g-2 mb-2">
+      <div class="col-12 col-sm-7 col-md-5 col-lg-4">
+        <div class="input-group input-group-lg">
+          <span class="input-group-text"><i class="fa-solid fa-at"></i></span>
+          <input type="text" name="username" class="form-control" placeholder="<%= t('login.placeholder') %>"
+                 autocomplete="off" required />
+        </div>
+      </div>
+      <div class="col-12 col-sm-auto d-grid">
+        <button class="btn btn-accent btn-lg fw-semibold"><%= t('home.cta') %> <i class="fa-solid fa-arrow-right-long ms-1"></i></button>
+      </div>
+    </form>
+    <p class="text-secondary small mb-0"><%= t('login.hint') %></p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <!-- How to sign up -->
+  <h3 class="fw-bold text-center mb-4"><i class="fa-solid fa-user-plus text-accent me-2"></i><%= t('home.howSignupTitle') %></h3>
+  <div class="row g-3 mb-5">
+    <% [1,2,3].forEach(function (n) { %>
+      <div class="col-12 col-md-4">
+        <div class="card wc-card h-100 border-0 text-center">
+          <div class="card-body">
+            <div class="step-num mx-auto mb-3"><%= n %></div>
+            <p class="mb-0"><%= t('home.signupStep' + n) %></p>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- How it works (scoring) -->
+  <h3 class="fw-bold text-center mb-4"><i class="fa-solid fa-circle-info text-accent me-2"></i><%= t('how.title') %></h3>
+  <div class="card wc-card border-0 how-card mb-5">
+    <div class="card-body">
+      <div class="row g-2 small">
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-pen text-accent me-2"></i><%= t('how.predict') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-lock text-accent me-2"></i><%= t('how.lock') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-bullseye text-accent me-2"></i><%= t('how.exact') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-check-double text-accent me-2"></i><%= t('how.outcome') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-xmark text-accent me-2"></i><%= t('how.wrong') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-crown text-accent me-2"></i><%= t('how.champion') %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <h3 class="fw-bold text-center mb-4"><i class="fa-solid fa-star text-accent me-2"></i><%= t('home.featuresTitle') %></h3>
+  <div class="row g-3">
+    <%
+      const feats = [
+        { i: "fa-futbol",            t: "home.featPredictT", d: "home.featPredictD" },
+        { i: "fa-star",              t: "home.featPointsT",  d: "home.featPointsD" },
+        { i: "fa-trophy",            t: "home.featLeaderT",  d: "home.featLeaderD" },
+        { i: "fa-table-cells-large", t: "home.featGroupsT",  d: "home.featGroupsD" },
+        { i: "fa-crown",             t: "home.featChampT",   d: "home.featChampD" },
+        { i: "fa-bolt",              t: "home.featLiveT",    d: "home.featLiveD" },
+      ];
+    %>
+    <% feats.forEach(function (f) { %>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card wc-card h-100 border-0">
+          <div class="card-body d-flex gap-3">
+            <div class="feature-icon"><i class="fa-solid <%= f.i %>"></i></div>
+            <div>
+              <h6 class="fw-bold mb-1"><%= t(f.t) %></h6>
+              <p class="text-secondary small mb-0"><%= t(f.d) %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="text-center mt-5">
+    <a href="/login" class="btn btn-accent btn-lg fw-semibold px-5">
+      <i class="fa-solid fa-right-to-bracket me-1"></i> <%= t('home.startNow') %>
+    </a>
+  </div>
+</div>
+
+<%- include("partials/footer") %>
