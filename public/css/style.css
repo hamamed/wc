@@ -19,8 +19,12 @@
 
 * { font-family: "Nunito", system-ui, -apple-system, sans-serif; }
 
-/* Arabic uses the Cairo font and right-to-left layout */
-[dir="rtl"] * { font-family: "Cairo", "Nunito", system-ui, sans-serif; }
+/* Arabic uses the Cairo font and right-to-left layout.
+   Exclude Font Awesome icons (any element with a fa- class) so the icon
+   font isn't overridden. */
+[dir="rtl"] *:not([class*="fa-"]):not(.fa) {
+  font-family: "Cairo", "Nunito", system-ui, sans-serif;
+}
 .lang-toggle { cursor: pointer; }
 .dropdown-item.active { background-color: var(--accent); }
 
