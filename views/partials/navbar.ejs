@@ -107,6 +107,30 @@
 </nav>
 <% } %>
 
+<!-- Get-the-app banner (dismissible, remembered per browser) -->
+<div class="container mt-3" id="appBanner" style="display:none;">
+  <div class="app-banner d-flex align-items-center gap-2">
+    <i class="fa-brands fa-android fa-lg"></i>
+    <span class="flex-grow-1"><%= t('app.banner') %></span>
+    <a href="/download/hama.apk" download class="btn btn-accent btn-sm fw-semibold">
+      <i class="fa-solid fa-download me-1"></i><%= t('app.download') %>
+    </a>
+    <button type="button" class="btn-close" id="appBannerClose" aria-label="Close"></button>
+  </div>
+</div>
+<script>
+  (function () {
+    if (localStorage.getItem("appBannerHidden")) return;
+    var b = document.getElementById("appBanner");
+    if (!b) return;
+    b.style.display = "";
+    document.getElementById("appBannerClose").addEventListener("click", function () {
+      b.style.display = "none";
+      localStorage.setItem("appBannerHidden", "1");
+    });
+  })();
+</script>
+
 <!-- Flash messages -->
 <div class="container mt-3">
   <% (success || []).forEach(function (msg) { %>

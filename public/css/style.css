@@ -438,6 +438,17 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .wc-footer { border-top: 1px solid var(--line); background: var(--surface); }
 .wc-footer .text-secondary { color: var(--text-secondary) !important; }
 
+/* ---- Get-the-app banner ---- */
+.app-banner {
+  background: var(--accent-soft);
+  border: 1px solid #d4e6ff;
+  border-radius: 14px;
+  padding: 0.6rem 0.9rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+}
+.app-banner .fa-android { color: #3ddc84; }
+
 /* ---- Alerts ---- */
 .alert-success { background: #e9f9ee; border: 1px solid #c7eed4; color: #1c7a3e; border-radius: 12px; }
 .alert-danger { background: #fdecee; border: 1px solid #f8ccd2; color: #c0344a; border-radius: 12px; }

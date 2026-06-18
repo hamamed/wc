@@ -16,6 +16,8 @@ const en = {
   "nav.profile": "Profile",
   "nav.login": "Login",
   "nav.language": "Language",
+  "app.banner": "Get the HAMA app for Android",
+  "app.download": "Download",
 
   "login.tagline": "Predict the scores. Climb the leaderboard.",
   "login.enterUsername": "Enter your username",
@@ -153,6 +155,8 @@ const fr = {
   "nav.profile": "Profil",
   "nav.login": "Connexion",
   "nav.language": "Langue",
+  "app.banner": "Téléchargez l'app HAMA pour Android",
+  "app.download": "Télécharger",
 
   "login.tagline": "Pronostiquez les scores. Grimpez au classement.",
   "login.enterUsername": "Entrez votre nom d'utilisateur",
@@ -290,6 +294,8 @@ const ar = {
   "nav.profile": "الملف الشخصي",
   "nav.login": "تسجيل الدخول",
   "nav.language": "اللغة",
+  "app.banner": "حمّل تطبيق هاما لأندرويد",
+  "app.download": "تحميل",
 
   "login.tagline": "توقّع النتائج. تصدّر الترتيب.",
   "login.enterUsername": "أدخل اسم المستخدم",
