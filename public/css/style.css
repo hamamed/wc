@@ -210,6 +210,24 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .row-me td { color: var(--accent-dark); }
 .search-box { max-width: 280px; }
 
+/* ---- Standings / groups ---- */
+.standings-table th {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 800;
+  border-bottom: 1px solid var(--line);
+}
+.standings-table td, .standings-table th { border-color: var(--line); padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.standings-table tr.qualify { background: rgba(0, 200, 120, 0.10); }
+.standings-table tr.qualify td:first-child { box-shadow: inset 3px 0 0 #19c37d; }
+.standings-table tr.playoff { background: rgba(255, 180, 0, 0.10); }
+.standings-table tr.playoff td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
+.legend-box { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 4px; vertical-align: -1px; }
+.legend-box.qualify { background: #19c37d; }
+.legend-box.playoff { background: var(--gold); }
+
 /* ---- Profile / stats ---- */
 .profile-avatar {
   width: 66px; height: 66px; border-radius: 20px;

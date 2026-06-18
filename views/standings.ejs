@@ -1,0 +1,124 @@
+<%- include("partials/head", { title: "Groups · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<%
+  function flagCell(flag, team) {
+    return (flag ? '<img src="' + flag + '" class="flag-mini" alt="" />' : '') + team;
+  }
+%>
+
+<div class="container py-4">
+  <div class="mb-4">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-table-cells-large text-accent me-2"></i>Groups &amp; Standings</h2>
+    <p class="text-secondary mb-0">
+      Top 2 of each group qualify. The best 3rd-placed teams round out the knockouts.
+    </p>
+  </div>
+
+  <% if (!groups || groups.length === 0 || groups.every(function(g){return g.rows.length===0})) { %>
+    <div class="card wc-card border-0">
+      <div class="card-body text-center text-secondary py-5">
+        <i class="fa-solid fa-table-list fa-2x mb-3 d-block"></i>
+        No standings yet — they'll appear once group-stage results come in.
+      </div>
+    </div>
+  <% } else { %>
+
+  <!-- Group tables -->
+  <div class="row g-3">
+    <% groups.forEach(function (g) { %>
+      <% if (g.rows.length) { %>
+        <div class="col-12 col-lg-6">
+          <div class="card wc-card border-0 h-100">
+            <div class="card-body">
+              <h6 class="fw-bold mb-3"><i class="fa-solid fa-layer-group text-accent me-2"></i><%= g.name %></h6>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 standings-table">
+                  <thead>
+                    <tr>
+                      <th style="width:34px;">#</th>
+                      <th>Team</th>
+                      <th class="text-center" title="Played">P</th>
+                      <th class="text-center" title="Won">W</th>
+                      <th class="text-center" title="Drawn">D</th>
+                      <th class="text-center" title="Lost">L</th>
+                      <th class="text-center" title="Goal difference">GD</th>
+                      <th class="text-center" title="Points">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% g.rows.forEach(function (r) { %>
+                      <tr class="<%= r.rank <= 2 ? 'qualify' : (r.rank === 3 ? 'playoff' : '') %>">
+                        <td class="fw-bold"><%= r.rank %></td>
+                        <td class="fw-semibold"><%- flagCell(r.flag, r.team) %></td>
+                        <td class="text-center"><%= r.played %></td>
+                        <td class="text-center"><%= r.win %></td>
+                        <td class="text-center"><%= r.draw %></td>
+                        <td class="text-center"><%= r.lose %></td>
+                        <td class="text-center"><%= r.gd > 0 ? '+' + r.gd : r.gd %></td>
+                        <td class="text-center fw-bold text-accent"><%= r.points %></td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    <% }); %>
+  </div>
+
+  <!-- Best third-placed teams -->
+  <% if (thirds && thirds.length) { %>
+    <div class="card wc-card border-0 mt-4">
+      <div class="card-body">
+        <h6 class="fw-bold mb-1"><i class="fa-solid fa-ranking-star text-accent me-2"></i>Best 3rd-Placed Teams</h6>
+        <p class="text-secondary small mb-3">The top finishers here advance alongside the group winners and runners-up.</p>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 standings-table">
+            <thead>
+              <tr>
+                <th style="width:34px;">#</th>
+                <th>Team</th>
+                <th class="text-center">P</th>
+                <th class="text-center">W</th>
+                <th class="text-center">D</th>
+                <th class="text-center">L</th>
+                <th class="text-center">GD</th>
+                <th class="text-center">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% thirds.forEach(function (r) { %>
+                <tr class="<%= r.thirdRank <= 8 ? 'qualify' : '' %>">
+                  <td class="fw-bold"><%= r.thirdRank %></td>
+                  <td class="fw-semibold"><%- flagCell(r.flag, r.team) %></td>
+                  <td class="text-center"><%= r.played %></td>
+                  <td class="text-center"><%= r.win %></td>
+                  <td class="text-center"><%= r.draw %></td>
+                  <td class="text-center"><%= r.lose %></td>
+                  <td class="text-center"><%= r.gd > 0 ? '+' + r.gd : r.gd %></td>
+                  <td class="text-center fw-bold text-accent"><%= r.points %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Legend -->
+  <div class="d-flex gap-3 flex-wrap small text-secondary mt-3">
+    <span><span class="legend-box qualify"></span> Qualifies</span>
+    <span><span class="legend-box playoff"></span> 3rd place (best-thirds race)</span>
+    <% if (source === "local") { %>
+      <span class="ms-auto"><i class="fa-solid fa-circle-info me-1"></i>Computed from results</span>
+    <% } %>
+  </div>
+
+  <% } %>
+</div>
+
+<%- include("partials/footer") %>

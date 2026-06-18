@@ -50,6 +50,7 @@ async function fetchFromApiFootball() {
         inPlay: LIVE.has(short),
         scoreA: f.goals ? f.goals.home : null,
         scoreB: f.goals ? f.goals.away : null,
+        group: (f.league && f.league.round) || null,
       };
     });
 }
@@ -78,7 +79,74 @@ async function fetchFromFootballData() {
       inPlay: m.status === "IN_PLAY" || m.status === "PAUSED",
       scoreA: m.score && m.score.fullTime ? m.score.fullTime.home : null,
       scoreB: m.score && m.score.fullTime ? m.score.fullTime.away : null,
+      group: m.group ? m.group.replace("GROUP_", "Group ") : null,
     }));
+}
+
+// ---- Standings (group tables) --------------------------------------------
+// Returns: [ { name, rows: [{ rank, team, flag, played, win, draw, lose, gf, ga, gd, points }] } ]
+async function fetchStandingsApiFootball() {
+  const key = process.env.API_FOOTBALL_KEY;
+  const league = process.env.API_FOOTBALL_LEAGUE || "1";
+  const season = process.env.API_FOOTBALL_SEASON || "2026";
+  const url = `https://v3.football.api-sports.io/standings?league=${league}&season=${season}`;
+  const res = await fetch(url, { headers: { "x-apisports-key": key } });
+  if (!res.ok) throw new Error(`API-Football standings ${res.status}`);
+  const data = await res.json();
+  if (data.errors && (Array.isArray(data.errors) ? data.errors.length : Object.keys(data.errors).length)) {
+    throw new Error("API-Football: " + JSON.stringify(data.errors));
+  }
+  const league0 = data.response && data.response[0] && data.response[0].league;
+  const groups = (league0 && league0.standings) || [];
+  return groups.map((rows) => ({
+    name: (rows[0] && rows[0].group) || "Group",
+    rows: rows.map((r) => ({
+      rank: r.rank,
+      team: r.team.name,
+      flag: r.team.logo || null,
+      played: r.all.played,
+      win: r.all.win,
+      draw: r.all.draw,
+      lose: r.all.lose,
+      gf: r.all.goals.for,
+      ga: r.all.goals.against,
+      gd: r.goalsDiff,
+      points: r.points,
+    })),
+  }));
+}
+
+async function fetchStandingsFootballData() {
+  const key = process.env.FOOTBALL_API_KEY;
+  const res = await fetch("https://api.football-data.org/v4/competitions/WC/standings", {
+    headers: { "X-Auth-Token": key },
+  });
+  if (!res.ok) throw new Error(`football-data standings ${res.status}`);
+  const data = await res.json();
+  return (data.standings || [])
+    .filter((s) => s.type === "TOTAL")
+    .map((s) => ({
+      name: s.group ? s.group.replace("GROUP_", "Group ") : (s.stage || "Group"),
+      rows: (s.table || []).map((r) => ({
+        rank: r.position,
+        team: r.team.name,
+        flag: r.team.crest || null,
+        played: r.playedGames,
+        win: r.won,
+        draw: r.draw,
+        lose: r.lost,
+        gf: r.goalsFor,
+        ga: r.goalsAgainst,
+        gd: r.goalDifference,
+        points: r.points,
+      })),
+    }));
+}
+
+async function fetchStandings() {
+  if (process.env.API_FOOTBALL_KEY) return fetchStandingsApiFootball();
+  if (process.env.FOOTBALL_API_KEY) return fetchStandingsFootballData();
+  throw new Error("No football API key set for standings.");
 }
 
 // ---- Dispatcher ----------------------------------------------------------
@@ -90,4 +158,4 @@ async function fetchWorldCupMatches() {
   );
 }
 
-module.exports = { fetchWorldCupMatches };
+module.exports = { fetchWorldCupMatches, fetchStandings };

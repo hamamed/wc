@@ -36,6 +36,7 @@ async function syncWorldCup() {
         flagA,
         flagB,
         kickoffTime: Timestamp.fromDate(m.kickoff),
+        group: m.group || null,
         actualScoreA: null,
         actualScoreB: null,
         liveScoreA: null,
@@ -64,6 +65,7 @@ async function syncWorldCup() {
       flagA,
       flagB,
       kickoffTime: Timestamp.fromDate(m.kickoff),
+      group: m.group || cur.group || null,
     };
     if (m.inPlay && m.scoreA != null) {
       update.liveScoreA = m.scoreA;
