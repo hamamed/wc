@@ -118,7 +118,6 @@
 <script>
   (function () {
     const modalEl = document.getElementById("predsModal");
-    const modal = new bootstrap.Modal(modalEl);
     const title = document.getElementById("predsTitle");
     const loading = document.getElementById("predsLoading");
     const wrap = document.getElementById("predsWrap");
@@ -137,7 +136,7 @@
         wrap.classList.add("d-none");
         empty.classList.add("d-none");
         body.innerHTML = "";
-        modal.show();
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
         fetch("/admin/users/" + btn.dataset.id + "/predictions")
           .then((r) => r.json())
