@@ -66,7 +66,11 @@
             <tr class="<%= p.username === currentUser.username ? 'row-me' : '' %>">
               <td class="ps-4 text-secondary"><%= i + 1 %></td>
               <td>
-                <i class="fa-solid fa-user-circle text-secondary me-2"></i>
+                <% if (p.avatar) { %>
+                  <img src="<%= avatarSrc(p.avatar) %>" class="avatar-mini me-2" alt="" />
+                <% } else { %>
+                  <i class="fa-solid fa-user-circle text-secondary me-2"></i>
+                <% } %>
                 <span class="fw-semibold"><%= p.username %></span>
                 <% if (p.username === currentUser.username) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>

@@ -29,7 +29,7 @@ router.get("/:id/predictions", requireLogin, async (req, res, next) => {
     }
 
     const preds = await many(
-      `SELECT u.username, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
+      `SELECT u.username, u.avatar, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
        FROM predictions p JOIN users u ON u.id = p.user_id
        WHERE p.match_id = $1
        ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
@@ -63,13 +63,16 @@ router.get("/:id/predictions.json", requireLogin, async (req, res) => {
     const locked = Date.now() >= kickoffMs - LOCK || m.status === "completed";
     if (!locked) return res.status(403).json({ error: "locked" });
 
-    const preds = await many(
-      `SELECT u.username, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
+    const preds = (await many(
+      `SELECT u.username, u.avatar, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
        FROM predictions p JOIN users u ON u.id = p.user_id
        WHERE p.match_id = $1
        ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
       [req.params.id]
-    );
+    )).map((p) => ({
+      username: p.username, a: p.a, b: p.b, pts: p.pts,
+      avatar: res.locals.avatarSrc(p.avatar),
+    }));
 
     res.json({
       teamA: res.locals.tn(m.team_a),

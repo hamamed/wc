@@ -50,6 +50,9 @@ app.use((req, res, next) => {
   res.locals.langs = i18nLangs;
   res.locals.t = (key) => translate(lang, key);
   res.locals.tn = (name) => localizeTeam(name, lang); // localized team/country name
+  // Resolve an avatar value (flag URL, "/avatars/x", or bare filename) to an src.
+  res.locals.avatarSrc = (a) =>
+    !a ? null : (a.indexOf("http") === 0 || a.indexOf("/") === 0 ? a : "/avatars/" + a);
   next();
 });
 

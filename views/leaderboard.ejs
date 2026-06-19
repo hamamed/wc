@@ -49,7 +49,11 @@
                 <% } %>
               </td>
               <td>
-                <i class="fa-solid fa-user-circle text-secondary me-2"></i>
+                <% if (u.avatar) { %>
+                  <img src="<%= avatarSrc(u.avatar) %>" class="avatar-mini me-2" alt="" />
+                <% } else { %>
+                  <i class="fa-solid fa-user-circle text-secondary me-2"></i>
+                <% } %>
                 <span class="fw-semibold"><%= u.username %></span>
                 <% if (u.isMe) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>

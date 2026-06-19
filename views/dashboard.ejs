@@ -404,8 +404,9 @@
                 pts = '<td class="text-end"><span class="badge wc-badge ' + b + '">' + (p.pts > 0 ? "+" : "") + p.pts + "</span></td>";
               }
               const me = p.username === ME;
+              const av = p.avatar ? '<img src="' + esc(p.avatar) + '" class="avatar-mini me-2" alt=""/>' : '';
               h += '<tr class="' + (me ? "row-me" : "") + '"><td class="text-secondary">' + (i + 1) + "</td>" +
-                '<td class="fw-semibold">' + esc(p.username) + (me ? ' <span class="badge wc-userchip ms-1">' + esc(T.you) + "</span>" : "") + "</td>" +
+                '<td class="fw-semibold">' + av + esc(p.username) + (me ? ' <span class="badge wc-userchip ms-1">' + esc(T.you) + "</span>" : "") + "</td>" +
                 '<td class="text-center fw-bold">' + p.a + " - " + p.b + "</td>" + pts + "</tr>";
             });
             h += "</tbody></table></div>";

@@ -438,6 +438,16 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .wc-footer { border-top: 1px solid var(--line); background: var(--surface); }
 .wc-footer .text-secondary { color: var(--text-secondary) !important; }
 
+/* ---- Mini avatar (rows) ---- */
+.avatar-mini {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: -8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
 /* ---- Flag picker ---- */
 .flag-pick {
   width: 100%;
