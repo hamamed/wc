@@ -30,27 +30,12 @@
           <i class="fa-solid fa-shuffle me-1"></i> <%= t('profile.changePhoto') %>
         </button>
       </form>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#usernameModal">
+        <i class="fa-solid fa-pen me-1"></i> <%= t('profile.changeName') %>
+      </button>
       <a href="/logout" class="btn btn-outline-danger btn-sm">
         <i class="fa-solid fa-right-from-bracket me-1"></i> <%= t('profile.logout') %>
       </a>
-    </div>
-  </div>
-
-  <!-- Change username -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <form action="/profile/username" method="POST" class="row g-2 align-items-end">
-        <div class="col-12 col-md">
-          <label class="form-label small text-secondary"><%= t('profile.changeName') %></label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fa-solid fa-at"></i></span>
-            <input name="username" class="form-control" value="<%= currentUser.username %>" maxlength="20" required />
-          </div>
-        </div>
-        <div class="col-12 col-md-auto d-grid">
-          <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-floppy-disk me-1"></i><%= t('profile.save') %></button>
-        </div>
-      </form>
     </div>
   </div>
 
@@ -215,6 +200,30 @@
           <% }); %>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Change username modal -->
+<div class="modal fade" id="usernameModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content wc-card border-0">
+      <form action="/profile/username" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen text-accent me-2"></i><%= t('profile.changeName') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="input-group input-group-lg">
+            <span class="input-group-text"><i class="fa-solid fa-at"></i></span>
+            <input name="username" class="form-control" value="<%= currentUser.username %>" maxlength="20" autocomplete="off" required />
+          </div>
+          <p class="text-secondary small mt-2 mb-0"><%= t('login.hint') %></p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-accent w-100 fw-semibold"><i class="fa-solid fa-floppy-disk me-1"></i><%= t('profile.save') %></button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
