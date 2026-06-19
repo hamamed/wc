@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { one, many, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
-const { listAvatars, pickRandom } = require("../utils/avatars");
+const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAvatars");
 const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
 const { getActualChampion } = require("../utils/championScore");
 
@@ -73,7 +73,7 @@ router.get("/", requireLogin, async (req, res, next) => {
       stats,
       history,
       avatar: u.avatar || null,
-      hasAvatars: listAvatars().length > 0,
+      flagOptions: flagOptions(),
       teams: teamsFromMatches(allMatches),
       championPick: u.championPick || null,
       championFlag: u.championFlag || null,
@@ -112,21 +112,18 @@ router.post("/username", requireLogin, async (req, res) => {
   }
 });
 
-// ---- Shuffle to a random avatar from public/avatars/ ---------------------
+// ---- Set the profile picture to a chosen country flag --------------------
 router.post("/avatar", requireLogin, async (req, res) => {
   try {
-    const userId = req.session.user.id;
-    const current = await one("SELECT avatar FROM users WHERE id = $1", [userId]);
-
-    const next = pickRandom(current ? current.avatar : null);
-    if (!next) {
-      req.flash("error", "No avatars available — add images to public/avatars/.");
+    const code = (req.body.avatar || "").trim();
+    if (!isValidCode(code)) {
+      req.flash("error", res.locals.t("profile.pickFlag"));
       return res.redirect("/profile");
     }
-
-    await query("UPDATE users SET avatar = $1 WHERE id = $2", [next, userId]);
-    req.session.user.avatar = next;
-    req.flash("success", "Profile photo updated!");
+    const url = flagUrl(code);
+    await query("UPDATE users SET avatar = $1 WHERE id = $2", [url, req.session.user.id]);
+    req.session.user.avatar = url;
+    req.flash("success", res.locals.t("profile.photoUpdated"));
     res.redirect("/profile");
   } catch (err) {
     console.error(err);
