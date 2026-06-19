@@ -27,7 +27,7 @@ async function migrate() {
          (username, username_lower, total_points, avatar, champion_pick, champion_flag,
           champion_bonus, champion_picked_at, api_token, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       ON CONFLICT (username_lower) DO UPDATE SET total_points = EXCLUDED.total_points
+       ON CONFLICT (username_lower) DO UPDATE SET username = users.username
        RETURNING id`,
       [
         u.username,
@@ -45,28 +45,48 @@ async function migrate() {
     userMap[d.id] = row.id;
   }
 
-  // ---- matches ----
+  // ---- matches (merge-safe: keep an existing Postgres match, just map its id) ----
   const matchesSnap = await collections.matches.get();
   for (const d of matchesSnap.docs) {
     const m = d.data();
-    const row = await one(
-      `INSERT INTO matches
-         (external_id, team_a, team_b, flag_a, flag_b, kickoff_time,
-          actual_score_a, actual_score_b, live_score_a, live_score_b, status, grp)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-       RETURNING id`,
-      [
-        m.externalId || null,
-        m.teamA, m.teamB, m.flagA || null, m.flagB || null,
-        ts(m.kickoffTime),
-        m.actualScoreA != null ? m.actualScoreA : null,
-        m.actualScoreB != null ? m.actualScoreB : null,
-        m.liveScoreA != null ? m.liveScoreA : null,
-        m.liveScoreB != null ? m.liveScoreB : null,
-        m.status || "scheduled",
-        m.group || null,
-      ]
-    );
+    const vals = [
+      m.externalId || null,
+      m.teamA, m.teamB, m.flagA || null, m.flagB || null,
+      ts(m.kickoffTime),
+      m.actualScoreA != null ? m.actualScoreA : null,
+      m.actualScoreB != null ? m.actualScoreB : null,
+      m.liveScoreA != null ? m.liveScoreA : null,
+      m.liveScoreB != null ? m.liveScoreB : null,
+      m.status || "scheduled",
+      m.group || null,
+    ];
+    let row;
+    if (m.externalId) {
+      // Upsert by external_id; on conflict keep the live Postgres row, return its id.
+      row = await one(
+        `INSERT INTO matches
+           (external_id, team_a, team_b, flag_a, flag_b, kickoff_time,
+            actual_score_a, actual_score_b, live_score_a, live_score_b, status, grp)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         ON CONFLICT (external_id) DO UPDATE SET external_id = matches.external_id
+         RETURNING id`,
+        vals
+      );
+    } else {
+      // No external_id: match an existing one by teams + kickoff, else insert.
+      const ex = await one(
+        "SELECT id FROM matches WHERE team_a = $1 AND team_b = $2 AND kickoff_time = $3 LIMIT 1",
+        [m.teamA, m.teamB, ts(m.kickoffTime)]
+      );
+      row = ex || await one(
+        `INSERT INTO matches
+           (external_id, team_a, team_b, flag_a, flag_b, kickoff_time,
+            actual_score_a, actual_score_b, live_score_a, live_score_b, status, grp)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         RETURNING id`,
+        vals
+      );
+    }
     matchMap[d.id] = row.id;
   }
 
