@@ -86,6 +86,32 @@ router.get("/", requireLogin, async (req, res, next) => {
   }
 });
 
+// ---- Change username -----------------------------------------------------
+router.post("/username", requireLogin, async (req, res) => {
+  const raw = (req.body.username || "").trim();
+  const userId = req.session.user.id;
+  try {
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(raw)) {
+      req.flash("error", res.locals.t("profile.nameInvalid"));
+      return res.redirect("/profile");
+    }
+    const lower = raw.toLowerCase();
+    const clash = await one("SELECT id FROM users WHERE username_lower = $1", [lower]);
+    if (clash && String(clash.id) !== String(userId)) {
+      req.flash("error", res.locals.t("profile.nameTaken"));
+      return res.redirect("/profile");
+    }
+    await query("UPDATE users SET username = $1, username_lower = $2 WHERE id = $3", [raw, lower, userId]);
+    req.session.user.username = raw;
+    req.flash("success", res.locals.t("profile.nameUpdated"));
+    res.redirect("/profile");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not change your username.");
+    res.redirect("/profile");
+  }
+});
+
 // ---- Shuffle to a random avatar from public/avatars/ ---------------------
 router.post("/avatar", requireLogin, async (req, res) => {
   try {

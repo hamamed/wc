@@ -36,6 +36,24 @@
     </div>
   </div>
 
+  <!-- Change username -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body">
+      <form action="/profile/username" method="POST" class="row g-2 align-items-end">
+        <div class="col-12 col-md">
+          <label class="form-label small text-secondary"><%= t('profile.changeName') %></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fa-solid fa-at"></i></span>
+            <input name="username" class="form-control" value="<%= currentUser.username %>" maxlength="20" required />
+          </div>
+        </div>
+        <div class="col-12 col-md-auto d-grid">
+          <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-floppy-disk me-1"></i><%= t('profile.save') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Champion prediction banner -->
   <div class="card wc-card border-0 mb-4 champion-banner">
     <div class="card-body">
