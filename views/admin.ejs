@@ -69,6 +69,45 @@
     </div>
   </div>
 
+  <!-- Manually add / edit a prediction -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body">
+      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-pen text-accent me-2"></i>Add / edit a prediction</h6>
+      <p class="text-secondary small mb-3">Enter a prediction on a user's behalf. Leave Points blank to auto-score from the result.</p>
+      <form action="/admin/prediction" method="POST" class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-secondary">User</label>
+          <select name="userId" class="form-select" required>
+            <option value="">— select —</option>
+            <% users.forEach(function (u) { %><option value="<%= u.id %>"><%= u.username %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label small text-secondary">Match</label>
+          <select name="matchId" class="form-select" required>
+            <option value="">— select —</option>
+            <% matches.forEach(function (m) { %><option value="<%= m.id %>"><%= m.teamA %> vs <%= m.teamB %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-4 col-md-1">
+          <label class="form-label small text-secondary">A</label>
+          <input name="scoreA" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
+        </div>
+        <div class="col-4 col-md-1">
+          <label class="form-label small text-secondary">B</label>
+          <input name="scoreB" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
+        </div>
+        <div class="col-4 col-md-1">
+          <label class="form-label small text-secondary">Pts</label>
+          <input name="points" type="number" min="0" max="10" class="form-control text-center" placeholder="auto" />
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+          <button class="btn btn-accent fw-semibold">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Add a new match -->
   <div class="card wc-card border-0 mb-4">
     <div class="card-body">

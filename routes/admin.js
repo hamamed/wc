@@ -7,6 +7,7 @@ const { syncWorldCup } = require("../utils/syncService");
 const { flagUrl } = require("../utils/flags");
 const { teamsFromMatches } = require("../utils/champion");
 const { applyChampion, getActualChampion, BONUS } = require("../utils/championScore");
+const { computePoints } = require("../utils/scoring");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -68,11 +69,13 @@ router.get("/", requireAdmin, async (req, res, next) => {
        FROM matches ORDER BY kickoff_time ASC`
     );
     const actualChampion = await getActualChampion();
+    const users = await many("SELECT id, username FROM users ORDER BY username ASC");
     res.render("admin", {
       matches,
       teams: teamsFromMatches(matches),
       actualChampion,
       championBonus: BONUS,
+      users,
     });
   } catch (err) {
     next(err);
@@ -133,6 +136,64 @@ router.post("/live/:matchId", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not update the live score.");
+    res.redirect("/admin");
+  }
+});
+
+// ---- Manually add / edit a user's prediction (with points) ---------------
+router.post("/prediction", requireAdmin, async (req, res) => {
+  const userId = req.body.userId;
+  const matchId = req.body.matchId;
+  const a = parseInt(req.body.scoreA, 10);
+  const b = parseInt(req.body.scoreB, 10);
+  try {
+    if (!userId || !matchId || Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0 || a > 99 || b > 99) {
+      req.flash("error", "Pick a user, a match, and a valid score.");
+      return res.redirect("/admin");
+    }
+
+    const m = await one("SELECT status, actual_score_a, actual_score_b FROM matches WHERE id = $1", [matchId]);
+    if (!m) {
+      req.flash("error", "Match not found.");
+      return res.redirect("/admin");
+    }
+
+    // Points: use the admin's value if given; otherwise compute from the result
+    // (if the match is completed), else 0.
+    let points;
+    const rawPts = req.body.points;
+    if (rawPts !== "" && rawPts != null && !Number.isNaN(parseInt(rawPts, 10))) {
+      points = parseInt(rawPts, 10);
+    } else if (m.status === "completed" && m.actual_score_a != null && m.actual_score_b != null) {
+      points = computePoints(a, b, m.actual_score_a, m.actual_score_b);
+    } else {
+      points = 0;
+    }
+
+    await query(
+      `INSERT INTO predictions (user_id, match_id, predicted_score_a, predicted_score_b, points_earned, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now())
+       ON CONFLICT (user_id, match_id)
+       DO UPDATE SET predicted_score_a = EXCLUDED.predicted_score_a,
+                     predicted_score_b = EXCLUDED.predicted_score_b,
+                     points_earned = EXCLUDED.points_earned, updated_at = now()`,
+      [userId, matchId, a, b, points]
+    );
+
+    // Keep the user's total consistent.
+    await query(
+      `UPDATE users SET total_points =
+         COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = $1), 0)
+         + COALESCE(champion_bonus, 0)
+       WHERE id = $1`,
+      [userId]
+    );
+
+    req.flash("success", `Prediction saved (${a}-${b}, ${points} pts).`);
+    res.redirect("/admin");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not save the prediction.");
     res.redirect("/admin");
   }
 });
