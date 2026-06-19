@@ -20,7 +20,7 @@ async function applyChampion(team) {
 
     // Snapshot ranks before the bonus changes points (for leaderboard movement).
     await client.query(
-      `UPDATE users u SET last_rank = r.rk
+      `UPDATE users u SET last_rank = r.rk, last_points = u.total_points
        FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY total_points DESC, username ASC) AS rk FROM users) r
        WHERE u.id = r.id`
     );

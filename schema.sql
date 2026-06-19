@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   champion_picked_at TIMESTAMPTZ,
   api_token          TEXT,
   last_rank          INTEGER,
+  last_points        INTEGER,
   pin                TEXT,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );

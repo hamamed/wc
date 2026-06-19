@@ -6,7 +6,7 @@ const { requireLogin } = require("../utils/middleware");
 router.get("/", requireLogin, async (req, res, next) => {
   try {
     const rows = await many(
-      `SELECT id, username, total_points AS "totalPoints", last_rank AS "lastRank"
+      `SELECT id, username, total_points AS "totalPoints", last_rank AS "lastRank", last_points AS "lastPoints"
        FROM users ORDER BY total_points DESC, username ASC`
     );
 
@@ -15,12 +15,14 @@ router.get("/", requireLogin, async (req, res, next) => {
       const rank = i + 1;
       // move > 0 => climbed; < 0 => dropped; null lastRank => no data yet
       const move = u.lastRank != null ? u.lastRank - rank : 0;
+      const gained = u.lastPoints != null ? (u.totalPoints || 0) - u.lastPoints : 0;
       return {
         id: String(u.id),
         rank,
         username: u.username,
         totalPoints: u.totalPoints || 0,
         move,
+        gained,
         isMe: String(u.id) === me,
       };
     });

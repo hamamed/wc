@@ -53,7 +53,9 @@
                 <span class="fw-semibold"><%= u.username %></span>
                 <% if (u.isMe) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>
-              <td class="text-end pe-4 fw-bold text-accent"><%= u.totalPoints %></td>
+              <td class="text-end pe-4 fw-bold text-accent">
+                <%= u.totalPoints %><% if (u.gained > 0) { %> <small class="text-success fw-bold">+<%= u.gained %></small><% } %>
+              </td>
             </tr>
           <% }); %>
         </tbody>

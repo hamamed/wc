@@ -160,12 +160,13 @@ router.post("/predict", apiAuth, async (req, res) => {
 router.get("/leaderboard", apiAuth, async (req, res) => {
   try {
     const rows = await many(
-      "SELECT id, username, total_points, last_rank FROM users ORDER BY total_points DESC, username ASC"
+      "SELECT id, username, total_points, last_rank, last_points FROM users ORDER BY total_points DESC, username ASC"
     );
     const users = rows.map((u, i) => {
       const rank = i + 1;
       const move = u.last_rank != null ? u.last_rank - rank : 0;
-      return { rank, username: u.username, totalPoints: u.total_points || 0, move, me: u.id === req.userId };
+      const gained = u.last_points != null ? (u.total_points || 0) - u.last_points : 0;
+      return { rank, username: u.username, totalPoints: u.total_points || 0, move, gained, me: u.id === req.userId };
     });
     res.json({ users });
   } catch (err) {
