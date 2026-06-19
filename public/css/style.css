@@ -438,6 +438,16 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .wc-footer { border-top: 1px solid var(--line); background: var(--surface); }
 .wc-footer .text-secondary { color: var(--text-secondary) !important; }
 
+/* ---- PIN input ---- */
+.pin-input {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 14px;
+}
+
 /* ---- Get-the-app banner ---- */
 .app-banner {
   background: var(--accent-soft);

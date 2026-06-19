@@ -11,6 +11,7 @@ const { computeStandings, bestThirds } = require("../utils/standings");
 const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
 const { getActualChampion } = require("../utils/championScore");
 const { localizeTeam } = require("../utils/countries");
+const { validPin, hashPin, verifyPin } = require("../utils/pin");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -49,17 +50,34 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "invalid_username" });
     }
     const lower = raw.toLowerCase();
+    const pin = (req.body.pin || "").trim();
     const token = crypto.randomBytes(24).toString("hex");
 
-    let user = await one("SELECT id, username FROM users WHERE username_lower = $1", [lower]);
+    const user = await one("SELECT id, username, pin FROM users WHERE username_lower = $1", [lower]);
+
+    // New account — must choose a PIN.
     if (!user) {
-      user = await one(
-        "INSERT INTO users (username, username_lower, api_token) VALUES ($1, $2, $3) RETURNING id, username",
-        [raw, lower, token]
+      if (!pin) return res.json({ needPin: true, mode: "create" });
+      if (!validPin(pin)) return res.status(400).json({ error: "invalid_pin" });
+      const r = await one(
+        "INSERT INTO users (username, username_lower, pin, api_token) VALUES ($1, $2, $3, $4) RETURNING id, username",
+        [raw, lower, hashPin(pin), token]
       );
-    } else {
-      await query("UPDATE users SET api_token = $1 WHERE id = $2", [token, user.id]);
+      return res.json({ token, user: { id: String(r.id), username: r.username } });
     }
+
+    // Existing account without a PIN — set one now.
+    if (!user.pin) {
+      if (!pin) return res.json({ needPin: true, mode: "set" });
+      if (!validPin(pin)) return res.status(400).json({ error: "invalid_pin" });
+      await query("UPDATE users SET pin = $1, api_token = $2 WHERE id = $3", [hashPin(pin), token, user.id]);
+      return res.json({ token, user: { id: String(user.id), username: user.username } });
+    }
+
+    // Existing account with a PIN — verify.
+    if (!pin) return res.json({ needPin: true, mode: "enter" });
+    if (!verifyPin(pin, user.pin)) return res.status(401).json({ error: "bad_pin" });
+    await query("UPDATE users SET api_token = $1 WHERE id = $2", [token, user.id]);
     res.json({ token, user: { id: String(user.id), username: user.username } });
   } catch (err) {
     console.error(err);

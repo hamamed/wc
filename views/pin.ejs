@@ -1,0 +1,68 @@
+<%- include("partials/head", { title: "PIN · WC 2026 Predictor" }) %>
+
+<%
+  const setMode = (mode === "create" || mode === "set");
+%>
+
+<div class="login-hero d-flex align-items-center">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-7 col-lg-5">
+
+        <div class="text-center mb-2">
+          <% langs.forEach(function (l) { %>
+            <a href="/lang/<%= l.code %>" class="btn btn-sm <%= l.code === lang ? 'btn-accent' : 'btn-outline-secondary' %> me-1"><%= l.code.toUpperCase() %></a>
+          <% }); %>
+        </div>
+
+        <div class="text-center mb-4">
+          <img src="/logo.png" alt="HAMA" class="login-logo-img mb-3" />
+          <p class="text-secondary mb-0">
+            <i class="fa-solid fa-user me-1"></i><span class="fw-bold"><%= username %></span>
+          </p>
+        </div>
+
+        <div class="card wc-card border-0 shadow-lg">
+          <div class="card-body p-4 p-md-5">
+            <% (error || []).forEach(function (msg) { %>
+              <div class="alert alert-danger py-2"><%= msg %></div>
+            <% }); %>
+
+            <h5 class="fw-semibold mb-2 text-center">
+              <i class="fa-solid fa-lock text-accent me-2"></i>
+              <%= setMode ? t('pin.choose') : t('pin.enter') %>
+            </h5>
+            <% if (setMode) { %>
+              <p class="text-secondary small mb-4 text-center"><%= t('pin.hint') %></p>
+            <% } %>
+
+            <form action="/login/pin" method="POST">
+              <input
+                type="password" name="pin" class="form-control pin-input mb-3"
+                inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="one-time-code"
+                placeholder="••••" autofocus required
+              />
+              <button type="submit" class="btn btn-accent btn-lg w-100 fw-semibold">
+                <%= t('pin.submit') %> <i class="fa-solid fa-arrow-right-long ms-1"></i>
+              </button>
+            </form>
+
+            <p class="text-center mt-3 mb-0">
+              <a href="/login" class="text-secondary small">&larr; <%= t('pin.back') %></a>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Only allow digits in the PIN box.
+  document.querySelector(".pin-input").addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 4);
+  });
+</script>
+
+<%- include("partials/footer") %>

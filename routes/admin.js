@@ -308,6 +308,19 @@ router.post("/users/reset/:id", requireAdmin, async (req, res) => {
   }
 });
 
+// Clear a user's PIN so they can set a new one on next login (unlock support).
+router.post("/users/resetpin/:id", requireAdmin, async (req, res) => {
+  try {
+    await query("UPDATE users SET pin = NULL WHERE id = $1", [req.params.id]);
+    req.flash("success", "PIN cleared — the user will set a new one next login.");
+    res.redirect("/admin/users");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not reset the PIN.");
+    res.redirect("/admin/users");
+  }
+});
+
 router.post("/users/delete/:id", requireAdmin, async (req, res) => {
   try {
     const c = await one("SELECT count(*)::int AS n FROM predictions WHERE user_id = $1", [req.params.id]);
