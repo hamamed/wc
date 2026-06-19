@@ -139,7 +139,15 @@
                       <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %>
                     </span>
                     <% if (m.status === "completed") { %>
-                      <span class="badge wc-badge badge-open ms-1"><%= m.prediction.pointsEarned %> <%= t('common.pts') %></span>
+                      <div class="mt-2">
+                        <% if (m.prediction.pointsEarned === 2) { %>
+                          <span class="badge wc-badge badge-done"><i class="fa-solid fa-bullseye me-1"></i><%= t('dash.exactBonus') %> <%= t('dash.earned') %> +2 <%= t('common.pts') %></span>
+                        <% } else if (m.prediction.pointsEarned === 1) { %>
+                          <span class="badge wc-badge badge-open"><i class="fa-solid fa-check me-1"></i><%= t('dash.earned') %> +1 <%= t('common.pts') %></span>
+                        <% } else { %>
+                          <span class="badge wc-badge badge-locked"><i class="fa-solid fa-xmark me-1"></i><%= t('dash.earned') %> +0 <%= t('common.pts') %></span>
+                        <% } %>
+                      </div>
                     <% } %>
                   <% } else { %>
                     <span class="text-secondary fst-italic">
