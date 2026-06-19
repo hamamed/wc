@@ -119,8 +119,27 @@ async function migrate() {
     }
   } catch (e) { /* no settings is fine */ }
 
+  // ---- recompute points so totals match the migrated predictions ----
+  await query(
+    `UPDATE predictions p SET points_earned = CASE
+       WHEN m.status = 'completed' AND m.actual_score_a IS NOT NULL AND m.actual_score_b IS NOT NULL THEN
+         CASE
+           WHEN p.predicted_score_a = m.actual_score_a AND p.predicted_score_b = m.actual_score_b THEN 2
+           WHEN sign(p.predicted_score_a - p.predicted_score_b) = sign(m.actual_score_a - m.actual_score_b) THEN 1
+           ELSE 0
+         END
+       ELSE 0
+     END
+     FROM matches m WHERE m.id = p.match_id`
+  );
+  await query(
+    `UPDATE users u SET total_points =
+       COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = u.id), 0)
+       + COALESCE(u.champion_bonus, 0)`
+  );
+
   console.log(
-    `✅ Migrated ${Object.keys(userMap).length} users, ${Object.keys(matchMap).length} matches, ${predCount} predictions.`
+    `✅ Migrated ${Object.keys(userMap).length} users, ${Object.keys(matchMap).length} matches, ${predCount} predictions (points recomputed).`
   );
   await pool.end();
   process.exit(0);
