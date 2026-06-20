@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
+const { getUserProfile } = require("../utils/userProfile");
 
 router.get("/", requireLogin, async (req, res, next) => {
   try {
@@ -31,6 +32,19 @@ router.get("/", requireLogin, async (req, res, next) => {
     res.render("leaderboard", { users });
   } catch (err) {
     next(err);
+  }
+});
+
+// ---- A user's public profile (JSON, for the leaderboard modal) -----------
+router.get("/user/:id", requireLogin, async (req, res) => {
+  try {
+    const data = await getUserProfile(req.params.id, (n) => res.locals.tn(n));
+    if (!data) return res.status(404).json({ error: "not_found" });
+    data.avatar = res.locals.avatarSrc(data.avatar);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
   }
 });
 

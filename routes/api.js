@@ -13,6 +13,7 @@ const { getActualChampion } = require("../utils/championScore");
 const { localizeTeam } = require("../utils/countries");
 const { validPin, hashPin, verifyPin } = require("../utils/pin");
 const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAvatars");
+const { getUserProfile } = require("../utils/userProfile");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -174,6 +175,7 @@ router.get("/leaderboard", apiAuth, async (req, res) => {
       const move = u.last_rank != null ? u.last_rank - rank : 0;
       const gained = u.last_points != null ? (u.total_points || 0) - u.last_points : 0;
       return {
+        id: String(u.id),
         rank, username: u.username, avatar: res.locals.avatarSrc(u.avatar),
         totalPoints: u.total_points || 0, move, gained, me: u.id === req.userId,
       };
@@ -335,6 +337,20 @@ router.get("/match/:id/predictions", apiAuth, async (req, res) => {
     )).map((p) => ({ username: p.username, a: p.a, b: p.b, pts: p.pts, avatar: res.locals.avatarSrc(p.avatar) }));
     const L = (n) => localizeTeam(n, req.query.lang || "en");
     res.json({ teamA: L(m.team_a), teamB: L(m.team_b), completed: m.status === "completed", preds });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
+// ---- A user's public profile (stats + history) ---------------------------
+router.get("/user/:id", apiAuth, async (req, res) => {
+  try {
+    const L = (n) => localizeTeam(n, req.query.lang || "en");
+    const data = await getUserProfile(req.params.id, L);
+    if (!data) return res.status(404).json({ error: "not_found" });
+    data.avatar = res.locals.avatarSrc(data.avatar);
+    res.json(data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "server" });

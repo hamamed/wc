@@ -27,7 +27,7 @@
         </thead>
         <tbody id="leaderboardBody">
           <% users.forEach(function (u) { %>
-            <tr class="<%= u.isMe ? 'row-me' : '' %>" data-name="<%= u.username.toLowerCase() %>">
+            <tr class="user-row <%= u.isMe ? 'row-me' : '' %>" data-name="<%= u.username.toLowerCase() %>" data-id="<%= u.id %>" style="cursor:pointer;">
               <td class="ps-4">
                 <% if (u.rank === 1) { %>
                   <i class="fa-solid fa-medal text-gold"></i>
@@ -70,6 +70,132 @@
     </div>
   </div>
 </div>
+
+<!-- User profile modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content wc-card border-0">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="userModalTitle"><%= t('profile.summary') %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="userLoading" class="text-center text-secondary py-4"><i class="fa-solid fa-spinner fa-spin me-1"></i> …</div>
+        <div id="userContent" class="d-none">
+          <div class="row g-2 mb-3" id="userStats"></div>
+          <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock-rotate-left text-accent me-2"></i><%= t('hist.title') %></h6>
+          <div class="table-responsive" id="userHistoryWrap">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th><%= t('hist.match') %></th>
+                  <th class="text-center"><%= t('hist.yourPick') %></th>
+                  <th class="text-center"><%= t('hist.result') %></th>
+                  <th class="text-end"><%= t('hist.points') %></th>
+                </tr>
+              </thead>
+              <tbody id="userHistory"></tbody>
+            </table>
+          </div>
+          <div id="userHistoryEmpty" class="text-center text-secondary py-3 d-none"><%= t('hist.none') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- User profile modal ----
+  (function () {
+    const LBL = {
+      points: <%- JSON.stringify(t('stat.totalPoints')) %>,
+      exact: <%- JSON.stringify(t('stat.exact')) %>,
+      outcomes: <%- JSON.stringify(t('stat.outcomes')) %>,
+      hitRate: <%- JSON.stringify(t('stat.hitRate')) %>,
+      made: <%- JSON.stringify(t('stat.made')) %>,
+      scored: <%- JSON.stringify(t('stat.scored')) %>,
+      pending: <%- JSON.stringify(t('stat.pending')) %>,
+      missed: <%- JSON.stringify(t('stat.missed')) %>,
+    };
+    const modalEl = document.getElementById("userModal");
+    const title = document.getElementById("userModalTitle");
+    const loading = document.getElementById("userLoading");
+    const content = document.getElementById("userContent");
+    const statsEl = document.getElementById("userStats");
+    const histEl = document.getElementById("userHistory");
+    const histWrap = document.getElementById("userHistoryWrap");
+    const histEmpty = document.getElementById("userHistoryEmpty");
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+    function tile(label, value, cls) {
+      return '<div class="col-6 col-md-3"><div class="stat-tile text-center p-2 rounded">' +
+        '<div class="fw-bold fs-5 ' + (cls || "text-accent") + '">' + value + '</div>' +
+        '<div class="small text-secondary">' + esc(label) + '</div></div></div>';
+    }
+    function ptsBadge(p) {
+      if (p === 2) return '<span class="badge text-bg-success">+2</span>';
+      if (p === 1) return '<span class="badge text-bg-primary">+1</span>';
+      if (p === 0) return '<span class="badge text-bg-secondary">0</span>';
+      return '<span class="text-secondary">—</span>';
+    }
+
+    document.querySelectorAll(".user-row").forEach(function (row) {
+      row.addEventListener("click", function () {
+        const id = row.dataset.id;
+        loading.classList.remove("d-none");
+        content.classList.add("d-none");
+        statsEl.innerHTML = "";
+        histEl.innerHTML = "";
+        title.innerHTML = "…";
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+        fetch("/leaderboard/user/" + id)
+          .then((r) => r.json())
+          .then(function (d) {
+            if (d.error) throw new Error(d.error);
+            const av = d.avatar
+              ? '<img src="' + esc(d.avatar) + '" class="avatar-mini" alt="" />'
+              : '<i class="fa-solid fa-user-circle text-secondary"></i>';
+            title.innerHTML = av + " " + esc(d.username);
+
+            const s = d.stats;
+            statsEl.innerHTML =
+              tile(LBL.points, s.totalPoints, "text-accent") +
+              tile(LBL.exact, s.exact, "text-success") +
+              tile(LBL.outcomes, s.outcome, "text-primary") +
+              tile(LBL.hitRate, s.hitRate + "%", "text-accent") +
+              tile(LBL.made, s.made) +
+              tile(LBL.scored, s.scored) +
+              tile(LBL.pending, s.pending) +
+              tile(LBL.missed, s.missed, "text-danger");
+
+            if (!d.history.length) {
+              histWrap.classList.add("d-none");
+              histEmpty.classList.remove("d-none");
+            } else {
+              histWrap.classList.remove("d-none");
+              histEmpty.classList.add("d-none");
+              histEl.innerHTML = d.history.map(function (h) {
+                return "<tr><td>" + esc(h.teamA) + ' <span class="text-secondary">vs</span> ' + esc(h.teamB) + "</td>" +
+                  '<td class="text-center fw-semibold">' + esc(h.pred) + "</td>" +
+                  '<td class="text-center">' + esc(h.result || "—") + "</td>" +
+                  '<td class="text-end">' + ptsBadge(h.points) + "</td></tr>";
+              }).join("");
+            }
+
+            loading.classList.add("d-none");
+            content.classList.remove("d-none");
+          })
+          .catch(function () {
+            loading.innerHTML = '<span class="text-danger">Failed to load.</span>';
+          });
+      });
+    });
+  })();
+</script>
 
 <script>
   // Client-side search filter.
