@@ -341,4 +341,50 @@ router.get("/match/:id/predictions", apiAuth, async (req, res) => {
   }
 });
 
+// ---- Community: announcements + feature polls ----------------------------
+router.get("/community", apiAuth, async (req, res) => {
+  try {
+    const [announcements, polls] = await Promise.all([
+      many("SELECT id, message FROM announcements WHERE active ORDER BY created_at DESC"),
+      many(
+        `SELECT p.id, p.question,
+                (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND choice)::int AS yes,
+                (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND NOT choice)::int AS no,
+                (SELECT choice FROM poll_votes WHERE poll_id = p.id AND user_id = $1) AS "myVote"
+         FROM polls p WHERE p.active ORDER BY p.created_at DESC`,
+        [req.userId]
+      ),
+    ]);
+    res.json({
+      announcements: announcements.map((a) => ({ id: String(a.id), message: a.message })),
+      polls: polls.map((p) => ({
+        id: String(p.id), question: p.question,
+        yes: p.yes, no: p.no,
+        myVote: p.myVote === null || p.myVote === undefined ? null : !!p.myVote,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
+// ---- Vote on a poll (users may change their vote) ------------------------
+router.post("/vote", apiAuth, async (req, res) => {
+  try {
+    const pollId = req.body.pollId;
+    if (!pollId) return res.status(400).json({ error: "invalid" });
+    const choice = req.body.choice === "yes" || req.body.choice === true;
+    await query(
+      `INSERT INTO poll_votes (poll_id, user_id, choice) VALUES ($1, $2, $3)
+       ON CONFLICT (poll_id, user_id) DO UPDATE SET choice = EXCLUDED.choice`,
+      [pollId, req.userId, choice]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
 module.exports = router;
