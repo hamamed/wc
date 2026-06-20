@@ -21,8 +21,10 @@ async function getUserProfile(userId, L = (n) => n) {
   ]);
   if (!user) return null;
 
+  const now = Date.now();
   const stats = { totalPoints: user.totalPoints || 0, made: 0, scored: 0, pending: 0, exact: 0, outcome: 0, missed: 0 };
-  const history = rows.map((p) => {
+  const history = [];
+  rows.forEach((p) => {
     stats.made++;
     const completed = p.status === "completed";
     if (completed) {
@@ -33,13 +35,17 @@ async function getUserProfile(userId, L = (n) => n) {
     } else {
       stats.pending++;
     }
-    return {
+    // Only reveal predictions for matches that have already kicked off —
+    // upcoming picks stay private until the match starts.
+    const kickoff = new Date(p.kickoffTime).getTime();
+    if (now < kickoff) return;
+    history.push({
       teamA: L(p.teamA), teamB: L(p.teamB),
-      kickoff: new Date(p.kickoffTime).getTime(),
+      kickoff,
       pred: p.a + "-" + p.b,
       result: completed ? p.actualA + "-" + p.actualB : null,
       points: completed ? p.pts : null,
-    };
+    });
   });
   history.sort((x, y) => y.kickoff - x.kickoff);
   stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100) : 0;
