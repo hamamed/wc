@@ -43,6 +43,12 @@ async function apiAuth(req, res, next) {
   }
 }
 
+// ---- Latest app version (public — for the in-app "update" prompt) --------
+const APP_VERSION = process.env.APP_VERSION || "1.0.0";
+router.get("/app-version", (req, res) => {
+  res.json({ version: APP_VERSION, url: "https://koydam.com/download/hama.apk" });
+});
+
 // ---- Login / sign-up -----------------------------------------------------
 router.post("/login", async (req, res) => {
   try {
