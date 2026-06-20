@@ -70,12 +70,23 @@ router.get("/", requireAdmin, async (req, res, next) => {
     );
     const actualChampion = await getActualChampion();
     const users = await many("SELECT id, username FROM users ORDER BY username ASC");
+    const announcements = await many(
+      'SELECT id, message, active, created_at AS "createdAt" FROM announcements ORDER BY created_at DESC'
+    );
+    const polls = await many(
+      `SELECT p.id, p.question, p.active, p.created_at AS "createdAt",
+              (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND choice)::int AS yes,
+              (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND NOT choice)::int AS no
+       FROM polls p ORDER BY p.created_at DESC`
+    );
     res.render("admin", {
       matches,
       teams: teamsFromMatches(matches),
       actualChampion,
       championBonus: BONUS,
       users,
+      announcements,
+      polls,
     });
   } catch (err) {
     next(err);
@@ -280,6 +291,54 @@ router.post("/import", requireAdmin, async (req, res) => {
     req.flash("error", "API sync failed: " + err.message);
     res.redirect("/admin");
   }
+});
+
+// ---- Announcements -------------------------------------------------------
+router.post("/announcement", requireAdmin, async (req, res) => {
+  try {
+    const msg = (req.body.message || "").trim();
+    if (!msg) { req.flash("error", "Announcement message is required."); return res.redirect("/admin"); }
+    await query("INSERT INTO announcements (message) VALUES ($1)", [msg.slice(0, 500)]);
+    req.flash("success", "Announcement posted.");
+    res.redirect("/admin");
+  } catch (err) { console.error(err); req.flash("error", "Could not post the announcement."); res.redirect("/admin"); }
+});
+router.post("/announcement/:id/toggle", requireAdmin, async (req, res) => {
+  try {
+    await query("UPDATE announcements SET active = NOT active WHERE id = $1", [req.params.id]);
+    res.redirect("/admin");
+  } catch (err) { console.error(err); res.redirect("/admin"); }
+});
+router.post("/announcement/:id/delete", requireAdmin, async (req, res) => {
+  try {
+    await query("DELETE FROM announcements WHERE id = $1", [req.params.id]);
+    req.flash("success", "Announcement deleted.");
+    res.redirect("/admin");
+  } catch (err) { console.error(err); res.redirect("/admin"); }
+});
+
+// ---- Polls ---------------------------------------------------------------
+router.post("/poll", requireAdmin, async (req, res) => {
+  try {
+    const q = (req.body.question || "").trim();
+    if (!q) { req.flash("error", "Poll question is required."); return res.redirect("/admin"); }
+    await query("INSERT INTO polls (question) VALUES ($1)", [q.slice(0, 300)]);
+    req.flash("success", "Poll created.");
+    res.redirect("/admin");
+  } catch (err) { console.error(err); req.flash("error", "Could not create the poll."); res.redirect("/admin"); }
+});
+router.post("/poll/:id/toggle", requireAdmin, async (req, res) => {
+  try {
+    await query("UPDATE polls SET active = NOT active WHERE id = $1", [req.params.id]);
+    res.redirect("/admin");
+  } catch (err) { console.error(err); res.redirect("/admin"); }
+});
+router.post("/poll/:id/delete", requireAdmin, async (req, res) => {
+  try {
+    await query("DELETE FROM polls WHERE id = $1", [req.params.id]);
+    req.flash("success", "Poll deleted.");
+    res.redirect("/admin");
+  } catch (err) { console.error(err); res.redirect("/admin"); }
 });
 
 // ---- User management -----------------------------------------------------

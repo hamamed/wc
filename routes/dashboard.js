@@ -73,9 +73,37 @@ router.get("/", requireLogin, async (req, res, next) => {
       };
     });
 
-    res.render("dashboard", { matches });
+    const [announcements, polls] = await Promise.all([
+      many("SELECT id, message FROM announcements WHERE active ORDER BY created_at DESC"),
+      many(
+        `SELECT p.id, p.question,
+                (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND choice)::int AS yes,
+                (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND NOT choice)::int AS no,
+                (SELECT choice FROM poll_votes WHERE poll_id = p.id AND user_id = $1) AS "myVote"
+         FROM polls p WHERE p.active ORDER BY p.created_at DESC`,
+        [userId]
+      ),
+    ]);
+
+    res.render("dashboard", { matches, announcements, polls });
   } catch (err) {
     next(err);
+  }
+});
+
+// ---- Vote on a poll ------------------------------------------------------
+router.post("/vote/:pollId", requireLogin, async (req, res) => {
+  try {
+    const choice = req.body.choice === "yes";
+    await query(
+      `INSERT INTO poll_votes (poll_id, user_id, choice) VALUES ($1, $2, $3)
+       ON CONFLICT (poll_id, user_id) DO UPDATE SET choice = EXCLUDED.choice`,
+      [req.params.pollId, req.session.user.id, choice]
+    );
+    res.redirect("/dashboard");
+  } catch (err) {
+    console.error(err);
+    res.redirect("/dashboard");
   }
 });
 

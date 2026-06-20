@@ -54,3 +54,24 @@ CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
   value JSONB
 );
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id         BIGSERIAL PRIMARY KEY,
+  message    TEXT NOT NULL,
+  active     BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS polls (
+  id         BIGSERIAL PRIMARY KEY,
+  question   TEXT NOT NULL,
+  active     BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+  poll_id BIGINT NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  choice  BOOLEAN NOT NULL,
+  PRIMARY KEY (poll_id, user_id)
+);
