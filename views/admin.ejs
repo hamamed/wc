@@ -9,6 +9,12 @@
       hour: "2-digit", minute: "2-digit", hour12: false
     });
   }
+  const EMOJIS = ["⚽","🏆","🥇","🔥","🎉","📣","🎯","⭐","✅","❌","👍","👎","❤️","⚡","😀","🤔","🇲🇦","🇫🇷","🇧🇷","🇦🇷"];
+  function emojiBar(targetId) {
+    return '<div class="emoji-toolbar" data-target="' + targetId + '">' +
+      EMOJIS.map(function (e) { return '<button type="button" class="emoji-btn">' + e + '</button>'; }).join("") +
+      '</div>';
+  }
 %>
 
 <div class="container py-4">
@@ -74,11 +80,10 @@
     <div class="card-body">
       <h6 class="fw-semibold mb-1"><i class="fa-solid fa-bullhorn text-accent me-2"></i>Announcements</h6>
       <p class="text-secondary small mb-3">Active announcements show as a banner on every user's dashboard.</p>
-      <form action="/admin/announcement" method="POST" class="row g-2 align-items-end mb-3">
-        <div class="col-12 col-md">
-          <textarea name="message" class="form-control" rows="2" maxlength="500" placeholder="Write an announcement…" required></textarea>
-        </div>
-        <div class="col-12 col-md-auto d-grid">
+      <form action="/admin/announcement" method="POST" class="mb-3">
+        <%- emojiBar("annMsg") %>
+        <textarea id="annMsg" name="message" class="form-control emoji-input" rows="3" maxlength="500" placeholder="Write an announcement…  (emojis + line breaks OK)" required dir="auto"></textarea>
+        <div class="d-grid d-md-block mt-2">
           <button class="btn btn-accent fw-semibold">Post</button>
         </div>
       </form>
@@ -87,7 +92,7 @@
           <% announcements.forEach(function (a) { %>
             <li class="d-flex align-items-start gap-2 py-2 border-top">
               <span class="badge wc-badge <%= a.active ? 'badge-open' : 'badge-locked' %>"><%= a.active ? 'Active' : 'Hidden' %></span>
-              <span class="flex-grow-1 small"><%= a.message %></span>
+              <span class="flex-grow-1 small pre-line" dir="auto"><%= a.message %></span>
               <form action="/admin/announcement/<%= a.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Show/hide"><i class="fa-solid fa-eye"></i></button></form>
               <form action="/admin/announcement/<%= a.id %>/delete" method="POST" onsubmit="return confirm('Delete this announcement?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
             </li>
@@ -102,11 +107,10 @@
     <div class="card-body">
       <h6 class="fw-semibold mb-1"><i class="fa-solid fa-square-poll-vertical text-accent me-2"></i>Feature polls</h6>
       <p class="text-secondary small mb-3">Ask users a Yes/No question (e.g. "Add private leagues?"). Active polls show on their dashboard.</p>
-      <form action="/admin/poll" method="POST" class="row g-2 align-items-end mb-3">
-        <div class="col-12 col-md">
-          <input name="question" class="form-control" maxlength="300" placeholder="e.g. Should we add private leagues?" required />
-        </div>
-        <div class="col-12 col-md-auto d-grid">
+      <form action="/admin/poll" method="POST" class="mb-3">
+        <%- emojiBar("pollQ") %>
+        <textarea id="pollQ" name="question" class="form-control emoji-input" rows="3" maxlength="500" placeholder="e.g. Should we change scoring?  (emojis + line breaks OK)" required dir="auto"></textarea>
+        <div class="d-grid d-md-block mt-2">
           <button class="btn btn-accent fw-semibold">Create poll</button>
         </div>
       </form>
@@ -115,7 +119,7 @@
           <% polls.forEach(function (p) { %>
             <li class="d-flex align-items-center gap-2 py-2 border-top">
               <span class="badge wc-badge <%= p.active ? 'badge-open' : 'badge-locked' %>"><%= p.active ? 'Active' : 'Closed' %></span>
-              <span class="flex-grow-1 small"><%= p.question %></span>
+              <span class="flex-grow-1 small pre-line" dir="auto"><%= p.question %></span>
               <span class="small text-success fw-bold">✓ <%= p.yes %></span>
               <span class="small text-danger fw-bold">✗ <%= p.no %></span>
               <form action="/admin/poll/<%= p.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Open/close"><i class="fa-solid fa-power-off"></i></button></form>
@@ -329,6 +333,19 @@
 
     refresh();
   })();
+
+  // Emoji editor — insert the clicked emoji at the cursor in the target textarea.
+  document.querySelectorAll(".emoji-toolbar .emoji-btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      const ta = document.getElementById(b.closest(".emoji-toolbar").dataset.target);
+      if (!ta) return;
+      const s = ta.selectionStart, e = ta.selectionEnd, em = b.textContent;
+      ta.value = ta.value.slice(0, s) + em + ta.value.slice(e);
+      ta.focus();
+      const pos = s + em.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  });
 </script>
 
 <%- include("partials/footer") %>

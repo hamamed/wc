@@ -322,7 +322,7 @@ router.post("/poll", requireAdmin, async (req, res) => {
   try {
     const q = (req.body.question || "").trim();
     if (!q) { req.flash("error", "Poll question is required."); return res.redirect("/admin"); }
-    await query("INSERT INTO polls (question) VALUES ($1)", [q.slice(0, 300)]);
+    await query("INSERT INTO polls (question) VALUES ($1)", [q.slice(0, 500)]);
     req.flash("success", "Poll created.");
     res.redirect("/admin");
   } catch (err) { console.error(err); req.flash("error", "Could not create the poll."); res.redirect("/admin"); }

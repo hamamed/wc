@@ -438,6 +438,22 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .wc-footer { border-top: 1px solid var(--line); background: var(--surface); }
 .wc-footer .text-secondary { color: var(--text-secondary) !important; }
 
+/* ---- Emoji editor (admin announcements / polls) ---- */
+.emoji-toolbar {
+  display: flex; flex-wrap: wrap; gap: 2px;
+  border: 1px solid var(--line); border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  background: var(--surface-2); padding: 4px;
+}
+.emoji-btn {
+  border: none; background: transparent; cursor: pointer;
+  font-size: 1.15rem; line-height: 1; padding: 4px 6px; border-radius: 8px;
+}
+.emoji-btn:hover { background: var(--accent-soft); }
+.emoji-input { border-radius: 0 0 12px 12px !important; }
+/* Preserve the admin's line breaks when shown to users */
+.pre-line { white-space: pre-line; }
+
 /* ---- Privacy: blur the user's own predictions ---- */
 .preds-hidden .user-pred {
   filter: blur(7px);
