@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { one, many } = require("../config/db");
+const { one, many, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 
 const LOCK_MS = 30 * 60 * 1000;
@@ -95,9 +95,10 @@ router.get("/", requireLogin, async (req, res, next) => {
 router.post("/vote/:pollId", requireLogin, async (req, res) => {
   try {
     const choice = req.body.choice === "yes";
+    // One vote per user — once cast it can't be changed.
     await query(
       `INSERT INTO poll_votes (poll_id, user_id, choice) VALUES ($1, $2, $3)
-       ON CONFLICT (poll_id, user_id) DO UPDATE SET choice = EXCLUDED.choice`,
+       ON CONFLICT (poll_id, user_id) DO NOTHING`,
       [req.params.pollId, req.session.user.id, choice]
     );
     res.redirect("/dashboard");
