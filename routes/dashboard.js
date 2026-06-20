@@ -95,10 +95,10 @@ router.get("/", requireLogin, async (req, res, next) => {
 router.post("/vote/:pollId", requireLogin, async (req, res) => {
   try {
     const choice = req.body.choice === "yes";
-    // One vote per user — once cast it can't be changed.
+    // Users may change their vote — keep the latest choice.
     await query(
       `INSERT INTO poll_votes (poll_id, user_id, choice) VALUES ($1, $2, $3)
-       ON CONFLICT (poll_id, user_id) DO NOTHING`,
+       ON CONFLICT (poll_id, user_id) DO UPDATE SET choice = EXCLUDED.choice`,
       [req.params.pollId, req.session.user.id, choice]
     );
     res.redirect("/dashboard");
