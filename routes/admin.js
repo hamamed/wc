@@ -339,6 +339,15 @@ router.post("/poll", requireAdmin, async (req, res) => {
     res.redirect("/admin");
   } catch (err) { console.error(err); req.flash("error", "Could not create the poll."); res.redirect("/admin"); }
 });
+router.post("/poll/:id/edit", requireAdmin, async (req, res) => {
+  try {
+    const q = (req.body.question || "").trim();
+    if (!q) { req.flash("error", "Poll question is required."); return res.redirect("/admin"); }
+    await query("UPDATE polls SET question = $1 WHERE id = $2", [q.slice(0, 500), req.params.id]);
+    req.flash("success", "Poll updated.");
+    res.redirect("/admin");
+  } catch (err) { console.error(err); req.flash("error", "Could not update the poll."); res.redirect("/admin"); }
+});
 router.post("/poll/:id/toggle", requireAdmin, async (req, res) => {
   try {
     await query("UPDATE polls SET active = NOT active WHERE id = $1", [req.params.id]);
