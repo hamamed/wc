@@ -25,6 +25,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ---- Mobile app's web assets (over-the-air updates) ----------------------
+// The installed APK loads its UI from here, so shipping an update is just
+// editing these files on the server. Point APP_DIR at the hama-app `www`
+// folder (e.g. /root/hama-app/www); `no-cache` makes the app revalidate so
+// changes appear on the next launch.
+if (process.env.APP_DIR) {
+  app.use(
+    "/app",
+    express.static(process.env.APP_DIR, {
+      etag: true,
+      setHeaders: (res) => res.set("Cache-Control", "no-cache"),
+    })
+  );
+}
+
 app.use(
   session({
     // Persist sessions in PostgreSQL so users stay logged in across restarts.
