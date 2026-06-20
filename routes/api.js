@@ -31,7 +31,7 @@ async function apiAuth(req, res, next) {
     const token = h.startsWith("Bearer ") ? h.slice(7) : null;
     if (!token) return res.status(401).json({ error: "unauthorized" });
     const u = await one(
-      `SELECT id, username, avatar, total_points, champion_pick FROM users WHERE api_token = $1`,
+      `SELECT id, username, avatar, total_points, champion_pick, is_admin FROM users WHERE api_token = $1`,
       [token]
     );
     if (!u) return res.status(401).json({ error: "unauthorized" });
@@ -43,6 +43,15 @@ async function apiAuth(req, res, next) {
     res.status(500).json({ error: "server" });
   }
 }
+
+// ---- Who am I (incl. admin role, for showing the in-app admin panel) -----
+router.get("/me", apiAuth, (req, res) => {
+  res.json({
+    id: String(req.userId),
+    username: req.userData.username,
+    isAdmin: !!req.userData.is_admin,
+  });
+});
 
 // ---- Latest app version (public — for the in-app "update" prompt) --------
 const APP_VERSION = process.env.APP_VERSION || "1.0.0";

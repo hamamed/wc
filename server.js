@@ -97,6 +97,7 @@ app.get("/lang/:code", (req, res) => {
 });
 
 // ---- Routes --------------------------------------------------------------
+app.use("/api/admin", require("./routes/apiAdmin"));
 app.use("/api", require("./routes/api"));
 app.use("/", require("./routes/auth"));
 app.use("/dashboard", require("./routes/dashboard"));
