@@ -5,7 +5,7 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const flash = require("connect-flash");
 const path = require("path");
-const { pool } = require("./config/db");
+const { pool, one } = require("./config/db");
 const { t: translate, LANGS: i18nLangs } = require("./utils/i18n");
 const { localizeTeam } = require("./utils/countries");
 
@@ -39,11 +39,22 @@ app.use(
 app.use(flash());
 
 // Expose common values to every view.
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
+  // Refresh the logged-in user's admin role from the DB so granting/revoking
+  // admin takes effect immediately (no re-login needed).
+  let userIsAdmin = false;
+  if (req.session.user) {
+    try {
+      const row = await one("SELECT is_admin FROM users WHERE id = $1", [req.session.user.id]);
+      userIsAdmin = !!(row && row.is_admin);
+    } catch (_) { /* ignore — treat as non-admin */ }
+  }
+
   res.locals.currentUser = req.session.user || null;
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
-  res.locals.isAdmin = !!req.session.isAdmin;
+  res.locals.userIsAdmin = userIsAdmin;                                  // this user has an admin role
+  res.locals.isAdmin = !!req.session.isAdmin || userIsAdmin;            // can reach the admin panel
   res.locals.currentPath = req.path;
 
   // Language / i18n — prefer session, fall back to a persistent cookie so the

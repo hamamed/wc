@@ -49,6 +49,9 @@
                   <button class="btn btn-outline-secondary btn-sm" title="Rename">
                     <i class="fa-solid fa-pen"></i>
                   </button>
+                  <% if (u.isAdmin) { %>
+                    <span class="badge text-bg-warning"><i class="fa-solid fa-shield-halved me-1"></i>Admin</span>
+                  <% } %>
                 </form>
               </td>
               <td class="text-secondary small"><%= fmtDate(u.createdAt) %></td>
@@ -62,6 +65,13 @@
                           data-id="<%= u.id %>" data-name="<%= u.username %>" title="View predictions">
                     <i class="fa-solid fa-list-check"></i>
                   </button>
+                  <form action="/admin/users/admin/<%= u.id %>" method="POST"
+                        onsubmit="return confirm('<%= u.isAdmin ? "Remove admin access from this user?" : "Grant admin access to this user?" %>');">
+                    <button class="btn btn-sm <%= u.isAdmin ? 'btn-warning' : 'btn-outline-warning' %>"
+                            title="<%= u.isAdmin ? 'Revoke admin' : 'Make admin' %>">
+                      <i class="fa-solid fa-shield-halved"></i>
+                    </button>
+                  </form>
                   <form action="/admin/users/resetpin/<%= u.id %>" method="POST"
                         onsubmit="return confirm('Clear this user\'s PIN? They will set a new one next login.');">
                     <button class="btn btn-outline-secondary btn-sm" title="Reset PIN (unlock)">

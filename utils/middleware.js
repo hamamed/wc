@@ -7,13 +7,14 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// Guard the admin panel. Admin access is granted by an ADMIN_PASSWORD prompt
-// (see routes/admin.js) which sets req.session.isAdmin.
+// Guard the admin panel. Access is granted either by the ADMIN_PASSWORD prompt
+// (sets req.session.isAdmin) or by a user account flagged as admin
+// (res.locals.userIsAdmin, computed per-request in server.js).
 function requireAdmin(req, res, next) {
-  if (!req.session.isAdmin) {
-    return res.redirect("/admin/login");
+  if (req.session.isAdmin || res.locals.userIsAdmin) {
+    return next();
   }
-  next();
+  return res.redirect("/admin/login");
 }
 
 module.exports = { requireLogin, requireAdmin };

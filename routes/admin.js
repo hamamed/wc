@@ -367,7 +367,7 @@ router.get("/users", requireAdmin, async (req, res, next) => {
   try {
     const rows = await many(
       `SELECT id, username, total_points AS "totalPoints", created_at AS "createdAt",
-              champion_pick AS "championPick"
+              champion_pick AS "championPick", is_admin AS "isAdmin"
        FROM users ORDER BY created_at DESC`
     );
     const users = rows.map((u) => ({
@@ -376,6 +376,7 @@ router.get("/users", requireAdmin, async (req, res, next) => {
       totalPoints: u.totalPoints || 0,
       createdAt: u.createdAt ? new Date(u.createdAt) : null,
       championPick: u.championPick || null,
+      isAdmin: !!u.isAdmin,
     }));
     res.render("admin-users", { users });
   } catch (err) {
@@ -433,6 +434,19 @@ router.post("/users/rename/:id", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     req.flash("error", "Could not rename the user.");
+    res.redirect("/admin/users");
+  }
+});
+
+// Grant or revoke a user's admin role.
+router.post("/users/admin/:id", requireAdmin, async (req, res) => {
+  try {
+    const u = await one("UPDATE users SET is_admin = NOT is_admin WHERE id = $1 RETURNING username, is_admin", [req.params.id]);
+    if (u) req.flash("success", u.is_admin ? `${u.username} is now an admin.` : `${u.username} is no longer an admin.`);
+    res.redirect("/admin/users");
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Could not change the admin role.");
     res.redirect("/admin/users");
   }
 });

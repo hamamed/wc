@@ -15,8 +15,11 @@ CREATE TABLE IF NOT EXISTS users (
   last_rank          INTEGER,
   last_points        INTEGER,
   pin                TEXT,
+  is_admin           BOOLEAN NOT NULL DEFAULT false,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Add the admin flag to pre-existing databases.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS users_points_idx ON users (total_points DESC);
 CREATE INDEX IF NOT EXISTS users_token_idx  ON users (api_token);
 

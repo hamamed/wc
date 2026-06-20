@@ -59,6 +59,13 @@
               <i class="fa-solid fa-user me-1"></i> <%= t('nav.profile') %>
             </a>
           </li>
+          <% if (userIsAdmin) { %>
+            <li class="nav-item">
+              <a class="nav-link text-accent fw-semibold" href="/admin">
+                <i class="fa-solid fa-screwdriver-wrench me-1"></i> Admin
+              </a>
+            </li>
+          <% } %>
           <li class="nav-item ms-lg-2">
             <a href="/profile" class="badge wc-userchip text-decoration-none">
               <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
@@ -104,6 +111,11 @@
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
     <i class="fa-solid fa-user"></i><span><%= t('nav.profile') %></span>
   </a>
+  <% if (userIsAdmin) { %>
+    <a href="/admin" class="bottom-nav-item <%= navActive('/admin') %>">
+      <i class="fa-solid fa-screwdriver-wrench"></i><span>Admin</span>
+    </a>
+  <% } %>
 </nav>
 <% } %>
 
