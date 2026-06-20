@@ -17,10 +17,15 @@
       <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-accent me-2"></i><%= t('dash.title') %></h2>
       <p class="text-secondary mb-0"><%= t('dash.subtitle') %></p>
     </div>
-    <div class="legend small text-secondary d-flex gap-3 flex-wrap">
-      <span><span class="dot dot-open"></span> <%= t('dash.open') %></span>
-      <span><span class="dot dot-locked"></span> <%= t('dash.locked') %></span>
-      <span><span class="dot dot-done"></span> <%= t('dash.completed') %></span>
+    <div class="d-flex align-items-center gap-3">
+      <div class="legend small text-secondary d-flex gap-3 flex-wrap">
+        <span><span class="dot dot-open"></span> <%= t('dash.open') %></span>
+        <span><span class="dot dot-locked"></span> <%= t('dash.locked') %></span>
+        <span><span class="dot dot-done"></span> <%= t('dash.completed') %></span>
+      </div>
+      <button id="privacyToggle" type="button" class="btn btn-outline-secondary btn-sm" title="<%= t('dash.privacy') %>">
+        <i class="fa-solid fa-eye"></i>
+      </button>
     </div>
   </div>
 
@@ -110,12 +115,12 @@
                 <form action="/dashboard/predict/<%= m.id %>" method="POST">
                   <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
                     <input type="number" name="scoreA" min="0" max="99"
-                           class="form-control score-input text-center"
+                           class="form-control score-input text-center user-pred"
                            value="<%= m.prediction ? m.prediction.predictedScoreA : '' %>"
                            placeholder="0" required />
                     <span class="fw-bold text-secondary">-</span>
                     <input type="number" name="scoreB" min="0" max="99"
-                           class="form-control score-input text-center"
+                           class="form-control score-input text-center user-pred"
                            value="<%= m.prediction ? m.prediction.predictedScoreB : '' %>"
                            placeholder="0" required />
                   </div>
@@ -127,7 +132,7 @@
                 <% if (m.prediction) { %>
                   <p class="text-center text-secondary small mt-2 mb-0">
                     <i class="fa-solid fa-pen me-1"></i><%= t('dash.yourPick') %>:
-                    <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %> (<%= t('dash.editable') %>)
+                    <span class="user-pred"><%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %></span> (<%= t('dash.editable') %>)
                   </p>
                 <% } %>
               <% } else { %>
@@ -135,7 +140,7 @@
                 <div class="text-center small">
                   <% if (m.prediction) { %>
                     <span class="text-secondary"><%= t('dash.yourPick') %>:</span>
-                    <span class="fw-semibold">
+                    <span class="fw-semibold user-pred">
                       <%= m.prediction.predictedScoreA %>-<%= m.prediction.predictedScoreB %>
                     </span>
                     <% if (m.status === "completed") { %>
@@ -284,6 +289,23 @@
   if (document.querySelector(".badge-live")) {
     setTimeout(function () { location.reload(); }, 45000);
   }
+
+  // Privacy toggle — blur/unblur the user's own predictions (remembered).
+  (function () {
+    const btn = document.getElementById("privacyToggle");
+    if (!btn) return;
+    function apply(hidden) {
+      document.body.classList.toggle("preds-hidden", hidden);
+      btn.querySelector("i").className = hidden ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    }
+    let hidden = localStorage.getItem("predsHidden") === "1";
+    apply(hidden);
+    btn.addEventListener("click", function () {
+      hidden = !hidden;
+      localStorage.setItem("predsHidden", hidden ? "1" : "0");
+      apply(hidden);
+    });
+  })();
 </script>
 
 <!-- Smooth AJAX prediction saving (no page reload) -->
