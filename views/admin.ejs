@@ -164,13 +164,29 @@
           <% if (polls.length) { %>
             <ul class="list-unstyled mb-0">
               <% polls.forEach(function (p) { %>
-                <li class="d-flex align-items-center gap-2 py-2 border-top">
-                  <span class="badge wc-badge <%= p.active ? 'badge-open' : 'badge-locked' %>"><%= p.active ? 'Active' : 'Closed' %></span>
-                  <span class="flex-grow-1 small pre-line" dir="auto"><%= p.question %></span>
-                  <span class="small text-success fw-bold">✓ <%= p.yes %></span>
-                  <span class="small text-danger fw-bold">✗ <%= p.no %></span>
-                  <form action="/admin/poll/<%= p.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Open/close"><i class="fa-solid fa-power-off"></i></button></form>
-                  <form action="/admin/poll/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this poll and its votes?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
+                <li class="py-2 border-top">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge wc-badge <%= p.active ? 'badge-open' : 'badge-locked' %>"><%= p.active ? 'Active' : 'Closed' %></span>
+                    <span class="flex-grow-1 small pre-line" dir="auto"><%= p.question %></span>
+                    <span class="small text-success fw-bold">✓ <%= p.yes %></span>
+                    <span class="small text-danger fw-bold">✗ <%= p.no %></span>
+                    <% if (p.voters.length) { %>
+                      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#voters-<%= p.id %>" title="Show voters"><i class="fa-solid fa-users"></i></button>
+                    <% } %>
+                    <form action="/admin/poll/<%= p.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Open/close"><i class="fa-solid fa-power-off"></i></button></form>
+                    <form action="/admin/poll/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this poll and its votes?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
+                  </div>
+                  <% if (p.voters.length) { %>
+                    <div class="collapse mt-2" id="voters-<%= p.id %>">
+                      <div class="d-flex flex-wrap gap-2">
+                        <% p.voters.forEach(function (v) { %>
+                          <span class="badge rounded-pill <%= v.choice ? 'text-bg-success' : 'text-bg-danger' %>">
+                            <i class="fa-solid <%= v.choice ? 'fa-check' : 'fa-xmark' %> me-1"></i><%= v.username %>
+                          </span>
+                        <% }); %>
+                      </div>
+                    </div>
+                  <% } %>
                 </li>
               <% }); %>
             </ul>

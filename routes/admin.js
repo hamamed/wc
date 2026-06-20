@@ -79,6 +79,18 @@ router.get("/", requireAdmin, async (req, res, next) => {
               (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id AND NOT choice)::int AS no
        FROM polls p ORDER BY p.created_at DESC`
     );
+    // Who voted on each poll, and how — grouped by poll for the admin view.
+    const voteRows = await many(
+      `SELECT v.poll_id AS "pollId", u.username, v.choice
+       FROM poll_votes v JOIN users u ON u.id = v.user_id
+       ORDER BY v.choice DESC, lower(u.username) ASC`
+    );
+    const votersByPoll = {};
+    voteRows.forEach((v) => {
+      (votersByPoll[v.pollId] = votersByPoll[v.pollId] || []).push(v);
+    });
+    polls.forEach((p) => { p.voters = votersByPoll[p.id] || []; });
+
     res.render("admin", {
       matches,
       teams: teamsFromMatches(matches),
