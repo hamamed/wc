@@ -12,6 +12,7 @@ const { LOCK_MS, teamsFromMatches } = require("../utils/champion");
 const { getActualChampion } = require("../utils/championScore");
 const { localizeTeam } = require("../utils/countries");
 const { validPin, hashPin, verifyPin } = require("../utils/pin");
+const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAvatars");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -29,7 +30,7 @@ async function apiAuth(req, res, next) {
     const token = h.startsWith("Bearer ") ? h.slice(7) : null;
     if (!token) return res.status(401).json({ error: "unauthorized" });
     const u = await one(
-      `SELECT id, username, total_points, champion_pick FROM users WHERE api_token = $1`,
+      `SELECT id, username, avatar, total_points, champion_pick FROM users WHERE api_token = $1`,
       [token]
     );
     if (!u) return res.status(401).json({ error: "unauthorized" });
@@ -160,13 +161,16 @@ router.post("/predict", apiAuth, async (req, res) => {
 router.get("/leaderboard", apiAuth, async (req, res) => {
   try {
     const rows = await many(
-      "SELECT id, username, total_points, last_rank, last_points FROM users ORDER BY total_points DESC, username ASC"
+      "SELECT id, username, avatar, total_points, last_rank, last_points FROM users ORDER BY total_points DESC, username ASC"
     );
     const users = rows.map((u, i) => {
       const rank = i + 1;
       const move = u.last_rank != null ? u.last_rank - rank : 0;
       const gained = u.last_points != null ? (u.total_points || 0) - u.last_points : 0;
-      return { rank, username: u.username, totalPoints: u.total_points || 0, move, gained, me: u.id === req.userId };
+      return {
+        rank, username: u.username, avatar: res.locals.avatarSrc(u.avatar),
+        totalPoints: u.total_points || 0, move, gained, me: u.id === req.userId,
+      };
     });
     res.json({ users });
   } catch (err) {
@@ -238,6 +242,8 @@ router.get("/profile", apiAuth, async (req, res) => {
 
     res.json({
       username: req.userData.username,
+      avatar: res.locals.avatarSrc(req.userData.avatar),
+      flags: flagOptions(),
       stats, history,
       teams: teamsFromMatches(allMatches).map((t) => ({ value: t.name, label: L(t.name), flag: t.flag })),
       championPick: req.userData.champion_pick || null,
@@ -277,6 +283,36 @@ router.post("/champion", apiAuth, async (req, res) => {
   }
 });
 
+// ---- Change username -----------------------------------------------------
+router.post("/username", apiAuth, async (req, res) => {
+  try {
+    const raw = (req.body.username || "").trim();
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(raw)) return res.status(400).json({ error: "invalid" });
+    const lower = raw.toLowerCase();
+    const clash = await one("SELECT id FROM users WHERE username_lower = $1", [lower]);
+    if (clash && clash.id !== req.userId) return res.status(409).json({ error: "taken" });
+    await query("UPDATE users SET username = $1, username_lower = $2 WHERE id = $3", [raw, lower, req.userId]);
+    res.json({ ok: true, username: raw });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
+// ---- Set the profile picture to a chosen flag ----------------------------
+router.post("/avatar", apiAuth, async (req, res) => {
+  try {
+    const code = (req.body.avatar || "").trim();
+    if (!isValidCode(code)) return res.status(400).json({ error: "invalid" });
+    const url = flagUrl(code);
+    await query("UPDATE users SET avatar = $1 WHERE id = $2", [url, req.userId]);
+    res.json({ ok: true, avatar: url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
 // ---- All predictions for a locked match ----------------------------------
 router.get("/match/:id/predictions", apiAuth, async (req, res) => {
   try {
@@ -285,12 +321,12 @@ router.get("/match/:id/predictions", apiAuth, async (req, res) => {
     const k = new Date(m.kickoff_time).getTime();
     const locked = Date.now() >= k - LOCK || m.status === "completed";
     if (!locked) return res.status(403).json({ error: "locked" });
-    const preds = await many(
-      `SELECT u.username, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
+    const preds = (await many(
+      `SELECT u.username, u.avatar, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
        FROM predictions p JOIN users u ON u.id = p.user_id
        WHERE p.match_id = $1 ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
       [req.params.id]
-    );
+    )).map((p) => ({ username: p.username, a: p.a, b: p.b, pts: p.pts, avatar: res.locals.avatarSrc(p.avatar) }));
     const L = (n) => localizeTeam(n, req.query.lang || "en");
     res.json({ teamA: L(m.team_a), teamB: L(m.team_b), completed: m.status === "completed", preds });
   } catch (err) {
