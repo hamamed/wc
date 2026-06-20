@@ -33,164 +33,238 @@
     </div>
   </div>
 
-  <!-- Import fixtures from the football API -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <div>
-        <h6 class="fw-semibold mb-1"><i class="fa-solid fa-cloud-arrow-down text-accent me-2"></i>Import World Cup fixtures</h6>
-        <p class="text-secondary small mb-0">
-          Pulls matches &amp; flags from the football API. Finished matches are auto-scored.
-        </p>
+  <!-- Action launcher: each tool opens in its own modal -->
+  <div class="row g-2 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#matchModal">
+        <i class="fa-solid fa-plus"></i><span>Add a match</span>
+      </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#predModal">
+        <i class="fa-solid fa-pen"></i><span>Add / edit prediction</span>
+      </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#pollModal">
+        <i class="fa-solid fa-square-poll-vertical"></i><span>Feature polls</span>
+      </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#annModal">
+        <i class="fa-solid fa-bullhorn"></i><span>Announcements</span>
+      </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#championModal">
+        <i class="fa-solid fa-crown"></i><span>Set Champion</span>
+      </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <button type="button" class="btn admin-tile w-100 h-100" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fa-solid fa-cloud-arrow-down"></i><span>Import fixtures</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== Add a match ===== -->
+  <div class="modal fade" id="matchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-plus text-accent me-2"></i>Add a match manually</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/admin/match" method="POST" class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label small text-secondary">Team A</label>
+              <input name="teamA" class="form-control" placeholder="e.g. Brazil" required />
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label small text-secondary">Team B</label>
+              <input name="teamB" class="form-control" placeholder="e.g. Argentina" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-secondary">Kickoff time</label>
+              <input name="kickoffTime" type="datetime-local" class="form-control" required />
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+              <button class="btn btn-accent fw-semibold">Add</button>
+            </div>
+          </form>
+        </div>
       </div>
-      <form action="/admin/import" method="POST">
-        <button class="btn btn-accent fw-semibold">
-          <i class="fa-solid fa-rotate me-1"></i> Import / Refresh
-        </button>
-      </form>
     </div>
   </div>
 
-  <!-- Set the World Cup champion (awards the bonus) -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-crown text-accent me-2"></i>Set the World Cup Champion</h6>
-      <p class="text-secondary small mb-3">
-        Awards <strong>+<%= championBonus %></strong> points to every user who predicted this team.
-        <% if (actualChampion) { %>Current: <strong><%= actualChampion %></strong>.<% } %>
-      </p>
-      <form action="/admin/champion" method="POST" class="row g-2 align-items-center"
-            onsubmit="return confirm('Set champion and award the bonus to correct predictions?');">
-        <div class="col-12 col-md">
-          <select name="champion" class="form-select">
-            <option value="">— Not decided yet —</option>
-            <% teams.forEach(function (t) { %>
-              <option value="<%= t.name %>" <%= actualChampion === t.name ? 'selected' : '' %>><%= t.name %></option>
-            <% }); %>
-          </select>
+  <!-- ===== Add / edit a prediction ===== -->
+  <div class="modal fade" id="predModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-pen text-accent me-2"></i>Add / edit a prediction</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="col-12 col-md-auto d-grid">
-          <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> Save Champion</button>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">Enter a prediction on a user's behalf. Leave Points blank to auto-score from the result.</p>
+          <form action="/admin/prediction" method="POST" class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label small text-secondary">User</label>
+              <select name="userId" class="form-select" required>
+                <option value="">— select —</option>
+                <% users.forEach(function (u) { %><option value="<%= u.id %>"><%= u.username %></option><% }); %>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-secondary">Match</label>
+              <select name="matchId" class="form-select" required>
+                <option value="">— select —</option>
+                <% matches.forEach(function (m) { %><option value="<%= m.id %>"><%= m.teamA %> vs <%= m.teamB %></option><% }); %>
+              </select>
+            </div>
+            <div class="col-4 col-md-1">
+              <label class="form-label small text-secondary">A</label>
+              <input name="scoreA" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
+            </div>
+            <div class="col-4 col-md-1">
+              <label class="form-label small text-secondary">B</label>
+              <input name="scoreB" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
+            </div>
+            <div class="col-4 col-md-1">
+              <label class="form-label small text-secondary">Pts</label>
+              <input name="points" type="number" min="0" max="10" class="form-control text-center" placeholder="auto" />
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+              <button class="btn btn-accent fw-semibold">Save</button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  <!-- Announcements -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-bullhorn text-accent me-2"></i>Announcements</h6>
-      <p class="text-secondary small mb-3">Active announcements show as a banner on every user's dashboard.</p>
-      <form action="/admin/announcement" method="POST" class="mb-3">
-        <%- emojiBar("annMsg") %>
-        <textarea id="annMsg" name="message" class="form-control emoji-input" rows="3" maxlength="500" placeholder="Write an announcement…  (emojis + line breaks OK)" required dir="auto"></textarea>
-        <div class="d-grid d-md-block mt-2">
-          <button class="btn btn-accent fw-semibold">Post</button>
+  <!-- ===== Feature polls ===== -->
+  <div class="modal fade" id="pollModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-square-poll-vertical text-accent me-2"></i>Feature polls</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-      </form>
-      <% if (announcements.length) { %>
-        <ul class="list-unstyled mb-0">
-          <% announcements.forEach(function (a) { %>
-            <li class="d-flex align-items-start gap-2 py-2 border-top">
-              <span class="badge wc-badge <%= a.active ? 'badge-open' : 'badge-locked' %>"><%= a.active ? 'Active' : 'Hidden' %></span>
-              <span class="flex-grow-1 small pre-line" dir="auto"><%= a.message %></span>
-              <form action="/admin/announcement/<%= a.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Show/hide"><i class="fa-solid fa-eye"></i></button></form>
-              <form action="/admin/announcement/<%= a.id %>/delete" method="POST" onsubmit="return confirm('Delete this announcement?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
-            </li>
-          <% }); %>
-        </ul>
-      <% } %>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">Ask users a Yes/No question (e.g. "Add private leagues?"). Active polls show on their dashboard.</p>
+          <form action="/admin/poll" method="POST" class="mb-3">
+            <%- emojiBar("pollQ") %>
+            <textarea id="pollQ" name="question" class="form-control emoji-input" rows="3" maxlength="500" placeholder="e.g. Should we change scoring?  (emojis + line breaks OK)" required dir="auto"></textarea>
+            <div class="d-grid d-md-block mt-2">
+              <button class="btn btn-accent fw-semibold">Create poll</button>
+            </div>
+          </form>
+          <% if (polls.length) { %>
+            <ul class="list-unstyled mb-0">
+              <% polls.forEach(function (p) { %>
+                <li class="d-flex align-items-center gap-2 py-2 border-top">
+                  <span class="badge wc-badge <%= p.active ? 'badge-open' : 'badge-locked' %>"><%= p.active ? 'Active' : 'Closed' %></span>
+                  <span class="flex-grow-1 small pre-line" dir="auto"><%= p.question %></span>
+                  <span class="small text-success fw-bold">✓ <%= p.yes %></span>
+                  <span class="small text-danger fw-bold">✗ <%= p.no %></span>
+                  <form action="/admin/poll/<%= p.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Open/close"><i class="fa-solid fa-power-off"></i></button></form>
+                  <form action="/admin/poll/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this poll and its votes?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Polls -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-square-poll-vertical text-accent me-2"></i>Feature polls</h6>
-      <p class="text-secondary small mb-3">Ask users a Yes/No question (e.g. "Add private leagues?"). Active polls show on their dashboard.</p>
-      <form action="/admin/poll" method="POST" class="mb-3">
-        <%- emojiBar("pollQ") %>
-        <textarea id="pollQ" name="question" class="form-control emoji-input" rows="3" maxlength="500" placeholder="e.g. Should we change scoring?  (emojis + line breaks OK)" required dir="auto"></textarea>
-        <div class="d-grid d-md-block mt-2">
-          <button class="btn btn-accent fw-semibold">Create poll</button>
+  <!-- ===== Announcements ===== -->
+  <div class="modal fade" id="annModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-bullhorn text-accent me-2"></i>Announcements</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-      </form>
-      <% if (polls.length) { %>
-        <ul class="list-unstyled mb-0">
-          <% polls.forEach(function (p) { %>
-            <li class="d-flex align-items-center gap-2 py-2 border-top">
-              <span class="badge wc-badge <%= p.active ? 'badge-open' : 'badge-locked' %>"><%= p.active ? 'Active' : 'Closed' %></span>
-              <span class="flex-grow-1 small pre-line" dir="auto"><%= p.question %></span>
-              <span class="small text-success fw-bold">✓ <%= p.yes %></span>
-              <span class="small text-danger fw-bold">✗ <%= p.no %></span>
-              <form action="/admin/poll/<%= p.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Open/close"><i class="fa-solid fa-power-off"></i></button></form>
-              <form action="/admin/poll/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Delete this poll and its votes?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
-            </li>
-          <% }); %>
-        </ul>
-      <% } %>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">Active announcements show as a banner on every user's dashboard.</p>
+          <form action="/admin/announcement" method="POST" class="mb-3">
+            <%- emojiBar("annMsg") %>
+            <textarea id="annMsg" name="message" class="form-control emoji-input" rows="3" maxlength="500" placeholder="Write an announcement…  (emojis + line breaks OK)" required dir="auto"></textarea>
+            <div class="d-grid d-md-block mt-2">
+              <button class="btn btn-accent fw-semibold">Post</button>
+            </div>
+          </form>
+          <% if (announcements.length) { %>
+            <ul class="list-unstyled mb-0">
+              <% announcements.forEach(function (a) { %>
+                <li class="d-flex align-items-start gap-2 py-2 border-top">
+                  <span class="badge wc-badge <%= a.active ? 'badge-open' : 'badge-locked' %>"><%= a.active ? 'Active' : 'Hidden' %></span>
+                  <span class="flex-grow-1 small pre-line" dir="auto"><%= a.message %></span>
+                  <form action="/admin/announcement/<%= a.id %>/toggle" method="POST"><button class="btn btn-outline-secondary btn-sm" title="Show/hide"><i class="fa-solid fa-eye"></i></button></form>
+                  <form action="/admin/announcement/<%= a.id %>/delete" method="POST" onsubmit="return confirm('Delete this announcement?');"><button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash"></i></button></form>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Manually add / edit a prediction -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <h6 class="fw-semibold mb-1"><i class="fa-solid fa-pen text-accent me-2"></i>Add / edit a prediction</h6>
-      <p class="text-secondary small mb-3">Enter a prediction on a user's behalf. Leave Points blank to auto-score from the result.</p>
-      <form action="/admin/prediction" method="POST" class="row g-2 align-items-end">
-        <div class="col-12 col-md-3">
-          <label class="form-label small text-secondary">User</label>
-          <select name="userId" class="form-select" required>
-            <option value="">— select —</option>
-            <% users.forEach(function (u) { %><option value="<%= u.id %>"><%= u.username %></option><% }); %>
-          </select>
+  <!-- ===== Set the World Cup champion ===== -->
+  <div class="modal fade" id="championModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-crown text-accent me-2"></i>Set the World Cup Champion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="col-12 col-md-4">
-          <label class="form-label small text-secondary">Match</label>
-          <select name="matchId" class="form-select" required>
-            <option value="">— select —</option>
-            <% matches.forEach(function (m) { %><option value="<%= m.id %>"><%= m.teamA %> vs <%= m.teamB %></option><% }); %>
-          </select>
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">
+            Awards <strong>+<%= championBonus %></strong> points to every user who predicted this team.
+            <% if (actualChampion) { %>Current: <strong><%= actualChampion %></strong>.<% } %>
+          </p>
+          <form action="/admin/champion" method="POST" class="row g-2 align-items-center"
+                onsubmit="return confirm('Set champion and award the bonus to correct predictions?');">
+            <div class="col-12 col-md">
+              <select name="champion" class="form-select">
+                <option value="">— Not decided yet —</option>
+                <% teams.forEach(function (t) { %>
+                  <option value="<%= t.name %>" <%= actualChampion === t.name ? 'selected' : '' %>><%= t.name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-12 col-md-auto d-grid">
+              <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-crown me-1"></i> Save Champion</button>
+            </div>
+          </form>
         </div>
-        <div class="col-4 col-md-1">
-          <label class="form-label small text-secondary">A</label>
-          <input name="scoreA" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
-        </div>
-        <div class="col-4 col-md-1">
-          <label class="form-label small text-secondary">B</label>
-          <input name="scoreB" type="number" min="0" max="99" class="form-control text-center" placeholder="0" required />
-        </div>
-        <div class="col-4 col-md-1">
-          <label class="form-label small text-secondary">Pts</label>
-          <input name="points" type="number" min="0" max="10" class="form-control text-center" placeholder="auto" />
-        </div>
-        <div class="col-12 col-md-2 d-grid">
-          <button class="btn btn-accent fw-semibold">Save</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  <!-- Add a new match -->
-  <div class="card wc-card border-0 mb-4">
-    <div class="card-body">
-      <h6 class="fw-semibold mb-3"><i class="fa-solid fa-plus text-accent me-2"></i>Add a match manually</h6>
-      <form action="/admin/match" method="POST" class="row g-2 align-items-end">
-        <div class="col-12 col-md-3">
-          <label class="form-label small text-secondary">Team A</label>
-          <input name="teamA" class="form-control" placeholder="e.g. Brazil" required />
+  <!-- ===== Import fixtures ===== -->
+  <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-cloud-arrow-down text-accent me-2"></i>Import World Cup fixtures</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small text-secondary">Team B</label>
-          <input name="teamB" class="form-control" placeholder="e.g. Argentina" required />
+        <div class="modal-body">
+          <p class="text-secondary small mb-3">
+            Pulls matches &amp; flags from the football API. Finished matches are auto-scored.
+          </p>
+          <form action="/admin/import" method="POST" class="d-grid">
+            <button class="btn btn-accent fw-semibold">
+              <i class="fa-solid fa-rotate me-1"></i> Import / Refresh
+            </button>
+          </form>
         </div>
-        <div class="col-12 col-md-4">
-          <label class="form-label small text-secondary">Kickoff time</label>
-          <input name="kickoffTime" type="datetime-local" class="form-control" required />
-        </div>
-        <div class="col-12 col-md-2 d-grid">
-          <button class="btn btn-accent fw-semibold">Add</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
