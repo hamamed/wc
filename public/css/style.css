@@ -492,3 +492,14 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 /* ---- Alerts ---- */
 .alert-success { background: #e9f9ee; border: 1px solid #c7eed4; color: #1c7a3e; border-radius: 12px; }
 .alert-danger { background: #fdecee; border: 1px solid #f8ccd2; color: #c0344a; border-radius: 12px; }
+
+/* ---- Phone: smaller text + tighter fit, no horizontal scroll ---- */
+@media (max-width: 575.98px) {
+  html { font-size: 13.5px; }            /* scales all rem-based sizes down */
+  body { overflow-x: hidden; }
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card-body { padding: 0.9rem; }
+  .table td, .table th { padding: 0.4rem 0.3rem; }
+  .standings-table td, .standings-table th { padding: 0.35rem 0.2rem; }
+  h2.fw-bold { font-size: 1.35rem; }
+}
