@@ -2,8 +2,10 @@ require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
+const pgSession = require("connect-pg-simple")(session);
 const flash = require("connect-flash");
 const path = require("path");
+const { pool } = require("./config/db");
 const { t: translate, LANGS: i18nLangs } = require("./utils/i18n");
 const { localizeTeam } = require("./utils/countries");
 
@@ -25,10 +27,12 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
   session({
+    // Persist sessions in PostgreSQL so users stay logged in across restarts.
+    store: new pgSession({ pool, tableName: "user_sessions", createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET || "change-this-secret-in-production",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // 1 week
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 }, // 30 days
   })
 );
 
