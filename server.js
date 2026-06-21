@@ -58,11 +58,21 @@ app.use(async (req, res, next) => {
   // Refresh the logged-in user's admin role from the DB so granting/revoking
   // admin takes effect immediately (no re-login needed).
   let userIsAdmin = false;
+  let communityNew = 0;
   if (req.session.user) {
     try {
       const row = await one("SELECT is_admin FROM users WHERE id = $1", [req.session.user.id]);
       userIsAdmin = !!(row && row.is_admin);
     } catch (_) { /* ignore — treat as non-admin */ }
+    try {
+      const r = await one(
+        `SELECT COUNT(*)::int AS n FROM posts
+         WHERE user_id <> $1
+           AND created_at > COALESCE((SELECT community_seen_at FROM users WHERE id = $1), 'epoch')`,
+        [req.session.user.id]
+      );
+      communityNew = r ? r.n : 0;
+    } catch (_) { /* posts table may not exist yet */ }
   }
 
   res.locals.currentUser = req.session.user || null;
@@ -70,6 +80,7 @@ app.use(async (req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.userIsAdmin = userIsAdmin;                                  // this user has an admin role
   res.locals.isAdmin = !!req.session.isAdmin || userIsAdmin;            // can reach the admin panel
+  res.locals.communityNew = communityNew;                               // unseen community posts
   res.locals.currentPath = req.path;
 
   // Language / i18n — prefer session, fall back to a persistent cookie so the

@@ -60,8 +60,9 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/community">
+            <a class="nav-link position-relative" href="/community">
               <i class="fa-solid fa-comments me-1"></i> <%= t('comm2.nav') %>
+              <% if (communityNew > 0) { %><span class="badge rounded-pill text-bg-danger nav-badge"><%= communityNew > 99 ? '99+' : communityNew %></span><% } %>
             </a>
           </li>
           <li class="nav-item">
@@ -118,8 +119,9 @@
   <a href="/leaderboard" class="bottom-nav-item <%= navActive('/leaderboard') %>">
     <i class="fa-solid fa-trophy"></i><span><%= t('nav.ranks') %></span>
   </a>
-  <a href="/community" class="bottom-nav-item <%= navActive('/community') %>">
+  <a href="/community" class="bottom-nav-item position-relative <%= navActive('/community') %>">
     <i class="fa-solid fa-comments"></i><span><%= t('comm2.nav') %></span>
+    <% if (communityNew > 0) { %><span class="badge rounded-pill text-bg-danger nav-badge"><%= communityNew > 99 ? '99+' : communityNew %></span><% } %>
   </a>
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
     <i class="fa-solid fa-user"></i><span><%= t('nav.profile') %></span>

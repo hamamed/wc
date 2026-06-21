@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
 );
 -- Add the admin flag to pre-existing databases.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+-- When the user last opened the community feed (for the "new posts" badge).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS community_seen_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS users_points_idx ON users (total_points DESC);
 CREATE INDEX IF NOT EXISTS users_token_idx  ON users (api_token);
 

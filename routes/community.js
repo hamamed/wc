@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const forum = require("../utils/forum");
 
@@ -12,6 +13,9 @@ router.get("/", requireLogin, async (req, res, next) => {
     for (const p of posts) {
       p.comments = await forum.listComments(p.id);
     }
+    // Mark the feed as seen so the "new posts" badge clears.
+    try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [userId]); } catch (_) {}
+    res.locals.communityNew = 0;
     res.render("community", { posts });
   } catch (err) {
     next(err);

@@ -48,11 +48,22 @@ async function apiAuth(req, res, next) {
 }
 
 // ---- Who am I (incl. admin role, for showing the in-app admin panel) -----
-router.get("/me", apiAuth, (req, res) => {
+router.get("/me", apiAuth, async (req, res) => {
+  let communityNew = 0;
+  try {
+    const r = await one(
+      `SELECT COUNT(*)::int AS n FROM posts
+       WHERE user_id <> $1
+         AND created_at > COALESCE((SELECT community_seen_at FROM users WHERE id = $1), 'epoch')`,
+      [req.userId]
+    );
+    communityNew = r ? r.n : 0;
+  } catch (_) { /* posts table may not exist yet */ }
   res.json({
     id: String(req.userId),
     username: req.userData.username,
     isAdmin: !!req.userData.is_admin,
+    communityNew,
   });
 });
 
@@ -463,6 +474,7 @@ router.get("/community/posts", apiAuth, async (req, res) => {
         mine: String(p.userId) === String(req.userId), comments,
       });
     }
+    try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [req.userId]); } catch (_) {}
     res.json({ posts: out, isAdmin: !!req.userData.is_admin });
   } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
