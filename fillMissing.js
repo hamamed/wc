@@ -6,12 +6,12 @@
  * Future / not-yet-played matches are never touched.
  *
  *   node fillMissing.js                          # all played matches
- *   node fillMissing.js --exclude "Group Stage - 1"   # skip round 1 (exact grp)
- *   node fillMissing.js --exclude "%- 1"         # skip round 1 (ILIKE pattern)
+ *   node fillMissing.js --from 2026-06-19        # only matches kicking off on/after this date (round 2 start)
+ *   node fillMissing.js --exclude "Group Stage - 1"   # skip a round by grp label
  *
- * Use --exclude to start from round 2: pass the round-1 `grp` label so those
- * matches are left alone. Find the labels with:
- *   SELECT grp, count(*) FROM matches GROUP BY grp ORDER BY min(kickoff_time);
+ * Use --from to start from round 2: pass the date round 2 begins and earlier
+ * (round 1) matches are left alone. The date is interpreted in the server's
+ * timezone; you can also pass a full timestamp like "2026-06-19 17:00".
  *
  * Safe to re-run (only fills gaps — ON CONFLICT DO NOTHING).
  */
@@ -20,20 +20,26 @@ const { pool } = require("./config/db");
 const { computePoints } = require("./utils/scoring");
 
 const rnd = () => Math.floor(Math.random() * 4); // 0..3
-const exclIdx = process.argv.indexOf("--exclude");
-const exclude = exclIdx >= 0 ? process.argv[exclIdx + 1] : null;
+const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
+const fromDate = arg("--from");
+const exclude = arg("--exclude");
 
 (async () => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Only matches that have already kicked off; optionally skip an excluded round.
+    // Only matches that have already kicked off; optionally start from a date
+    // (round 2) and/or skip an excluded round by grp label.
     let where = "kickoff_time <= now()";
     const params = [];
+    if (fromDate) {
+      params.push(fromDate);
+      where += ` AND kickoff_time >= $${params.length}`;
+    }
     if (exclude) {
       params.push(exclude);
-      where += " AND (grp IS NULL OR grp NOT ILIKE $1)";
+      where += ` AND (grp IS NULL OR grp NOT ILIKE $${params.length})`;
     }
     const { rows: matches } = await client.query(
       `SELECT id, status, actual_score_a, actual_score_b, grp FROM matches WHERE ${where}`,
@@ -72,9 +78,12 @@ const exclude = exclIdx >= 0 ? process.argv[exclIdx + 1] : null;
     );
 
     await client.query("COMMIT");
+    const notes = [];
+    if (fromDate) notes.push(`from ${fromDate}`);
+    if (exclude) notes.push(`excluding grp ILIKE "${exclude}"`);
     console.log(
       `Filled ${created} missing prediction(s) across ${matches.length} played match(es)` +
-        (exclude ? ` (excluding grp ILIKE "${exclude}").` : ".")
+        (notes.length ? ` (${notes.join(", ")}).` : ".")
     );
   } catch (err) {
     await client.query("ROLLBACK");
