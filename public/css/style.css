@@ -475,6 +475,13 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .podium-1 .podium-bar { height: 80px; background: linear-gradient(#ffd84d, #f3b01c); }
 .podium-2 .podium-bar { height: 58px; background: linear-gradient(#dbe1e8, #b4bdca); }
 .podium-3 .podium-bar { height: 42px; background: linear-gradient(#ecbf95, #c5763a); }
+/* Shared spot: several tied players split one pedestal (50/50, 33/33/33, …) */
+.podium-members { display: flex; justify-content: center; align-items: flex-end; gap: 6px; flex-wrap: wrap; }
+.podium-member { flex: 1 1 0; min-width: 40px; max-width: 86px; text-align: center; }
+.podium-members .podium-avatar { width: 44px; height: 44px; }
+.podium-1 .podium-members .podium-avatar { width: 54px; height: 54px; }
+.podium-member .podium-medal { width: 20px; height: 20px; font-size: 0.62rem; bottom: -6px; }
+.podium-member .podium-name { font-size: 0.72rem; margin-top: 0.45rem; }
 
 /* ---- Stat tiles (user profile modal) ---- */
 .stat-tile { background: var(--surface-2); border: 1px solid var(--line); }

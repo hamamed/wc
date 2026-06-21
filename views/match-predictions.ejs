@@ -8,19 +8,36 @@
       hour: "2-digit", minute: "2-digit", hour12: false
     });
   }
-  function mpPlace(p, pos) {
-    if (!p) return "";
+  function mpPodium(list) {
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    const cls = p.rank === 1 ? "gold" : p.rank === 2 ? "silver" : "bronze";
-    const ava = p.avatar
-      ? '<img class="podium-avatar" src="' + esc(avatarSrc(p.avatar)) + '" alt=""/>'
-      : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
-    return '<div class="podium-place podium-' + pos + '">' +
-      '<div class="podium-ava-wrap">' + ava + '<span class="medal medal-' + cls + ' podium-medal">' + p.rank + '</span></div>' +
-      '<div class="podium-name">' + esc(p.username) + '</div>' +
-      '<div class="podium-points">+' + p.pts + ' ' + esc(t('common.pts')) + '</div>' +
-      '<div class="podium-bar">' + p.rank + '</div></div>';
+    const tiers = [];
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      if (p.pts == null) break;
+      const last = tiers[tiers.length - 1];
+      if (last && last.pts === p.pts) { last.members.push(p); continue; }
+      if (tiers.length >= 3) break;
+      tiers.push({ place: tiers.length + 1, pts: p.pts, members: [p] });
+    }
+    if (!tiers.length) return "";
+    const renderPlace = (tier) => {
+      if (!tier) return "";
+      const cls = tier.place === 1 ? "gold" : tier.place === 2 ? "silver" : "bronze";
+      const members = tier.members.map((p) => {
+        const ava = p.avatar
+          ? '<img class="podium-avatar" src="' + esc(avatarSrc(p.avatar)) + '" alt=""/>'
+          : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
+        return '<div class="podium-member"><div class="podium-ava-wrap">' + ava +
+          '<span class="medal medal-' + cls + ' podium-medal">' + tier.place + '</span></div>' +
+          '<div class="podium-name">' + esc(p.username) + '</div></div>';
+      }).join("");
+      return '<div class="podium-place podium-' + tier.place + '"><div class="podium-members">' + members + '</div>' +
+        '<div class="podium-points">+' + tier.pts + ' ' + esc(t('common.pts')) + '</div>' +
+        '<div class="podium-bar">' + tier.place + '</div></div>';
+    };
+    const byPlace = (n) => tiers.find((tt) => tt.place === n);
+    return '<div class="podium mb-0">' + renderPlace(byPlace(2)) + renderPlace(byPlace(1)) + renderPlace(byPlace(3)) + '</div>';
   }
 %>
 
@@ -59,15 +76,11 @@
     </div>
   </div>
 
-  <% if (match.scored && podium.length) { %>
+  <% if (match.scored && preds.length) { %>
     <div class="card wc-card border-0 mb-4">
       <div class="card-body">
         <% if (match.live) { %><div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> <%= t('dash.badgeLive') %></div><% } %>
-        <div class="podium mb-0">
-          <%- mpPlace(podium[1], 2) %>
-          <%- mpPlace(podium[0], 1) %>
-          <%- mpPlace(podium[2], 3) %>
-        </div>
+        <%- mpPodium(preds) %>
       </div>
     </div>
   <% } %>

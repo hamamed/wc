@@ -469,21 +469,36 @@
     };
     const ME = "<%= currentUser.username %>";
 
-    function mpPodium(podium) {
-      if (!podium || !podium.length) return "";
-      const place = (p, pos) => {
-        if (!p) return "";
-        const cls = p.rank === 1 ? "gold" : p.rank === 2 ? "silver" : "bronze";
-        const av = p.avatar
-          ? '<img class="podium-avatar" src="' + esc(p.avatar) + '" alt=""/>'
-          : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
-        return '<div class="podium-place podium-' + pos + '"><div class="podium-ava-wrap">' + av +
-          '<span class="medal medal-' + cls + ' podium-medal">' + p.rank + '</span></div>' +
-          '<div class="podium-name">' + esc(p.username) + '</div>' +
-          '<div class="podium-points">+' + p.pts + ' ' + esc(T.ptsLbl) + '</div>' +
-          '<div class="podium-bar">' + p.rank + '</div></div>';
+    function mpPodium(preds) {
+      // Group the (already pts-sorted) predictions into up to 3 distinct-points
+      // places. Tied players share a place and split it (50/50, 33/33/33, …).
+      const tiers = [];
+      for (let i = 0; i < preds.length; i++) {
+        const p = preds[i];
+        if (p.pts == null) break;
+        const last = tiers[tiers.length - 1];
+        if (last && last.pts === p.pts) { last.members.push(p); continue; }
+        if (tiers.length >= 3) break;
+        tiers.push({ place: tiers.length + 1, pts: p.pts, members: [p] });
+      }
+      if (!tiers.length) return "";
+      const renderPlace = (tier) => {
+        if (!tier) return "";
+        const cls = tier.place === 1 ? "gold" : tier.place === 2 ? "silver" : "bronze";
+        const members = tier.members.map(function (p) {
+          const av = p.avatar
+            ? '<img class="podium-avatar" src="' + esc(p.avatar) + '" alt=""/>'
+            : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
+          return '<div class="podium-member"><div class="podium-ava-wrap">' + av +
+            '<span class="medal medal-' + cls + ' podium-medal">' + tier.place + '</span></div>' +
+            '<div class="podium-name">' + esc(p.username) + '</div></div>';
+        }).join("");
+        return '<div class="podium-place podium-' + tier.place + '"><div class="podium-members">' + members + '</div>' +
+          '<div class="podium-points">+' + tier.pts + ' ' + esc(T.ptsLbl) + '</div>' +
+          '<div class="podium-bar">' + tier.place + '</div></div>';
       };
-      return '<div class="podium mb-3">' + place(podium[1], 2) + place(podium[0], 1) + place(podium[2], 3) + "</div>";
+      const byPlace = (n) => tiers.find((t) => t.place === n);
+      return '<div class="podium mb-3">' + renderPlace(byPlace(2)) + renderPlace(byPlace(1)) + renderPlace(byPlace(3)) + "</div>";
     }
     function esc(s) {
       return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
@@ -505,7 +520,7 @@
               return;
             }
             const liveTag = j.live ? '<div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> ' + esc(T.live) + "</div>" : "";
-            let h = liveTag + mpPodium(j.podium) +
+            let h = liveTag + (j.scored ? mpPodium(j.preds) : "") +
               '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>' +
               '<th style="width:42px">#</th><th>' + esc(T.player) + '</th><th class="text-center">' + esc(T.pick) + "</th>" +
               (j.scored ? '<th class="text-end">' + esc(T.pts) + "</th>" : "") + "</tr></thead><tbody>";
