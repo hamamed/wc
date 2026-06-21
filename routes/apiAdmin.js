@@ -304,12 +304,25 @@ router.post("/users/delete/:id", async (req, res) => {
   try { await query("DELETE FROM users WHERE id = $1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
+router.post("/users/:userId/predictions/:matchId/delete", async (req, res) => {
+  try {
+    const { userId, matchId } = req.params;
+    await query("DELETE FROM predictions WHERE user_id = $1 AND match_id = $2", [userId, matchId]);
+    await query(
+      `UPDATE users SET total_points =
+         COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = $1), 0) + COALESCE(champion_bonus, 0)
+       WHERE id = $1`,
+      [userId]
+    );
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
 router.get("/users/:id/predictions", async (req, res) => {
   try {
     const L = (n) => localizeTeam(n, req.query.lang || "en");
     const user = await one("SELECT username FROM users WHERE id = $1", [req.params.id]);
     const rows = await many(
-      `SELECT m.team_a, m.team_b, m.status, m.actual_score_a, m.actual_score_b,
+      `SELECT m.id AS match_id, m.team_a, m.team_b, m.status, m.actual_score_a, m.actual_score_b,
               p.predicted_score_a, p.predicted_score_b, p.points_earned, m.kickoff_time
        FROM predictions p JOIN matches m ON m.id = p.match_id
        WHERE p.user_id = $1 ORDER BY m.kickoff_time DESC`,
@@ -320,6 +333,7 @@ router.get("/users/:id/predictions", async (req, res) => {
       predictions: rows.map((p) => {
         const completed = p.status === "completed";
         return {
+          matchId: String(p.match_id),
           match: L(p.team_a) + " vs " + L(p.team_b),
           pick: p.predicted_score_a + "-" + p.predicted_score_b,
           result: completed ? p.actual_score_a + "-" + p.actual_score_b : "—",

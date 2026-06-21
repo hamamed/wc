@@ -120,6 +120,7 @@
                 <th class="text-center">Pick</th>
                 <th class="text-center">Result</th>
                 <th class="text-end">Pts</th>
+                <th class="text-end pe-2"></th>
               </tr>
             </thead>
             <tbody id="predsBody"></tbody>
@@ -154,7 +155,8 @@
         body.innerHTML = "";
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
-        fetch("/admin/users/" + btn.dataset.id + "/predictions")
+        const userId = btn.dataset.id;
+        fetch("/admin/users/" + userId + "/predictions")
           .then((r) => r.json())
           .then(function (j) {
             loading.classList.add("d-none");
@@ -168,7 +170,17 @@
                 '<td>' + esc(p.match) + '</td>' +
                 '<td class="text-center fw-semibold">' + esc(p.pick) + '</td>' +
                 '<td class="text-center">' + esc(p.result) + '</td>' +
-                '<td class="text-end fw-bold text-accent">' + esc(p.points) + '</td>';
+                '<td class="text-end fw-bold text-accent">' + esc(p.points) + '</td>' +
+                '<td class="text-end pe-2"><button class="btn btn-outline-danger btn-sm del-pred" data-match="' + esc(p.matchId) + '" title="Delete prediction"><i class="fa-solid fa-trash"></i></button></td>';
+              tr.querySelector(".del-pred").addEventListener("click", function () {
+                if (!confirm("Delete this prediction? Any points it earned are removed.")) return;
+                const b = this;
+                b.disabled = true;
+                fetch("/admin/users/" + userId + "/predictions/" + b.dataset.match + "/delete", { method: "POST" })
+                  .then((r) => r.json())
+                  .then(function (res) { if (res.ok) tr.remove(); else { b.disabled = false; alert("Could not delete."); } })
+                  .catch(function () { b.disabled = false; alert("Could not delete."); });
+              });
               body.appendChild(tr);
             });
             wrap.classList.remove("d-none");

@@ -389,7 +389,7 @@ router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
     const { id } = req.params;
     const user = await one("SELECT username FROM users WHERE id = $1", [id]);
     const rows = await many(
-      `SELECT m.team_a, m.team_b, m.kickoff_time, m.status,
+      `SELECT m.id AS match_id, m.team_a, m.team_b, m.kickoff_time, m.status,
               m.actual_score_a, m.actual_score_b,
               p.predicted_score_a, p.predicted_score_b, p.points_earned
        FROM predictions p JOIN matches m ON m.id = p.match_id
@@ -399,6 +399,7 @@ router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
     const predictions = rows.map((p) => {
       const completed = p.status === "completed";
       return {
+        matchId: String(p.match_id),
         match: `${p.team_a} vs ${p.team_b}`,
         kickoffMs: p.kickoff_time ? new Date(p.kickoff_time).getTime() : 0,
         pick: `${p.predicted_score_a}-${p.predicted_score_b}`,
@@ -411,6 +412,24 @@ router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "failed" });
+  }
+});
+
+// Delete one of a user's predictions, then keep their total in sync.
+router.post("/users/:userId/predictions/:matchId/delete", requireAdmin, async (req, res) => {
+  try {
+    const { userId, matchId } = req.params;
+    await query("DELETE FROM predictions WHERE user_id = $1 AND match_id = $2", [userId, matchId]);
+    await query(
+      `UPDATE users SET total_points =
+         COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = $1), 0) + COALESCE(champion_bonus, 0)
+       WHERE id = $1`,
+      [userId]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
   }
 });
 
