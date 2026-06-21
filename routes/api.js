@@ -52,13 +52,15 @@ router.get("/me", apiAuth, async (req, res) => {
   let communityNew = 0;
   try {
     const r = await one(
-      `SELECT COUNT(*)::int AS n FROM posts
-       WHERE user_id <> $1
-         AND created_at > COALESCE((SELECT community_seen_at FROM users WHERE id = $1), 'epoch')`,
+      `SELECT (
+         (SELECT COUNT(*) FROM posts WHERE user_id <> $1 AND created_at > s.seen) +
+         (SELECT COUNT(*) FROM post_comments WHERE user_id <> $1 AND created_at > s.seen)
+       )::int AS n
+       FROM (SELECT COALESCE(community_seen_at, 'epoch') AS seen FROM users WHERE id = $1) s`,
       [req.userId]
     );
     communityNew = r ? r.n : 0;
-  } catch (_) { /* posts table may not exist yet */ }
+  } catch (_) { /* community tables may not exist yet */ }
   res.json({
     id: String(req.userId),
     username: req.userData.username,
