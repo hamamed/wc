@@ -1,6 +1,23 @@
 <%- include("partials/head", { title: "Leaderboard · WC 2026 Predictor" }) %>
 <%- include("partials/navbar") %>
 
+<%
+  function podiumPlace(u, rank) {
+    if (!u) return "";
+    const cls = rank === 1 ? "gold" : rank === 2 ? "silver" : "bronze";
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const ava = u.avatar
+      ? '<img class="podium-avatar" src="' + esc(avatarSrc(u.avatar)) + '" alt=""/>'
+      : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
+    return '<div class="podium-place podium-' + rank + '" data-id="' + esc(u.id) + '" style="cursor:pointer">' +
+      '<div class="podium-ava-wrap">' + ava + '<span class="medal medal-' + cls + ' podium-medal">' + rank + '</span></div>' +
+      '<div class="podium-name">' + esc(u.username) + '</div>' +
+      '<div class="podium-points">' + u.totalPoints + ' ' + esc(t('common.pts')) + '</div>' +
+      '<div class="podium-bar">' + rank + '</div></div>';
+  }
+%>
+
 <div class="container py-4">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
@@ -13,6 +30,14 @@
              placeholder="<%= t('lb.search') %>" autocomplete="off" />
     </div>
   </div>
+
+  <% if (users.length) { %>
+    <div class="podium">
+      <%- podiumPlace(users[1], 2) %>
+      <%- podiumPlace(users[0], 1) %>
+      <%- podiumPlace(users[2], 3) %>
+    </div>
+  <% } %>
 
   <div class="card wc-card border-0">
     <div class="table-responsive">
@@ -144,7 +169,7 @@
       return '<span class="text-secondary">—</span>';
     }
 
-    document.querySelectorAll(".user-row").forEach(function (row) {
+    document.querySelectorAll(".user-row, .podium-place").forEach(function (row) {
       row.addEventListener("click", function () {
         const id = row.dataset.id;
         loading.classList.remove("d-none");
