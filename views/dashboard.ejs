@@ -473,13 +473,16 @@
       // Group the (already pts-sorted) predictions into up to 3 distinct-points
       // places. Tied players share a place and split it (50/50, 33/33/33, …).
       const tiers = [];
-      for (let i = 0; i < preds.length; i++) {
-        const p = preds[i];
-        if (p.pts == null) break;
-        const last = tiers[tiers.length - 1];
-        if (last && last.pts === p.pts) { last.members.push(p); continue; }
-        if (tiers.length >= 3) break;
-        tiers.push({ place: tiers.length + 1, pts: p.pts, members: [p] });
+      let idx = 0;
+      // 1st place: everyone tied on the top score shares it.
+      if (preds.length && preds[0].pts != null) {
+        const topPts = preds[0].pts, members = [];
+        while (idx < preds.length && preds[idx].pts === topPts) { members.push(preds[idx]); idx++; }
+        tiers.push({ place: 1, pts: topPts, members: members });
+      }
+      // 2nd & 3rd: single next players (no sharing).
+      for (let place = 2; place <= 3 && idx < preds.length && preds[idx].pts != null; place++, idx++) {
+        tiers.push({ place: place, pts: preds[idx].pts, members: [preds[idx]] });
       }
       if (!tiers.length) return "";
       const renderPlace = (tier) => {

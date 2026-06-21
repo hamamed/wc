@@ -12,13 +12,16 @@
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const tiers = [];
-    for (let i = 0; i < list.length; i++) {
-      const p = list[i];
-      if (p.pts == null) break;
-      const last = tiers[tiers.length - 1];
-      if (last && last.pts === p.pts) { last.members.push(p); continue; }
-      if (tiers.length >= 3) break;
-      tiers.push({ place: tiers.length + 1, pts: p.pts, members: [p] });
+    let idx = 0;
+    // 1st place: everyone tied on the top score shares it.
+    if (list.length && list[0].pts != null) {
+      const topPts = list[0].pts, members = [];
+      while (idx < list.length && list[idx].pts === topPts) { members.push(list[idx]); idx++; }
+      tiers.push({ place: 1, pts: topPts, members: members });
+    }
+    // 2nd & 3rd: single next players (no sharing).
+    for (let place = 2; place <= 3 && idx < list.length && list[idx].pts != null; place++, idx++) {
+      tiers.push({ place: place, pts: list[idx].pts, members: [list[idx]] });
     }
     if (!tiers.length) return "";
     const renderPlace = (tier) => {
