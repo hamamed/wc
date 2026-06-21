@@ -22,14 +22,15 @@ async function getUserProfile(userId, L = (n) => n) {
   if (!user) return null;
 
   const now = Date.now();
-  const stats = { totalPoints: user.totalPoints || 0, made: 0, scored: 0, pending: 0, exact: 0, outcome: 0, missed: 0 };
+  const stats = { totalPoints: user.totalPoints || 0, made: 0, scored: 0, pending: 0, exact: 0, difference: 0, outcome: 0, missed: 0 };
   const history = [];
   rows.forEach((p) => {
     stats.made++;
     const completed = p.status === "completed";
     if (completed) {
       stats.scored++;
-      if (p.pts === 2) stats.exact++;
+      if (p.pts === 4) stats.exact++;
+      else if (p.pts === 2) stats.difference++;
       else if (p.pts === 1) stats.outcome++;
       else stats.missed++;
     } else {
@@ -48,7 +49,7 @@ async function getUserProfile(userId, L = (n) => n) {
     });
   });
   history.sort((x, y) => y.kickoff - x.kickoff);
-  stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100) : 0;
+  stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100) : 0;
 
   return { username: user.username, avatar: user.avatar || null, stats, history };
 }

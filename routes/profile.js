@@ -36,7 +36,7 @@ router.get("/", requireLogin, async (req, res, next) => {
     const u = user || {};
     const stats = {
       totalPoints: u.totalPoints || 0,
-      made: 0, scored: 0, pending: 0, exact: 0, outcome: 0, missed: 0,
+      made: 0, scored: 0, pending: 0, exact: 0, difference: 0, outcome: 0, missed: 0,
     };
 
     const history = rows.map((p) => {
@@ -44,7 +44,8 @@ router.get("/", requireLogin, async (req, res, next) => {
       const completed = p.status === "completed";
       if (completed) {
         stats.scored++;
-        if (p.pointsEarned === 2) stats.exact++;
+        if (p.pointsEarned === 4) stats.exact++;
+        else if (p.pointsEarned === 2) stats.difference++;
         else if (p.pointsEarned === 1) stats.outcome++;
         else stats.missed++;
       } else {
@@ -66,7 +67,7 @@ router.get("/", requireLogin, async (req, res, next) => {
 
     stats.hitRate =
       stats.scored > 0
-        ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100)
+        ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100)
         : 0;
 
     res.render("profile", {

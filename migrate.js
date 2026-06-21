@@ -124,7 +124,9 @@ async function migrate() {
     `UPDATE predictions p SET points_earned = CASE
        WHEN m.status = 'completed' AND m.actual_score_a IS NOT NULL AND m.actual_score_b IS NOT NULL THEN
          CASE
-           WHEN p.predicted_score_a = m.actual_score_a AND p.predicted_score_b = m.actual_score_b THEN 2
+           WHEN p.predicted_score_a = m.actual_score_a AND p.predicted_score_b = m.actual_score_b THEN 4
+           WHEN sign(p.predicted_score_a - p.predicted_score_b) = sign(m.actual_score_a - m.actual_score_b)
+                AND (p.predicted_score_a - p.predicted_score_b) = (m.actual_score_a - m.actual_score_b) THEN 2
            WHEN sign(p.predicted_score_a - p.predicted_score_b) = sign(m.actual_score_a - m.actual_score_b) THEN 1
            ELSE 0
          END

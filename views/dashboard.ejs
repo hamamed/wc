@@ -199,8 +199,10 @@
                     </span>
                     <% if (m.status === "completed") { %>
                       <div class="mt-2">
-                        <% if (m.prediction.pointsEarned === 2) { %>
-                          <span class="badge wc-badge badge-done"><i class="fa-solid fa-bullseye me-1"></i><%= t('dash.exactBonus') %> <%= t('dash.earned') %> +2 <%= t('common.pts') %></span>
+                        <% if (m.prediction.pointsEarned === 4) { %>
+                          <span class="badge wc-badge badge-done"><i class="fa-solid fa-bullseye me-1"></i><%= t('dash.exactBonus') %> <%= t('dash.earned') %> +4 <%= t('common.pts') %></span>
+                        <% } else if (m.prediction.pointsEarned === 2) { %>
+                          <span class="badge wc-badge badge-open"><i class="fa-solid fa-arrows-left-right me-1"></i><%= t('dash.earned') %> +2 <%= t('common.pts') %></span>
                         <% } else if (m.prediction.pointsEarned === 1) { %>
                           <span class="badge wc-badge badge-open"><i class="fa-solid fa-check me-1"></i><%= t('dash.earned') %> +1 <%= t('common.pts') %></span>
                         <% } else { %>
@@ -236,6 +238,7 @@
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-pen text-accent me-2"></i><%= t('how.predict') %></div>
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-lock text-accent me-2"></i><%= t('how.lock') %></div>
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-bullseye text-accent me-2"></i><%= t('how.exact') %></div>
+        <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-arrows-left-right text-accent me-2"></i><%= t('how.difference') %></div>
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-check-double text-accent me-2"></i><%= t('how.outcome') %></div>
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-xmark text-accent me-2"></i><%= t('how.wrong') %></div>
         <div class="col-12 col-md-6 col-lg-4"><i class="fa-solid fa-crown text-accent me-2"></i><%= t('how.champion') %></div>
@@ -486,7 +489,7 @@
             j.preds.forEach(function (p, i) {
               let pts = "";
               if (j.completed) {
-                const b = p.pts === 2 ? "badge-done" : p.pts === 1 ? "badge-open" : "badge-locked";
+                const b = p.pts === 4 ? "badge-done" : p.pts > 0 ? "badge-open" : "badge-locked";
                 pts = '<td class="text-end"><span class="badge wc-badge ' + b + '">' + (p.pts > 0 ? "+" : "") + p.pts + "</span></td>";
               }
               const me = p.username === ME;

@@ -237,13 +237,14 @@ router.get("/profile", apiAuth, async (req, res) => {
     const lang = req.query.lang || "en";
     const L = (n) => localizeTeam(n, lang);
 
-    const stats = { totalPoints: req.userData.total_points || 0, made: 0, scored: 0, pending: 0, exact: 0, outcome: 0, missed: 0 };
+    const stats = { totalPoints: req.userData.total_points || 0, made: 0, scored: 0, pending: 0, exact: 0, difference: 0, outcome: 0, missed: 0 };
     const history = rows.map((p) => {
       stats.made++;
       const completed = p.status === "completed";
       if (completed) {
         stats.scored++;
-        if (p.points_earned === 2) stats.exact++;
+        if (p.points_earned === 4) stats.exact++;
+        else if (p.points_earned === 2) stats.difference++;
         else if (p.points_earned === 1) stats.outcome++;
         else stats.missed++;
       } else stats.pending++;
@@ -255,7 +256,7 @@ router.get("/profile", apiAuth, async (req, res) => {
       };
     });
     history.sort((a, b) => b.kickoff - a.kickoff);
-    stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.outcome) / stats.scored) * 100) : 0;
+    stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100) : 0;
 
     res.json({
       username: req.userData.username,

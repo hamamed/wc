@@ -119,7 +119,16 @@
         <div class="card-body">
           <div class="stat-icon"><i class="fa-solid fa-bullseye"></i></div>
           <div class="stat-value text-gold"><%= stats.exact %></div>
-          <div class="stat-label"><%= t('stat.exact') %> <span class="text-secondary"><%= t('stat.pts2') %></span></div>
+          <div class="stat-label"><%= t('stat.exact') %> <span class="text-secondary"><%= t('stat.pts4') %></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card wc-card stat-card border-0 h-100">
+        <div class="card-body">
+          <div class="stat-icon"><i class="fa-solid fa-arrows-left-right"></i></div>
+          <div class="stat-value"><%= stats.difference %></div>
+          <div class="stat-label"><%= t('stat.difference') %> <span class="text-secondary"><%= t('stat.pts2') %></span></div>
         </div>
       </div>
     </div>
@@ -186,8 +195,10 @@
               <td class="text-end pe-4">
                 <% if (h.pointsEarned === null) { %>
                   <span class="badge wc-badge badge-locked"><%= t('hist.pending') %></span>
-                <% } else if (h.pointsEarned === 2) { %>
+                <% } else if (h.pointsEarned === 4) { %>
                   <span class="badge wc-badge badge-done"><%= t('hist.exact') %></span>
+                <% } else if (h.pointsEarned === 2) { %>
+                  <span class="badge wc-badge badge-open"><%= t('hist.difference') %></span>
                 <% } else if (h.pointsEarned === 1) { %>
                   <span class="badge wc-badge badge-open"><%= t('hist.outcome') %></span>
                 <% } else { %>

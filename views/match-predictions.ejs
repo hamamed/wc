@@ -77,7 +77,8 @@
               <td class="text-center fw-bold"><%= p.a %> - <%= p.b %></td>
               <% if (match.completed) { %>
                 <td class="text-end pe-4">
-                  <% if (p.pts === 2) { %><span class="badge wc-badge badge-done">+2</span>
+                  <% if (p.pts === 4) { %><span class="badge wc-badge badge-done">+4</span>
+                  <% } else if (p.pts === 2) { %><span class="badge wc-badge badge-open">+2</span>
                   <% } else if (p.pts === 1) { %><span class="badge wc-badge badge-open">+1</span>
                   <% } else { %><span class="badge wc-badge badge-locked">0</span><% } %>
                 </td>
