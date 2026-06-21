@@ -32,10 +32,14 @@
   </div>
 
   <% if (users.length) { %>
-    <div class="podium">
-      <%- podiumPlace(users[1], 2) %>
-      <%- podiumPlace(users[0], 1) %>
-      <%- podiumPlace(users[2], 3) %>
+    <div class="card wc-card border-0 mb-4">
+      <div class="card-body">
+        <div class="podium mb-0">
+          <%- podiumPlace(users[1], 2) %>
+          <%- podiumPlace(users[0], 1) %>
+          <%- podiumPlace(users[2], 3) %>
+        </div>
+      </div>
     </div>
   <% } %>
 
