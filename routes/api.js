@@ -14,6 +14,7 @@ const { localizeTeam } = require("../utils/countries");
 const { validPin, hashPin, verifyPin } = require("../utils/pin");
 const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAvatars");
 const { getUserProfile } = require("../utils/userProfile");
+const { rankPredictions } = require("../utils/matchPreds");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -334,19 +335,41 @@ router.post("/avatar", apiAuth, async (req, res) => {
 // ---- All predictions for a locked match ----------------------------------
 router.get("/match/:id/predictions", apiAuth, async (req, res) => {
   try {
-    const m = await one("SELECT team_a, team_b, kickoff_time, status FROM matches WHERE id = $1", [req.params.id]);
+    const m = await one(
+      `SELECT team_a, team_b, kickoff_time, status,
+              actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
+              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB"
+       FROM matches WHERE id = $1`,
+      [req.params.id]
+    );
     if (!m) return res.status(404).json({ error: "not_found" });
     const k = new Date(m.kickoff_time).getTime();
     const locked = Date.now() >= k - LOCK || m.status === "completed";
     if (!locked) return res.status(403).json({ error: "locked" });
-    const preds = (await many(
-      `SELECT u.username, u.avatar, p.predicted_score_a AS a, p.predicted_score_b AS b, p.points_earned AS pts
-       FROM predictions p JOIN users u ON u.id = p.user_id
-       WHERE p.match_id = $1 ORDER BY p.points_earned DESC NULLS LAST, u.username ASC`,
+
+    const completed = m.status === "completed";
+    const started = Date.now() >= k;
+    const hasLive = m.liveScoreA != null && m.liveScoreB != null;
+    const live = started && !completed && hasLive;
+    const scored = completed || live;
+    const scoreA = completed ? m.actualScoreA : (live ? m.liveScoreA : null);
+    const scoreB = completed ? m.actualScoreB : (live ? m.liveScoreB : null);
+
+    const raw = await many(
+      `SELECT u.username, u.avatar, p.predicted_score_a AS a, p.predicted_score_b AS b
+       FROM predictions p JOIN users u ON u.id = p.user_id WHERE p.match_id = $1`,
       [req.params.id]
-    )).map((p) => ({ username: p.username, a: p.a, b: p.b, pts: p.pts, avatar: res.locals.avatarSrc(p.avatar) }));
+    );
+    const preds = rankPredictions(raw, scoreA, scoreB, scored).map((p) => ({
+      username: p.username, a: p.a, b: p.b, pts: p.pts, rank: p.rank,
+      avatar: res.locals.avatarSrc(p.avatar),
+    }));
     const L = (n) => localizeTeam(n, req.query.lang || "en");
-    res.json({ teamA: L(m.team_a), teamB: L(m.team_b), completed: m.status === "completed", preds });
+    res.json({
+      teamA: L(m.team_a), teamB: L(m.team_b),
+      completed, live, scored, scoreA, scoreB,
+      preds, podium: scored ? preds.slice(0, 3) : [],
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "server" });

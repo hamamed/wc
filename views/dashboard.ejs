@@ -209,6 +209,10 @@
                           <span class="badge wc-badge badge-locked"><i class="fa-solid fa-xmark me-1"></i><%= t('dash.earned') %> +0 <%= t('common.pts') %></span>
                         <% } %>
                       </div>
+                    <% } else if (m.live && m.livePts !== null) { %>
+                      <div class="mt-2">
+                        <span class="badge wc-badge badge-live"><span class="live-dot"></span> <%= t('dash.earned') %> +<%= m.livePts %> <%= t('common.pts') %> · <%= t('dash.badgeLive') %></span>
+                      </div>
                     <% } %>
                   <% } else { %>
                     <span class="text-secondary fst-italic">
@@ -461,9 +465,26 @@
     const T = {
       title: "<%= t('mp.title') %>", pick: "<%= t('mp.pick') %>", player: "<%= t('lb.player') %>",
       pts: "<%= t('lb.points') %>", none: "<%= t('mp.none') %>", you: "<%= t('lb.you') %>",
-      err: "<%= t('dash.lockedMsg') %>",
+      err: "<%= t('dash.lockedMsg') %>", live: "<%= t('dash.badgeLive') %>", ptsLbl: "<%= t('common.pts') %>",
     };
     const ME = "<%= currentUser.username %>";
+
+    function mpPodium(podium) {
+      if (!podium || !podium.length) return "";
+      const place = (p, pos) => {
+        if (!p) return "";
+        const cls = p.rank === 1 ? "gold" : p.rank === 2 ? "silver" : "bronze";
+        const av = p.avatar
+          ? '<img class="podium-avatar" src="' + esc(p.avatar) + '" alt=""/>'
+          : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
+        return '<div class="podium-place podium-' + pos + '"><div class="podium-ava-wrap">' + av +
+          '<span class="medal medal-' + cls + ' podium-medal">' + p.rank + '</span></div>' +
+          '<div class="podium-name">' + esc(p.username) + '</div>' +
+          '<div class="podium-points">+' + p.pts + ' ' + esc(T.ptsLbl) + '</div>' +
+          '<div class="podium-bar">' + p.rank + '</div></div>';
+      };
+      return '<div class="podium mb-3">' + place(podium[1], 2) + place(podium[0], 1) + place(podium[2], 3) + "</div>";
+    }
     function esc(s) {
       return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -483,18 +504,20 @@
               bodyEl.innerHTML = '<div class="text-center text-secondary py-4">' + esc(T.none) + "</div>";
               return;
             }
-            let h = '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>' +
+            const liveTag = j.live ? '<div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> ' + esc(T.live) + "</div>" : "";
+            let h = liveTag + mpPodium(j.podium) +
+              '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>' +
               '<th style="width:42px">#</th><th>' + esc(T.player) + '</th><th class="text-center">' + esc(T.pick) + "</th>" +
-              (j.completed ? '<th class="text-end">' + esc(T.pts) + "</th>" : "") + "</tr></thead><tbody>";
+              (j.scored ? '<th class="text-end">' + esc(T.pts) + "</th>" : "") + "</tr></thead><tbody>";
             j.preds.forEach(function (p, i) {
               let pts = "";
-              if (j.completed) {
+              if (j.scored) {
                 const b = p.pts === 4 ? "badge-done" : p.pts > 0 ? "badge-open" : "badge-locked";
                 pts = '<td class="text-end"><span class="badge wc-badge ' + b + '">' + (p.pts > 0 ? "+" : "") + p.pts + "</span></td>";
               }
               const me = p.username === ME;
               const av = p.avatar ? '<img src="' + esc(p.avatar) + '" class="avatar-mini me-2" alt=""/>' : '';
-              h += '<tr class="' + (me ? "row-me" : "") + '"><td class="text-secondary">' + (i + 1) + "</td>" +
+              h += '<tr class="' + (me ? "row-me" : "") + '"><td class="text-secondary">' + (j.scored ? p.rank : i + 1) + "</td>" +
                 '<td class="fw-semibold">' + av + esc(p.username) + (me ? ' <span class="badge wc-userchip ms-1">' + esc(T.you) + "</span>" : "") + "</td>" +
                 '<td class="text-center fw-bold">' + p.a + " - " + p.b + "</td>" + pts + "</tr>";
             });

@@ -8,6 +8,20 @@
       hour: "2-digit", minute: "2-digit", hour12: false
     });
   }
+  function mpPlace(p, pos) {
+    if (!p) return "";
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const cls = p.rank === 1 ? "gold" : p.rank === 2 ? "silver" : "bronze";
+    const ava = p.avatar
+      ? '<img class="podium-avatar" src="' + esc(avatarSrc(p.avatar)) + '" alt=""/>'
+      : '<span class="podium-avatar d-inline-flex align-items-center justify-content-center"><i class="fa-solid fa-user text-secondary"></i></span>';
+    return '<div class="podium-place podium-' + pos + '">' +
+      '<div class="podium-ava-wrap">' + ava + '<span class="medal medal-' + cls + ' podium-medal">' + p.rank + '</span></div>' +
+      '<div class="podium-name">' + esc(p.username) + '</div>' +
+      '<div class="podium-points">+' + p.pts + ' ' + esc(t('common.pts')) + '</div>' +
+      '<div class="podium-bar">' + p.rank + '</div></div>';
+  }
 %>
 
 <div class="container py-4">
@@ -45,6 +59,19 @@
     </div>
   </div>
 
+  <% if (match.scored && podium.length) { %>
+    <div class="card wc-card border-0 mb-4">
+      <div class="card-body">
+        <% if (match.live) { %><div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> <%= t('dash.badgeLive') %></div><% } %>
+        <div class="podium mb-0">
+          <%- mpPlace(podium[1], 2) %>
+          <%- mpPlace(podium[0], 1) %>
+          <%- mpPlace(podium[2], 3) %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <h5 class="fw-semibold mb-3"><i class="fa-solid fa-people-group text-accent me-2"></i><%= t('mp.title') %> (<%= preds.length %>)</h5>
 
   <div class="card wc-card border-0">
@@ -55,7 +82,7 @@
             <th class="ps-4" style="width:50px;">#</th>
             <th><%= t('lb.player') %></th>
             <th class="text-center"><%= t('mp.pick') %></th>
-            <% if (match.completed) { %><th class="text-end pe-4"><%= t('lb.points') %></th><% } %>
+            <% if (match.scored) { %><th class="text-end pe-4"><%= t('lb.points') %></th><% } %>
           </tr>
         </thead>
         <tbody>
@@ -64,7 +91,7 @@
           <% } %>
           <% preds.forEach(function (p, i) { %>
             <tr class="<%= p.username === currentUser.username ? 'row-me' : '' %>">
-              <td class="ps-4 text-secondary"><%= i + 1 %></td>
+              <td class="ps-4 text-secondary"><%= match.scored ? p.rank : (i + 1) %></td>
               <td>
                 <% if (p.avatar) { %>
                   <img src="<%= avatarSrc(p.avatar) %>" class="avatar-mini me-2" alt="" />
@@ -75,7 +102,7 @@
                 <% if (p.username === currentUser.username) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>
               <td class="text-center fw-bold"><%= p.a %> - <%= p.b %></td>
-              <% if (match.completed) { %>
+              <% if (match.scored) { %>
                 <td class="text-end pe-4">
                   <% if (p.pts === 4) { %><span class="badge wc-badge badge-done">+4</span>
                   <% } else if (p.pts === 2) { %><span class="badge wc-badge badge-open">+2</span>

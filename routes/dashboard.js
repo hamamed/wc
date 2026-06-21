@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { one, many, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
+const { computePoints } = require("../utils/scoring");
 
 const LOCK_MS = 30 * 60 * 1000;
 function isLocked(kickoffMs) {
@@ -43,6 +44,9 @@ router.get("/", requireLogin, async (req, res, next) => {
       const started = Date.now() >= kickoffMs;
       const pred = predByMatch[m.id] || null;
 
+      const hasLive = m.liveScoreA != null && m.liveScoreB != null;
+      const isLive = started && m.status !== "completed" && hasLive;
+
       let badge;
       if (m.status === "completed") {
         badge = { type: "completed", points: pred ? pred.pointsEarned : null };
@@ -53,6 +57,9 @@ router.get("/", requireLogin, async (req, res, next) => {
       } else {
         badge = { type: "open" };
       }
+
+      // Provisional points for a live match, based on the current live score.
+      const livePts = isLive && pred ? computePoints(pred.predictedScoreA, pred.predictedScoreB, m.liveScoreA, m.liveScoreB) : null;
 
       return {
         id: m.id,
@@ -68,6 +75,8 @@ router.get("/", requireLogin, async (req, res, next) => {
         liveScoreA: m.liveScoreA != null ? m.liveScoreA : null,
         liveScoreB: m.liveScoreB != null ? m.liveScoreB : null,
         locked,
+        live: isLive,
+        livePts,
         prediction: pred,
         badge,
       };
