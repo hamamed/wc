@@ -31,16 +31,19 @@
     </div>
   </div>
 
-  <div class="card wc-card border-0">
-    <% if (users.length) { %>
-      <div class="card-body pb-0">
+  <% if (users.length) { %>
+    <div class="card wc-card border-0 mb-4">
+      <div class="card-body">
         <div class="podium mb-0">
           <%- podiumPlace(users[1], 2) %>
           <%- podiumPlace(users[0], 1) %>
           <%- podiumPlace(users[2], 3) %>
         </div>
       </div>
-    <% } %>
+    </div>
+  <% } %>
+
+  <div class="card wc-card border-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0 leaderboard-table">
         <thead>
