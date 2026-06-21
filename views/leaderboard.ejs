@@ -30,11 +30,11 @@
             <tr class="user-row <%= u.isMe ? 'row-me' : '' %>" data-name="<%= u.username.toLowerCase() %>" data-id="<%= u.id %>" style="cursor:pointer;">
               <td class="ps-4">
                 <% if (u.rank === 1) { %>
-                  <i class="fa-solid fa-medal text-gold"></i>
+                  <span class="medal medal-gold">1</span>
                 <% } else if (u.rank === 2) { %>
-                  <i class="fa-solid fa-medal text-silver"></i>
+                  <span class="medal medal-silver">2</span>
                 <% } else if (u.rank === 3) { %>
-                  <i class="fa-solid fa-medal text-bronze"></i>
+                  <span class="medal medal-bronze">3</span>
                 <% } else { %>
                   <span class="text-secondary">#<%= u.rank %></span>
                 <% } %>
