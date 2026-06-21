@@ -461,19 +461,33 @@ router.post("/vote", apiAuth, async (req, res) => {
 // ---- Community forum -----------------------------------------------------
 router.get("/community/posts", apiAuth, async (req, res) => {
   try {
+    const me = String(req.userId);
+    // Previous seen time (before resetting) drives the "new" highlights.
+    let prevSeen = 0;
+    try {
+      const u = await one("SELECT community_seen_at FROM users WHERE id = $1", [req.userId]);
+      prevSeen = u && u.community_seen_at ? new Date(u.community_seen_at).getTime() : 0;
+    } catch (_) {}
+
     const posts = await forum.listPosts(req.userId);
     const out = [];
     for (const p of posts) {
-      const comments = (await forum.listComments(p.id)).map((c) => ({
-        id: String(c.id), username: c.username, avatar: res.locals.avatarSrc(c.avatar),
-        body: c.body, createdAt: new Date(c.createdAt).getTime(),
-        mine: String(c.userId) === String(req.userId),
-      }));
+      const comments = (await forum.listComments(p.id)).map((c) => {
+        const ts = new Date(c.createdAt).getTime();
+        return {
+          id: String(c.id), username: c.username, avatar: res.locals.avatarSrc(c.avatar),
+          body: c.body, createdAt: ts, mine: String(c.userId) === me,
+          isNew: ts > prevSeen && String(c.userId) !== me,
+        };
+      });
+      const ts = new Date(p.createdAt).getTime();
       out.push({
         id: String(p.id), username: p.username, avatar: res.locals.avatarSrc(p.avatar),
         body: p.body, score: p.score, myVote: p.myVote, commentCount: p.commentCount,
-        createdAt: new Date(p.createdAt).getTime(),
-        mine: String(p.userId) === String(req.userId), comments,
+        createdAt: ts, mine: String(p.userId) === me,
+        isNew: ts > prevSeen && String(p.userId) !== me,
+        hasNewComments: comments.some((c) => c.isNew),
+        comments,
       });
     }
     try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [req.userId]); } catch (_) {}

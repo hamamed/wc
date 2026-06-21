@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { query } = require("../config/db");
+const { one, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const forum = require("../utils/forum");
 
@@ -8,12 +8,19 @@ const forum = require("../utils/forum");
 router.get("/", requireLogin, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
+    const me = String(userId);
+    // Capture the previous "seen" time BEFORE resetting it, to flag what's new.
+    const u = await one("SELECT community_seen_at FROM users WHERE id = $1", [userId]);
+    const prevSeen = u && u.community_seen_at ? new Date(u.community_seen_at).getTime() : 0;
+
     const posts = await forum.listPosts(userId);
-    // Attach comments for each post (small community — fine to load inline).
     for (const p of posts) {
       p.comments = await forum.listComments(p.id);
+      p.comments.forEach((c) => { c.isNew = new Date(c.createdAt).getTime() > prevSeen && String(c.userId) !== me; });
+      p.isNew = new Date(p.createdAt).getTime() > prevSeen && String(p.userId) !== me;
+      p.hasNewComments = p.comments.some((c) => c.isNew);
     }
-    // Mark the feed as seen so the "new posts" badge clears.
+    // Mark the feed as seen so the badge clears.
     try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [userId]); } catch (_) {}
     res.locals.communityNew = 0;
     res.render("community", { posts });

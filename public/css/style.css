@@ -447,6 +447,9 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .vote-btn.up.active { color: #ff6a3d; }
 .vote-btn.down.active { color: #6a85ff; }
 .vote-score { font-size: 0.95rem; }
+.post-new { border-left: 4px solid #ff5a4d !important; }
+.post-newc { border-left: 4px solid #3d7bff !important; }
+.comment-new { background: rgba(61, 123, 255, 0.08); border-radius: 8px; }
 
 /* ---- Rank medals (top 3) ---- */
 .medal {

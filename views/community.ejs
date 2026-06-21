@@ -35,7 +35,7 @@
   <% } %>
 
   <% posts.forEach(function (p) { %>
-    <div class="card wc-card border-0 mb-3" id="post-<%= p.id %>">
+    <div class="card wc-card border-0 mb-3 <%= p.isNew ? 'post-new' : (p.hasNewComments ? 'post-newc' : '') %>" id="post-<%= p.id %>">
       <div class="card-body d-flex gap-3">
         <!-- Vote column -->
         <div class="vote-col text-center" data-id="<%= p.id %>">
@@ -48,6 +48,7 @@
           <div class="small text-secondary mb-1">
             <% if (p.avatar) { %><img src="<%= avatarSrc(p.avatar) %>" class="avatar-mini me-1" alt="" /><% } else { %><i class="fa-solid fa-user-circle me-1"></i><% } %>
             <span class="fw-semibold text-body"><%= p.username %></span> · <%= ago(p.createdAt) %>
+            <% if (p.isNew) { %><span class="badge rounded-pill text-bg-danger ms-1"><%= t('comm2.new') %></span><% } else if (p.hasNewComments) { %><span class="badge rounded-pill text-bg-primary ms-1"><i class="fa-solid fa-comment-dots me-1"></i><%= t('comm2.new') %></span><% } %>
             <% if (p.username === currentUser.username || isAdmin) { %>
               <form action="/community/post/<%= p.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this post?');">
                 <button class="btn btn-link btn-sm text-danger p-0 ms-1" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -61,7 +62,7 @@
 
           <div class="collapse mt-2" id="c-<%= p.id %>">
             <% p.comments.forEach(function (c) { %>
-              <div class="d-flex gap-2 py-2 border-top">
+              <div class="d-flex gap-2 py-2 border-top <%= c.isNew ? 'comment-new' : '' %>">
                 <div class="flex-grow-1 min-w-0">
                   <div class="small text-secondary">
                     <% if (c.avatar) { %><img src="<%= avatarSrc(c.avatar) %>" class="avatar-mini me-1" alt="" /><% } %>
