@@ -13,7 +13,8 @@
     return '<div class="podium-place podium-' + rank + '" data-id="' + esc(u.id) + '" style="cursor:pointer">' +
       '<div class="podium-ava-wrap">' + ava + '<span class="medal medal-' + cls + ' podium-medal">' + rank + '</span></div>' +
       '<div class="podium-name">' + esc(u.username) + '</div>' +
-      '<div class="podium-points">' + u.totalPoints + ' ' + esc(t('common.pts')) + '</div>' +
+      '<div class="podium-points">' + u.totalPoints + ' ' + esc(t('common.pts')) +
+        (u.livePts > 0 ? ' <span class="text-danger"><span class="live-dot"></span>+' + u.livePts + '</span>' : '') + '</div>' +
       '<div class="podium-bar">' + rank + '</div></div>';
   }
 %>
@@ -87,7 +88,7 @@
                 <% if (u.isMe) { %><span class="badge wc-userchip ms-2"><%= t('lb.you') %></span><% } %>
               </td>
               <td class="text-end pe-4 fw-bold text-accent">
-                <%= u.totalPoints %><% if (u.gained > 0) { %> <small class="text-success fw-bold">+<%= u.gained %></small><% } %>
+                <%= u.totalPoints %><% if (u.livePts > 0) { %> <small class="text-danger fw-bold"><span class="live-dot"></span>+<%= u.livePts %></small><% } else if (u.gained > 0) { %> <small class="text-success fw-bold">+<%= u.gained %></small><% } %>
               </td>
             </tr>
           <% }); %>

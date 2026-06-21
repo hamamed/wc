@@ -15,6 +15,7 @@ const { validPin, hashPin, verifyPin } = require("../utils/pin");
 const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAvatars");
 const { getUserProfile } = require("../utils/userProfile");
 const { rankPredictions } = require("../utils/matchPreds");
+const { getLiveBonus } = require("../utils/liveBonus");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -177,17 +178,24 @@ router.post("/predict", apiAuth, async (req, res) => {
 // ---- Leaderboard ----------------------------------------------------------
 router.get("/leaderboard", apiAuth, async (req, res) => {
   try {
-    const rows = await many(
-      "SELECT id, username, avatar, total_points, last_rank, last_points FROM users ORDER BY total_points DESC, username ASC"
-    );
-    const users = rows.map((u, i) => {
-      const rank = i + 1;
+    const [rows, live] = await Promise.all([
+      many("SELECT id, username, avatar, total_points, last_rank, last_points FROM users"),
+      getLiveBonus(),
+    ]);
+    const enriched = rows.map((u) => {
+      const livePts = live[u.id] || 0;
+      const base = u.total_points || 0;
+      return { u, livePts, base, points: base + livePts };
+    });
+    enriched.sort((a, b) => (b.points - a.points) || String(a.u.username).localeCompare(String(b.u.username)));
+    const users = enriched.map((e, i) => {
+      const u = e.u, rank = i + 1;
       const move = u.last_rank != null ? u.last_rank - rank : 0;
-      const gained = u.last_points != null ? (u.total_points || 0) - u.last_points : 0;
+      const gained = u.last_points != null ? e.base - u.last_points : 0;
       return {
         id: String(u.id),
         rank, username: u.username, avatar: res.locals.avatarSrc(u.avatar),
-        totalPoints: u.total_points || 0, move, gained, me: u.id === req.userId,
+        totalPoints: e.points, livePts: e.livePts, move, gained, me: u.id === req.userId,
       };
     });
     res.json({ users });

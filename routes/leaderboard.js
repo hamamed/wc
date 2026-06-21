@@ -3,29 +3,41 @@ const router = express.Router();
 const { many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { getUserProfile } = require("../utils/userProfile");
+const { getLiveBonus } = require("../utils/liveBonus");
 
 router.get("/", requireLogin, async (req, res, next) => {
   try {
-    const rows = await many(
-      `SELECT id, username, avatar, total_points AS "totalPoints", last_rank AS "lastRank", last_points AS "lastPoints"
-       FROM users ORDER BY total_points DESC, username ASC`
-    );
+    const [rows, live] = await Promise.all([
+      many(
+        `SELECT id, username, avatar, total_points AS "totalPoints", last_rank AS "lastRank", last_points AS "lastPoints"
+         FROM users`
+      ),
+      getLiveBonus(),
+    ]);
 
-    const me = req.session.user.id;
-    const users = rows.map((u, i) => {
+    const me = String(req.session.user.id);
+    // Add provisional live points, then rank by the live-adjusted total.
+    const enriched = rows.map((u) => {
+      const livePts = live[u.id] || 0;
+      const base = u.totalPoints || 0;
+      return { id: String(u.id), username: u.username, avatar: u.avatar || null, base, livePts, points: base + livePts, lastRank: u.lastRank, lastPoints: u.lastPoints };
+    });
+    enriched.sort((a, b) => (b.points - a.points) || a.username.localeCompare(b.username));
+
+    const users = enriched.map((u, i) => {
       const rank = i + 1;
-      // move > 0 => climbed; < 0 => dropped; null lastRank => no data yet
       const move = u.lastRank != null ? u.lastRank - rank : 0;
-      const gained = u.lastPoints != null ? (u.totalPoints || 0) - u.lastPoints : 0;
+      const gained = u.lastPoints != null ? u.base - u.lastPoints : 0;
       return {
-        id: String(u.id),
+        id: u.id,
         rank,
         username: u.username,
-        avatar: u.avatar || null,
-        totalPoints: u.totalPoints || 0,
+        avatar: u.avatar,
+        totalPoints: u.points,   // live-adjusted total
+        livePts: u.livePts,
         move,
         gained,
-        isMe: String(u.id) === me,
+        isMe: u.id === me,
       };
     });
 
