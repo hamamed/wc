@@ -304,6 +304,36 @@ router.post("/users/delete/:id", async (req, res) => {
   try { await query("DELETE FROM users WHERE id = $1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
+router.post("/users/:userId/predictions/:matchId/edit", async (req, res) => {
+  try {
+    const { userId, matchId } = req.params;
+    const a = parseInt(req.body.scoreA, 10), b = parseInt(req.body.scoreB, 10);
+    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0 || a > 99 || b > 99) return res.status(400).json({ error: "invalid" });
+    const m = await one("SELECT status, actual_score_a, actual_score_b FROM matches WHERE id = $1", [matchId]);
+    if (!m) return res.status(404).json({ error: "not_found" });
+    let points;
+    const rawPts = req.body.points;
+    if (rawPts !== "" && rawPts != null && !Number.isNaN(parseInt(rawPts, 10))) points = parseInt(rawPts, 10);
+    else if (m.status === "completed" && m.actual_score_a != null && m.actual_score_b != null) points = computePoints(a, b, m.actual_score_a, m.actual_score_b);
+    else points = 0;
+    await query(
+      `INSERT INTO predictions (user_id, match_id, predicted_score_a, predicted_score_b, points_earned, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now())
+       ON CONFLICT (user_id, match_id)
+       DO UPDATE SET predicted_score_a = EXCLUDED.predicted_score_a,
+                     predicted_score_b = EXCLUDED.predicted_score_b,
+                     points_earned = EXCLUDED.points_earned, updated_at = now()`,
+      [userId, matchId, a, b, points]
+    );
+    await query(
+      `UPDATE users SET total_points =
+         COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = $1), 0) + COALESCE(champion_bonus, 0)
+       WHERE id = $1`,
+      [userId]
+    );
+    res.json({ ok: true, points, pick: a + "-" + b });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
 router.post("/users/:userId/predictions/:matchId/delete", async (req, res) => {
   try {
     const { userId, matchId } = req.params;
@@ -336,6 +366,7 @@ router.get("/users/:id/predictions", async (req, res) => {
           matchId: String(p.match_id),
           match: L(p.team_a) + " vs " + L(p.team_b),
           pick: p.predicted_score_a + "-" + p.predicted_score_b,
+          predA: p.predicted_score_a, predB: p.predicted_score_b,
           result: completed ? p.actual_score_a + "-" + p.actual_score_b : "—",
           points: p.points_earned || 0, completed,
         };

@@ -166,21 +166,49 @@
             }
             j.predictions.forEach(function (p) {
               const tr = document.createElement("tr");
-              tr.innerHTML =
-                '<td>' + esc(p.match) + '</td>' +
-                '<td class="text-center fw-semibold">' + esc(p.pick) + '</td>' +
-                '<td class="text-center">' + esc(p.result) + '</td>' +
-                '<td class="text-end fw-bold text-accent">' + esc(p.points) + '</td>' +
-                '<td class="text-end pe-2"><button class="btn btn-outline-danger btn-sm del-pred" data-match="' + esc(p.matchId) + '" title="Delete prediction"><i class="fa-solid fa-trash"></i></button></td>';
-              tr.querySelector(".del-pred").addEventListener("click", function () {
+              function showView() {
+                tr.innerHTML =
+                  '<td>' + esc(p.match) + '</td>' +
+                  '<td class="text-center fw-semibold">' + esc(p.pick) + '</td>' +
+                  '<td class="text-center">' + esc(p.result) + '</td>' +
+                  '<td class="text-end fw-bold text-accent">' + esc(p.points) + '</td>' +
+                  '<td class="text-end pe-2"><button class="btn btn-outline-secondary btn-sm me-1 edit-pred" title="Edit prediction"><i class="fa-solid fa-pen"></i></button>' +
+                  '<button class="btn btn-outline-danger btn-sm del-pred" title="Delete prediction"><i class="fa-solid fa-trash"></i></button></td>';
+                tr.querySelector(".edit-pred").addEventListener("click", showEdit);
+                tr.querySelector(".del-pred").addEventListener("click", onDelete);
+              }
+              function showEdit() {
+                tr.innerHTML =
+                  '<td>' + esc(p.match) + '</td>' +
+                  '<td class="text-center"><div class="d-inline-flex gap-1 align-items-center justify-content-center">' +
+                    '<input type="number" min="0" max="99" class="form-control form-control-sm text-center ea" style="width:48px" value="' + esc(p.predA) + '"/><span>-</span>' +
+                    '<input type="number" min="0" max="99" class="form-control form-control-sm text-center eb" style="width:48px" value="' + esc(p.predB) + '"/></div></td>' +
+                  '<td class="text-center">' + esc(p.result) + '</td>' +
+                  '<td class="text-end"><input type="number" min="0" class="form-control form-control-sm text-center ep" style="width:58px" value="' + esc(p.points) + '"/></td>' +
+                  '<td class="text-end pe-2"><button class="btn btn-accent btn-sm me-1 save-pred" title="Save"><i class="fa-solid fa-check"></i></button>' +
+                  '<button class="btn btn-outline-secondary btn-sm cancel-pred" title="Cancel"><i class="fa-solid fa-xmark"></i></button></td>';
+                tr.querySelector(".cancel-pred").addEventListener("click", showView);
+                tr.querySelector(".save-pred").addEventListener("click", function () {
+                  const a = tr.querySelector(".ea").value, b = tr.querySelector(".eb").value, pts = tr.querySelector(".ep").value;
+                  const btn = this; btn.disabled = true;
+                  fetch("/admin/users/" + userId + "/predictions/" + p.matchId + "/edit", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ scoreA: a, scoreB: b, points: pts }),
+                  }).then((r) => r.json()).then(function (res) {
+                    if (res.ok) { p.predA = a; p.predB = b; p.pick = res.pick; p.points = res.points; showView(); }
+                    else { btn.disabled = false; alert("Could not save."); }
+                  }).catch(function () { btn.disabled = false; alert("Could not save."); });
+                });
+              }
+              function onDelete() {
                 if (!confirm("Delete this prediction? Any points it earned are removed.")) return;
-                const b = this;
-                b.disabled = true;
-                fetch("/admin/users/" + userId + "/predictions/" + b.dataset.match + "/delete", { method: "POST" })
+                const b = this; b.disabled = true;
+                fetch("/admin/users/" + userId + "/predictions/" + p.matchId + "/delete", { method: "POST" })
                   .then((r) => r.json())
                   .then(function (res) { if (res.ok) tr.remove(); else { b.disabled = false; alert("Could not delete."); } })
                   .catch(function () { b.disabled = false; alert("Could not delete."); });
-              });
+              }
+              showView();
               body.appendChild(tr);
             });
             wrap.classList.remove("d-none");

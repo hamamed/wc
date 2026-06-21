@@ -403,6 +403,8 @@ router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
         match: `${p.team_a} vs ${p.team_b}`,
         kickoffMs: p.kickoff_time ? new Date(p.kickoff_time).getTime() : 0,
         pick: `${p.predicted_score_a}-${p.predicted_score_b}`,
+        predA: p.predicted_score_a,
+        predB: p.predicted_score_b,
         result: completed ? `${p.actual_score_a}-${p.actual_score_b}` : "—",
         points: p.points_earned || 0,
         completed,
@@ -412,6 +414,45 @@ router.get("/users/:id/predictions", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "failed" });
+  }
+});
+
+// Edit one of a user's predictions (score + optional points), keep total in sync.
+router.post("/users/:userId/predictions/:matchId/edit", requireAdmin, async (req, res) => {
+  try {
+    const { userId, matchId } = req.params;
+    const a = parseInt(req.body.scoreA, 10), b = parseInt(req.body.scoreB, 10);
+    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0 || a > 99 || b > 99) {
+      return res.status(400).json({ error: "invalid" });
+    }
+    const m = await one("SELECT status, actual_score_a, actual_score_b FROM matches WHERE id = $1", [matchId]);
+    if (!m) return res.status(404).json({ error: "not_found" });
+
+    let points;
+    const rawPts = req.body.points;
+    if (rawPts !== "" && rawPts != null && !Number.isNaN(parseInt(rawPts, 10))) points = parseInt(rawPts, 10);
+    else if (m.status === "completed" && m.actual_score_a != null && m.actual_score_b != null) points = computePoints(a, b, m.actual_score_a, m.actual_score_b);
+    else points = 0;
+
+    await query(
+      `INSERT INTO predictions (user_id, match_id, predicted_score_a, predicted_score_b, points_earned, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now())
+       ON CONFLICT (user_id, match_id)
+       DO UPDATE SET predicted_score_a = EXCLUDED.predicted_score_a,
+                     predicted_score_b = EXCLUDED.predicted_score_b,
+                     points_earned = EXCLUDED.points_earned, updated_at = now()`,
+      [userId, matchId, a, b, points]
+    );
+    await query(
+      `UPDATE users SET total_points =
+         COALESCE((SELECT SUM(points_earned) FROM predictions WHERE user_id = $1), 0) + COALESCE(champion_bonus, 0)
+       WHERE id = $1`,
+      [userId]
+    );
+    res.json({ ok: true, points, pick: a + "-" + b });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
   }
 });
 
