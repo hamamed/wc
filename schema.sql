@@ -78,3 +78,28 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   choice  BOOLEAN NOT NULL,
   PRIMARY KEY (poll_id, user_id)
 );
+
+-- Community forum: posts, up/down votes, comments.
+CREATE TABLE IF NOT EXISTS posts (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS posts_created_idx ON posts (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS post_votes (
+  post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  value   SMALLINT NOT NULL,           -- 1 = up, -1 = down
+  PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS post_comments (
+  id         BIGSERIAL PRIMARY KEY,
+  post_id    BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS post_comments_post_idx ON post_comments (post_id);

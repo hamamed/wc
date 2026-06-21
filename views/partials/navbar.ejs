@@ -55,6 +55,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="/community">
+              <i class="fa-solid fa-comments me-1"></i> <%= t('comm2.nav') %>
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="/profile">
               <i class="fa-solid fa-user me-1"></i> <%= t('nav.profile') %>
             </a>
@@ -107,6 +112,9 @@
   </a>
   <a href="/leaderboard" class="bottom-nav-item <%= navActive('/leaderboard') %>">
     <i class="fa-solid fa-trophy"></i><span><%= t('nav.ranks') %></span>
+  </a>
+  <a href="/community" class="bottom-nav-item <%= navActive('/community') %>">
+    <i class="fa-solid fa-comments"></i><span><%= t('comm2.nav') %></span>
   </a>
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
     <i class="fa-solid fa-user"></i><span><%= t('nav.profile') %></span>

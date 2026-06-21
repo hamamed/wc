@@ -121,6 +121,7 @@ app.use("/profile", require("./routes/profile"));
 app.use("/champion", require("./routes/champion"));
 app.use("/standings", require("./routes/standings"));
 app.use("/leaderboard", require("./routes/leaderboard"));
+app.use("/community", require("./routes/community"));
 app.use("/admin", require("./routes/admin"));
 
 // Home -> dashboard when logged in, otherwise the public landing page.

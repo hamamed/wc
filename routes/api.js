@@ -16,6 +16,7 @@ const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAva
 const { getUserProfile } = require("../utils/userProfile");
 const { rankPredictions } = require("../utils/matchPreds");
 const { getLiveBonus } = require("../utils/liveBonus");
+const forum = require("../utils/forum");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -442,6 +443,48 @@ router.post("/vote", apiAuth, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "server" });
   }
+});
+
+// ---- Community forum -----------------------------------------------------
+router.get("/community/posts", apiAuth, async (req, res) => {
+  try {
+    const posts = await forum.listPosts(req.userId);
+    const out = [];
+    for (const p of posts) {
+      const comments = (await forum.listComments(p.id)).map((c) => ({
+        id: String(c.id), username: c.username, avatar: res.locals.avatarSrc(c.avatar),
+        body: c.body, createdAt: new Date(c.createdAt).getTime(),
+        mine: String(c.userId) === String(req.userId),
+      }));
+      out.push({
+        id: String(p.id), username: p.username, avatar: res.locals.avatarSrc(p.avatar),
+        body: p.body, score: p.score, myVote: p.myVote, commentCount: p.commentCount,
+        createdAt: new Date(p.createdAt).getTime(),
+        mine: String(p.userId) === String(req.userId), comments,
+      });
+    }
+    res.json({ posts: out, isAdmin: !!req.userData.is_admin });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts", apiAuth, async (req, res) => {
+  try { await forum.createPost(req.userId, req.body.body); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/vote", apiAuth, async (req, res) => {
+  try { const score = await forum.votePost(req.userId, req.params.id, parseInt(req.body.value, 10)); res.json({ ok: true, score }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/comment", apiAuth, async (req, res) => {
+  try { await forum.addComment(req.userId, req.params.id, req.body.body); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/delete", apiAuth, async (req, res) => {
+  try { await forum.deletePost(req.userId, req.params.id, !!req.userData.is_admin); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/comments/:id/delete", apiAuth, async (req, res) => {
+  try { await forum.deleteComment(req.userId, req.params.id, !!req.userData.is_admin); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 
 module.exports = router;

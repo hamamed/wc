@@ -1,0 +1,114 @@
+<%- include("partials/head", { title: "Community · WC 2026 Predictor" }) %>
+<%- include("partials/navbar") %>
+
+<%
+  function ago(d) {
+    const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+    if (s < 60) return s + "s";
+    if (s < 3600) return Math.floor(s / 60) + "m";
+    if (s < 86400) return Math.floor(s / 3600) + "h";
+    return Math.floor(s / 86400) + "d";
+  }
+%>
+
+<div class="container py-4" style="max-width:760px;">
+  <div class="mb-4">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-comments text-accent me-2"></i><%= t('comm2.title') %></h2>
+    <p class="text-secondary mb-0"><%= t('comm2.subtitle') %></p>
+  </div>
+
+  <!-- New post -->
+  <div class="card wc-card border-0 mb-4">
+    <div class="card-body">
+      <form action="/community/post" method="POST">
+        <textarea name="body" class="form-control mb-2" rows="3" maxlength="2000" dir="auto"
+                  placeholder="<%= t('comm2.placeholder') %>" required></textarea>
+        <div class="d-grid d-sm-block">
+          <button class="btn btn-accent fw-semibold"><i class="fa-solid fa-paper-plane me-1"></i><%= t('comm2.post') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <% if (!posts.length) { %>
+    <div class="text-center text-secondary py-5"><i class="fa-solid fa-comment-dots fa-2x mb-3 d-block"></i><%= t('comm2.empty') %></div>
+  <% } %>
+
+  <% posts.forEach(function (p) { %>
+    <div class="card wc-card border-0 mb-3" id="post-<%= p.id %>">
+      <div class="card-body d-flex gap-3">
+        <!-- Vote column -->
+        <div class="vote-col text-center" data-id="<%= p.id %>">
+          <button class="vote-btn up <%= p.myVote === 1 ? 'active' : '' %>" data-value="1" title="Upvote"><i class="fa-solid fa-caret-up"></i></button>
+          <div class="vote-score fw-bold"><%= p.score %></div>
+          <button class="vote-btn down <%= p.myVote === -1 ? 'active' : '' %>" data-value="-1" title="Downvote"><i class="fa-solid fa-caret-down"></i></button>
+        </div>
+        <!-- Body -->
+        <div class="flex-grow-1 min-w-0">
+          <div class="small text-secondary mb-1">
+            <% if (p.avatar) { %><img src="<%= avatarSrc(p.avatar) %>" class="avatar-mini me-1" alt="" /><% } else { %><i class="fa-solid fa-user-circle me-1"></i><% } %>
+            <span class="fw-semibold text-body"><%= p.username %></span> · <%= ago(p.createdAt) %>
+            <% if (p.username === currentUser.username || isAdmin) { %>
+              <form action="/community/post/<%= p.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this post?');">
+                <button class="btn btn-link btn-sm text-danger p-0 ms-1" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </form>
+            <% } %>
+          </div>
+          <div class="pre-line mb-2" dir="auto"><%= p.body %></div>
+          <button class="btn btn-link btn-sm p-0 text-secondary text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#c-<%= p.id %>">
+            <i class="fa-regular fa-comment me-1"></i><%= p.commentCount %> <%= t('comm2.comments') %>
+          </button>
+
+          <div class="collapse mt-2" id="c-<%= p.id %>">
+            <% p.comments.forEach(function (c) { %>
+              <div class="d-flex gap-2 py-2 border-top">
+                <div class="flex-grow-1 min-w-0">
+                  <div class="small text-secondary">
+                    <% if (c.avatar) { %><img src="<%= avatarSrc(c.avatar) %>" class="avatar-mini me-1" alt="" /><% } %>
+                    <span class="fw-semibold text-body"><%= c.username %></span> · <%= ago(c.createdAt) %>
+                  </div>
+                  <div class="pre-line small" dir="auto"><%= c.body %></div>
+                </div>
+                <% if (c.username === currentUser.username || isAdmin) { %>
+                  <form action="/community/comment/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Delete this comment?');">
+                    <button class="btn btn-link btn-sm text-danger p-0" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                  </form>
+                <% } %>
+              </div>
+            <% }); %>
+            <form action="/community/post/<%= p.id %>/comment" method="POST" class="d-flex gap-2 mt-2">
+              <input name="body" class="form-control form-control-sm" maxlength="1000" dir="auto" placeholder="<%= t('comm2.addComment') %>" required />
+              <button class="btn btn-accent btn-sm fw-semibold"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<script>
+  // AJAX up/down voting.
+  document.querySelectorAll(".vote-col").forEach(function (col) {
+    const id = col.dataset.id;
+    const scoreEl = col.querySelector(".vote-score");
+    col.querySelectorAll(".vote-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const wanted = parseInt(btn.dataset.value, 10);
+        const already = btn.classList.contains("active");
+        const value = already ? 0 : wanted;
+        fetch("/community/post/" + id + "/vote", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: value }),
+        }).then((r) => r.json()).then(function (j) {
+          if (!j.ok) return;
+          scoreEl.textContent = j.score;
+          col.querySelectorAll(".vote-btn").forEach((b) => b.classList.remove("active"));
+          if (value !== 0) btn.classList.add("active");
+        }).catch(function () {});
+      });
+    });
+  });
+</script>
+
+<%- include("partials/footer") %>
