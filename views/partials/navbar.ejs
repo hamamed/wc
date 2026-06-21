@@ -19,6 +19,11 @@
 
     <% if (currentUser) { %>
       <!-- On phones the bottom app-nav replaces the hamburger; show the user chip instead -->
+      <% if (userIsAdmin) { %>
+        <a href="/admin" class="btn btn-outline-secondary btn-sm d-lg-none ms-2" title="Admin">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </a>
+      <% } %>
       <span class="badge wc-userchip d-lg-none ms-2">
         <i class="fa-solid fa-user me-1"></i><%= currentUser.username %>
       </span>
@@ -119,11 +124,6 @@
   <a href="/profile" class="bottom-nav-item <%= navActive('/profile') %>">
     <i class="fa-solid fa-user"></i><span><%= t('nav.profile') %></span>
   </a>
-  <% if (userIsAdmin) { %>
-    <a href="/admin" class="bottom-nav-item <%= navActive('/admin') %>">
-      <i class="fa-solid fa-screwdriver-wrench"></i><span>Admin</span>
-    </a>
-  <% } %>
 </nav>
 <% } %>
 
