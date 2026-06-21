@@ -5,7 +5,13 @@
  * started but aren't finalized get 0 (they'll be scored when the result is set).
  * Future / not-yet-played matches are never touched.
  *
- *   node fillMissing.js
+ *   node fillMissing.js                          # all played matches
+ *   node fillMissing.js --exclude "Group Stage - 1"   # skip round 1 (exact grp)
+ *   node fillMissing.js --exclude "%- 1"         # skip round 1 (ILIKE pattern)
+ *
+ * Use --exclude to start from round 2: pass the round-1 `grp` label so those
+ * matches are left alone. Find the labels with:
+ *   SELECT grp, count(*) FROM matches GROUP BY grp ORDER BY min(kickoff_time);
  *
  * Safe to re-run (only fills gaps — ON CONFLICT DO NOTHING).
  */
@@ -14,14 +20,24 @@ const { pool } = require("./config/db");
 const { computePoints } = require("./utils/scoring");
 
 const rnd = () => Math.floor(Math.random() * 4); // 0..3
+const exclIdx = process.argv.indexOf("--exclude");
+const exclude = exclIdx >= 0 ? process.argv[exclIdx + 1] : null;
 
 (async () => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    // Only matches that have already kicked off; optionally skip an excluded round.
+    let where = "kickoff_time <= now()";
+    const params = [];
+    if (exclude) {
+      params.push(exclude);
+      where += " AND (grp IS NULL OR grp NOT ILIKE $1)";
+    }
     const { rows: matches } = await client.query(
-      `SELECT id, status, actual_score_a, actual_score_b
-       FROM matches WHERE kickoff_time <= now()`
+      `SELECT id, status, actual_score_a, actual_score_b, grp FROM matches WHERE ${where}`,
+      params
     );
     const { rows: users } = await client.query("SELECT id FROM users");
 
@@ -56,7 +72,10 @@ const rnd = () => Math.floor(Math.random() * 4); // 0..3
     );
 
     await client.query("COMMIT");
-    console.log(`Filled ${created} missing prediction(s) across ${matches.length} played match(es).`);
+    console.log(
+      `Filled ${created} missing prediction(s) across ${matches.length} played match(es)` +
+        (exclude ? ` (excluding grp ILIKE "${exclude}").` : ".")
+    );
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("Fill failed:", err);
