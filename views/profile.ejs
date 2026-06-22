@@ -177,6 +177,15 @@
             <span class="ach-badge <%= a.earned ? 'earned' : '' %>"><i class="fa-solid <%= a.icon %> me-1"></i><%= t('ach.' + a.key) %></span>
           <% }); %>
         </div>
+        <ul class="list-unstyled small text-secondary mb-0 mt-3">
+          <% achievements.forEach(function (a) { %>
+            <li class="mb-1">
+              <i class="fa-solid <%= a.icon %> me-2 <%= a.earned ? 'text-accent' : '' %>" style="width:16px;text-align:center;"></i>
+              <strong class="text-body"><%= t('ach.' + a.key) %></strong> — <%= t('ach.' + a.key + 'D') %>
+              <% if (a.earned) { %><i class="fa-solid fa-circle-check text-success ms-1"></i><% } %>
+            </li>
+          <% }); %>
+        </ul>
       </div>
     </div>
   <% } %>

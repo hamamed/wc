@@ -120,6 +120,7 @@ const en = {
   "champ.wrong": "Wrong pick this time.",
   "champ.race": "Champion Race — who everyone picked",
   "ach.title": "Achievements", "ach.firstPick": "First Pick", "ach.sharp": "Sharpshooter", "ach.hattrick": "Hat-trick", "ach.streak3": "On Fire (×3)", "ach.century": "Centurion", "ach.veteran": "Veteran", "ach.oracle": "Oracle",
+  "ach.firstPickD": "Make your first prediction.", "ach.sharpD": "Get an exact score right.", "ach.hattrickD": "Get 3 exact scores.", "ach.streak3D": "Score points in 3 predictions in a row.", "ach.centuryD": "Reach 100 total points.", "ach.veteranD": "Make 20 predictions.", "ach.oracleD": "Correctly pick the World Cup champion.",
 
   "stat.totalPoints": "Total Points",
   "stat.exact": "Exact Scores",
@@ -302,6 +303,7 @@ const fr = {
   "champ.wrong": "Mauvais choix cette fois.",
   "champ.race": "Course au titre — les choix de tous",
   "ach.title": "Succès", "ach.firstPick": "Premier pronostic", "ach.sharp": "Tireur d'élite", "ach.hattrick": "Coup du chapeau", "ach.streak3": "En feu (×3)", "ach.century": "Centurion", "ach.veteran": "Vétéran", "ach.oracle": "Oracle",
+  "ach.firstPickD": "Faites votre premier pronostic.", "ach.sharpD": "Trouvez un score exact.", "ach.hattrickD": "Obtenez 3 scores exacts.", "ach.streak3D": "Marquez des points sur 3 pronostics d'affilée.", "ach.centuryD": "Atteignez 100 points.", "ach.veteranD": "Faites 20 pronostics.", "ach.oracleD": "Pronostiquez le bon champion.",
 
   "stat.totalPoints": "Points totaux",
   "stat.exact": "Scores exacts",
@@ -484,6 +486,7 @@ const ar = {
   "champ.wrong": "اختيار خاطئ هذه المرة.",
   "champ.race": "سباق البطل — اختيارات الجميع",
   "ach.title": "الإنجازات", "ach.firstPick": "أول توقّع", "ach.sharp": "قنّاص", "ach.hattrick": "هاتريك", "ach.streak3": "مشتعل (×3)", "ach.century": "المئوية", "ach.veteran": "محترف", "ach.oracle": "العرّاف",
+  "ach.firstPickD": "قدّم أول توقّع لك.", "ach.sharpD": "احصل على نتيجة مضبوطة.", "ach.hattrickD": "احصل على 3 نتائج مضبوطة.", "ach.streak3D": "اكسب نقاطاً في 3 توقّعات متتالية.", "ach.centuryD": "اجمع 100 نقطة.", "ach.veteranD": "قدّم 20 توقّعاً.", "ach.oracleD": "توقّع بطل كأس العالم الصحيح.",
 
   "stat.totalPoints": "مجموع النقاط",
   "stat.exact": "النتائج المضبوطة",
