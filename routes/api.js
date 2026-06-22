@@ -61,11 +61,23 @@ router.get("/me", apiAuth, async (req, res) => {
     );
     communityNew = r ? r.n : 0;
   } catch (_) { /* community tables may not exist yet */ }
+  let fixturesTodo = 0;
+  try {
+    const r = await one(
+      `SELECT COUNT(*)::int AS n FROM matches m
+       WHERE m.status <> 'completed'
+         AND m.kickoff_time > now() + interval '30 minutes'
+         AND NOT EXISTS (SELECT 1 FROM predictions p WHERE p.match_id = m.id AND p.user_id = $1)`,
+      [req.userId]
+    );
+    fixturesTodo = r ? r.n : 0;
+  } catch (_) {}
   res.json({
     id: String(req.userId),
     username: req.userData.username,
     isAdmin: !!req.userData.is_admin,
     communityNew,
+    fixturesTodo,
   });
 });
 

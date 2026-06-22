@@ -1,3 +1,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Auto-refresh while a match is live so live scores/points stay current.
+    (function () {
+      if (!document.querySelector(".badge-live, .live-dot")) return;
+      if (document.querySelector("input:focus, textarea:focus")) return;
+      var reload = function () {
+        if (document.hidden || document.querySelector("input:focus, textarea:focus, .modal.show")) return;
+        location.reload();
+      };
+      setTimeout(reload, 45000);
+    })();
+  </script>
 </body>
 </html>

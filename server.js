@@ -59,6 +59,7 @@ app.use(async (req, res, next) => {
   // admin takes effect immediately (no re-login needed).
   let userIsAdmin = false;
   let communityNew = 0;
+  let fixturesTodo = 0;
   if (req.session.user) {
     try {
       const row = await one("SELECT is_admin FROM users WHERE id = $1", [req.session.user.id]);
@@ -75,6 +76,16 @@ app.use(async (req, res, next) => {
       );
       communityNew = r ? r.n : 0;
     } catch (_) { /* community tables may not exist yet */ }
+    try {
+      const r = await one(
+        `SELECT COUNT(*)::int AS n FROM matches m
+         WHERE m.status <> 'completed'
+           AND m.kickoff_time > now() + interval '30 minutes'
+           AND NOT EXISTS (SELECT 1 FROM predictions p WHERE p.match_id = m.id AND p.user_id = $1)`,
+        [req.session.user.id]
+      );
+      fixturesTodo = r ? r.n : 0;
+    } catch (_) {}
   }
 
   res.locals.currentUser = req.session.user || null;
@@ -83,6 +94,7 @@ app.use(async (req, res, next) => {
   res.locals.userIsAdmin = userIsAdmin;                                  // this user has an admin role
   res.locals.isAdmin = !!req.session.isAdmin || userIsAdmin;            // can reach the admin panel
   res.locals.communityNew = communityNew;                               // unseen community posts
+  res.locals.fixturesTodo = fixturesTodo;                               // open matches you haven't predicted
   res.locals.currentPath = req.path;
 
   // Language / i18n — prefer session, fall back to a persistent cookie so the
