@@ -9,11 +9,12 @@ router.get("/", requireLogin, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const me = String(userId);
+    const sort = req.query.sort === "new" ? "new" : "top";
     // Capture the previous "seen" time BEFORE resetting it, to flag what's new.
     const u = await one("SELECT community_seen_at FROM users WHERE id = $1", [userId]);
     const prevSeen = u && u.community_seen_at ? new Date(u.community_seen_at).getTime() : 0;
 
-    const posts = await forum.listPosts(userId);
+    const posts = await forum.listPosts(userId, sort);
     for (const p of posts) {
       p.comments = await forum.listComments(p.id);
       p.comments.forEach((c) => { c.isNew = new Date(c.createdAt).getTime() > prevSeen && String(c.userId) !== me; });
@@ -23,7 +24,7 @@ router.get("/", requireLogin, async (req, res, next) => {
     // Mark the feed as seen so the badge clears.
     try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [userId]); } catch (_) {}
     res.locals.communityNew = 0;
-    res.render("community", { posts });
+    res.render("community", { posts, sort });
   } catch (err) {
     next(err);
   }
@@ -41,6 +42,20 @@ router.post("/post/:id/comment", requireLogin, async (req, res) => {
     await forum.addComment(req.session.user.id, req.params.id, req.body.body);
     res.redirect("/community#post-" + req.params.id);
   } catch (err) { console.error(err); res.redirect("/community"); }
+});
+
+router.post("/post/:id/edit", requireLogin, async (req, res) => {
+  try {
+    await forum.editPost(req.session.user.id, req.params.id, req.body.body, !!res.locals.userIsAdmin || !!req.session.isAdmin);
+    res.redirect("/community");
+  } catch (err) { console.error(err); res.redirect("/community"); }
+});
+
+router.post("/post/:id/report", requireLogin, async (req, res) => {
+  try {
+    await forum.reportPost(req.session.user.id, req.params.id);
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 
 // AJAX vote — returns the new score.

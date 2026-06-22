@@ -30,6 +30,12 @@
     </div>
   </div>
 
+  <!-- Sort tabs -->
+  <div class="btn-group btn-group-sm mb-3" role="group">
+    <a href="/community?sort=top" class="btn <%= sort === 'top' ? 'btn-accent' : 'btn-outline-secondary' %>"><i class="fa-solid fa-fire me-1"></i><%= t('comm2.top') %></a>
+    <a href="/community?sort=new" class="btn <%= sort === 'new' ? 'btn-accent' : 'btn-outline-secondary' %>"><i class="fa-solid fa-clock me-1"></i><%= t('comm2.new') %></a>
+  </div>
+
   <% if (!posts.length) { %>
     <div class="text-center text-secondary py-5"><i class="fa-solid fa-comment-dots fa-2x mb-3 d-block"></i><%= t('comm2.empty') %></div>
   <% } %>
@@ -49,13 +55,26 @@
             <% if (p.avatar) { %><img src="<%= avatarSrc(p.avatar) %>" class="avatar-mini me-1" alt="" /><% } else { %><i class="fa-solid fa-user-circle me-1"></i><% } %>
             <span class="fw-semibold text-body"><%= p.username %></span> · <%= ago(p.createdAt) %>
             <% if (p.isNew) { %><span class="badge rounded-pill text-bg-danger ms-1"><%= t('comm2.new') %></span><% } else if (p.hasNewComments) { %><span class="badge rounded-pill text-bg-primary ms-1"><i class="fa-solid fa-comment-dots me-1"></i><%= t('comm2.new') %></span><% } %>
+            <% if (isAdmin && p.reportCount > 0) { %><span class="badge rounded-pill text-bg-warning ms-1"><i class="fa-solid fa-flag me-1"></i><%= p.reportCount %> <%= t('comm2.flagged') %></span><% } %>
             <% if (p.username === currentUser.username || isAdmin) { %>
+              <button class="btn btn-link btn-sm text-secondary p-0 ms-1 edit-toggle" type="button" data-id="<%= p.id %>" title="<%= t('comm2.editL') %>"><i class="fa-solid fa-pen"></i></button>
               <form action="/community/post/<%= p.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this post?');">
                 <button class="btn btn-link btn-sm text-danger p-0 ms-1" title="Delete"><i class="fa-solid fa-trash"></i></button>
               </form>
             <% } %>
+            <% if (p.username !== currentUser.username) { %>
+              <button class="btn btn-link btn-sm text-secondary p-0 ms-1 report-btn" type="button" data-id="<%= p.id %>" <%= p.myReport ? 'disabled' : '' %> title="<%= t('comm2.report') %>">
+                <i class="fa-solid fa-flag"></i> <%= p.myReport ? t('comm2.reported') : '' %>
+              </button>
+            <% } %>
           </div>
-          <div class="pre-line mb-2" dir="auto"><%= p.body %></div>
+          <div class="pre-line mb-2 post-body" dir="auto"><%= p.body %></div>
+          <% if (p.username === currentUser.username || isAdmin) { %>
+            <form action="/community/post/<%= p.id %>/edit" method="POST" class="collapse mb-2" id="edit-<%= p.id %>">
+              <textarea name="body" class="form-control mb-2" rows="3" maxlength="2000" dir="auto"><%= p.body %></textarea>
+              <button class="btn btn-accent btn-sm fw-semibold"><%= t('comm2.save') %></button>
+            </form>
+          <% } %>
           <button class="btn btn-link btn-sm p-0 text-secondary text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#c-<%= p.id %>">
             <i class="fa-regular fa-comment me-1"></i><%= p.commentCount %> <%= t('comm2.comments') %>
           </button>
@@ -89,6 +108,25 @@
 </div>
 
 <script>
+  // Edit toggle (reveal the inline edit form).
+  document.querySelectorAll(".edit-toggle").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var f = document.getElementById("edit-" + b.dataset.id);
+      if (f) f.classList.toggle("show");
+    });
+  });
+  // Report a post.
+  document.querySelectorAll(".report-btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (b.disabled) return;
+      if (!confirm("Report this post to the admins?")) return;
+      fetch("/community/post/" + b.dataset.id + "/report", { method: "POST" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j.ok) { b.disabled = true; b.innerHTML = '<i class="fa-solid fa-flag"></i> Reported'; } })
+        .catch(function () {});
+    });
+  });
+
   // AJAX up/down voting.
   document.querySelectorAll(".vote-col").forEach(function (col) {
     const id = col.dataset.id;

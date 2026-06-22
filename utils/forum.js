@@ -4,18 +4,40 @@
  */
 const { one, many, query } = require("../config/db");
 
-// Posts sorted by score (then newest), with the caller's vote + comment count.
-async function listPosts(userId) {
+// Posts with the caller's vote, comment count and report info.
+// sort: "new" = newest first, otherwise "top" = highest score first.
+async function listPosts(userId, sort) {
+  const order = sort === "new" ? "p.created_at DESC" : "score DESC, p.created_at DESC";
   return many(
     `SELECT p.id, p.body, p.created_at AS "createdAt", p.user_id AS "userId",
             u.username, u.avatar,
             COALESCE((SELECT SUM(value) FROM post_votes WHERE post_id = p.id), 0)::int AS score,
             (SELECT value FROM post_votes WHERE post_id = p.id AND user_id = $1) AS "myVote",
-            (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id)::int AS "commentCount"
+            (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id)::int AS "commentCount",
+            (SELECT COUNT(*) FROM post_reports WHERE post_id = p.id)::int AS "reportCount",
+            EXISTS(SELECT 1 FROM post_reports WHERE post_id = p.id AND user_id = $1) AS "myReport"
      FROM posts p JOIN users u ON u.id = p.user_id
-     ORDER BY score DESC, p.created_at DESC`,
+     ORDER BY ` + order,
     [userId]
   );
+}
+
+async function editPost(userId, postId, body, isAdmin) {
+  const b = (body || "").trim().slice(0, 2000);
+  if (!b) return false;
+  const p = await one("SELECT user_id FROM posts WHERE id = $1", [postId]);
+  if (!p) return false;
+  if (!isAdmin && String(p.user_id) !== String(userId)) return false;
+  await query("UPDATE posts SET body = $1 WHERE id = $2", [b, postId]);
+  return true;
+}
+
+async function reportPost(userId, postId) {
+  await query(
+    "INSERT INTO post_reports (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+    [postId, userId]
+  );
+  return true;
 }
 
 async function listComments(postId) {
@@ -72,4 +94,4 @@ async function deleteComment(userId, commentId, isAdmin) {
   return true;
 }
 
-module.exports = { listPosts, listComments, createPost, addComment, votePost, deletePost, deleteComment };
+module.exports = { listPosts, listComments, createPost, editPost, addComment, votePost, reportPost, deletePost, deleteComment };

@@ -105,3 +105,10 @@ CREATE TABLE IF NOT EXISTS post_comments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS post_comments_post_idx ON post_comments (post_id);
+
+CREATE TABLE IF NOT EXISTS post_reports (
+  post_id    BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (post_id, user_id)
+);

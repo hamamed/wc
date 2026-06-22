@@ -481,7 +481,8 @@ router.get("/community/posts", apiAuth, async (req, res) => {
       prevSeen = u && u.community_seen_at ? new Date(u.community_seen_at).getTime() : 0;
     } catch (_) {}
 
-    const posts = await forum.listPosts(req.userId);
+    const sort = req.query.sort === "new" ? "new" : "top";
+    const posts = await forum.listPosts(req.userId, sort);
     const out = [];
     for (const p of posts) {
       const comments = (await forum.listComments(p.id)).map((c) => {
@@ -496,6 +497,7 @@ router.get("/community/posts", apiAuth, async (req, res) => {
       out.push({
         id: String(p.id), username: p.username, avatar: res.locals.avatarSrc(p.avatar),
         body: p.body, score: p.score, myVote: p.myVote, commentCount: p.commentCount,
+        reportCount: p.reportCount, myReport: !!p.myReport,
         createdAt: ts, mine: String(p.userId) === me,
         isNew: ts > prevSeen && String(p.userId) !== me,
         hasNewComments: comments.some((c) => c.isNew),
@@ -508,6 +510,14 @@ router.get("/community/posts", apiAuth, async (req, res) => {
 });
 router.post("/community/posts", apiAuth, async (req, res) => {
   try { await forum.createPost(req.userId, req.body.body); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/edit", apiAuth, async (req, res) => {
+  try { await forum.editPost(req.userId, req.params.id, req.body.body, !!req.userData.is_admin); res.json({ ok: true }); }
+  catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/report", apiAuth, async (req, res) => {
+  try { await forum.reportPost(req.userId, req.params.id); res.json({ ok: true }); }
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts/:id/vote", apiAuth, async (req, res) => {
