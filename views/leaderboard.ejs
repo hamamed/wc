@@ -34,6 +34,7 @@
 
   <% if (users.length) { %>
     <div class="card wc-card border-0 mb-4 podium-card">
+      <%- include("partials/podiumPattern") %>
       <div class="card-body">
         <div class="podium mb-0">
           <%- podiumPlace(users[1], 2) %>
