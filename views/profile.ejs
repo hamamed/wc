@@ -31,6 +31,9 @@
       <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#usernameModal">
         <i class="fa-solid fa-pen me-1"></i> <%= t('profile.changeName') %>
       </button>
+      <button type="button" id="themeToggle" class="btn btn-outline-secondary btn-sm" title="<%= t('profile.theme') %>">
+        <i class="fa-solid fa-moon me-1"></i> <%= t('profile.theme') %>
+      </button>
       <a href="/logout" class="btn btn-outline-danger btn-sm">
         <i class="fa-solid fa-right-from-bracket me-1"></i> <%= t('profile.logout') %>
       </a>
@@ -291,5 +294,24 @@
   })();
 </script>
 <% } %>
+
+<script>
+  (function () {
+    const btn = document.getElementById("themeToggle");
+    if (!btn) return;
+    function sync() {
+      const dark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+      btn.querySelector("i").className = dark ? "fa-solid fa-sun me-1" : "fa-solid fa-moon me-1";
+    }
+    sync();
+    btn.addEventListener("click", function () {
+      const dark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+      const next = dark ? "light" : "dark";
+      document.documentElement.setAttribute("data-bs-theme", next);
+      try { localStorage.setItem("theme", next); } catch (e) {}
+      sync();
+    });
+  })();
+</script>
 
 <%- include("partials/footer") %>

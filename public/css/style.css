@@ -17,6 +17,22 @@
   --shadow-hover: 0 12px 30px rgba(17, 34, 63, 0.10);
 }
 
+/* ---- Dark theme ---- */
+[data-bs-theme="dark"] {
+  --bg: #0f141b;
+  --surface: #1a212b;
+  --surface-2: #232c38;
+  --text: #e6ebf2;
+  --text-secondary: #93a1b3;
+  --accent-soft: #16263e;
+  --line: #2b3441;
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+[data-bs-theme="dark"] .wc-navbar,
+[data-bs-theme="dark"] .bottom-nav { background: var(--surface); }
+[data-bs-theme="dark"] .wc-card { background: var(--surface); }
+
 * { font-family: "Nunito", system-ui, -apple-system, sans-serif; }
 
 /* Arabic uses the Cairo font and right-to-left layout.
