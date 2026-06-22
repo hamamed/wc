@@ -118,6 +118,7 @@ const en = {
   "champ.correct": "Correct — bonus earned! 🏆",
   "champ.wrong": "Wrong pick this time.",
   "champ.race": "Champion Race — who everyone picked",
+  "ach.title": "Achievements", "ach.firstPick": "First Pick", "ach.sharp": "Sharpshooter", "ach.hattrick": "Hat-trick", "ach.streak3": "On Fire (×3)", "ach.century": "Centurion", "ach.veteran": "Veteran", "ach.oracle": "Oracle",
 
   "stat.totalPoints": "Total Points",
   "stat.exact": "Exact Scores",
@@ -298,6 +299,7 @@ const fr = {
   "champ.correct": "Correct — bonus gagné ! 🏆",
   "champ.wrong": "Mauvais choix cette fois.",
   "champ.race": "Course au titre — les choix de tous",
+  "ach.title": "Succès", "ach.firstPick": "Premier pronostic", "ach.sharp": "Tireur d'élite", "ach.hattrick": "Coup du chapeau", "ach.streak3": "En feu (×3)", "ach.century": "Centurion", "ach.veteran": "Vétéran", "ach.oracle": "Oracle",
 
   "stat.totalPoints": "Points totaux",
   "stat.exact": "Scores exacts",
@@ -478,6 +480,7 @@ const ar = {
   "champ.correct": "صحيح — حصلت على المكافأة! 🏆",
   "champ.wrong": "اختيار خاطئ هذه المرة.",
   "champ.race": "سباق البطل — اختيارات الجميع",
+  "ach.title": "الإنجازات", "ach.firstPick": "أول توقّع", "ach.sharp": "قنّاص", "ach.hattrick": "هاتريك", "ach.streak3": "مشتعل (×3)", "ach.century": "المئوية", "ach.veteran": "محترف", "ach.oracle": "العرّاف",
 
   "stat.totalPoints": "مجموع النقاط",
   "stat.exact": "النتائج المضبوطة",

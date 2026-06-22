@@ -296,12 +296,15 @@ router.get("/profile", apiAuth, async (req, res) => {
     });
     history.sort((a, b) => b.kickoff - a.kickoff);
     stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100) : 0;
+    const { computeAchievements } = require("../utils/achievements");
+    const championCorrect = actualChampion && req.userData.champion_pick && req.userData.champion_pick === actualChampion;
+    const achievements = computeAchievements(stats, history.slice().reverse().map((h) => h.points), championCorrect);
 
     res.json({
       username: req.userData.username,
       avatar: res.locals.avatarSrc(req.userData.avatar),
       flags: flagOptions(),
-      stats, history,
+      stats, history, achievements,
       teams: teamsFromMatches(allMatches).map((t) => ({ value: t.name, label: L(t.name), flag: t.flag })),
       championPick: req.userData.champion_pick || null,
       championLabel: L(req.userData.champion_pick || ""),

@@ -130,6 +130,7 @@
         <div id="userLoading" class="text-center text-secondary py-4"><i class="fa-solid fa-spinner fa-spin me-1"></i> …</div>
         <div id="userContent" class="d-none">
           <div class="row g-2 mb-3" id="userStats"></div>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="userAch"></div>
           <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock-rotate-left text-accent me-2"></i><%= t('hist.title') %></h6>
           <div class="table-responsive" id="userHistoryWrap">
             <table class="table table-hover align-middle mb-0">
@@ -165,11 +166,18 @@
       pending: <%- JSON.stringify(t('stat.pending')) %>,
       missed: <%- JSON.stringify(t('stat.missed')) %>,
     };
+    const ACH = {
+      firstPick: <%- JSON.stringify(t('ach.firstPick')) %>, sharp: <%- JSON.stringify(t('ach.sharp')) %>,
+      hattrick: <%- JSON.stringify(t('ach.hattrick')) %>, streak3: <%- JSON.stringify(t('ach.streak3')) %>,
+      century: <%- JSON.stringify(t('ach.century')) %>, veteran: <%- JSON.stringify(t('ach.veteran')) %>,
+      oracle: <%- JSON.stringify(t('ach.oracle')) %>,
+    };
     const modalEl = document.getElementById("userModal");
     const title = document.getElementById("userModalTitle");
     const loading = document.getElementById("userLoading");
     const content = document.getElementById("userContent");
     const statsEl = document.getElementById("userStats");
+    const achEl = document.getElementById("userAch");
     const histEl = document.getElementById("userHistory");
     const histWrap = document.getElementById("userHistoryWrap");
     const histEmpty = document.getElementById("userHistoryEmpty");
@@ -221,6 +229,10 @@
               tile(LBL.scored, s.scored) +
               tile(LBL.pending, s.pending) +
               tile(LBL.missed, s.missed, "text-danger");
+
+            achEl.innerHTML = (d.achievements || []).map(function (a) {
+              return '<span class="ach-badge ' + (a.earned ? "earned" : "") + '"><i class="fa-solid ' + a.icon + ' me-1"></i>' + esc(ACH[a.key] || a.key) + "</span>";
+            }).join("");
 
             if (!d.history.length) {
               histWrap.classList.add("d-none");

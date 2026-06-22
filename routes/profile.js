@@ -70,9 +70,15 @@ router.get("/", requireLogin, async (req, res, next) => {
         ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100)
         : 0;
 
+    const { computeAchievements } = require("../utils/achievements");
+    const pointsChron = history.slice().reverse().map((h) => h.pointsEarned);
+    const championCorrect = actualChampion && u.championPick && u.championPick === actualChampion;
+    const achievements = computeAchievements(stats, pointsChron, championCorrect);
+
     res.render("profile", {
       stats,
       history,
+      achievements,
       avatar: u.avatar || null,
       flagOptions: flagOptions(),
       teams: teamsFromMatches(allMatches),

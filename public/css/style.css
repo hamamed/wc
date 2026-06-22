@@ -464,6 +464,9 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .vote-btn.up.active { color: #ff6a3d; }
 .vote-btn.down.active { color: #6a85ff; }
 .vote-score { font-size: 0.95rem; }
+.ach-badge { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface-2); color: var(--text-secondary); border-radius: 14px; padding: 4px 10px; font-size: 0.8rem; font-weight: 700; opacity: 0.55; }
+.ach-badge.earned { opacity: 1; background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.ach-badge.earned i { color: var(--gold); }
 .reaction-bar { display: flex; flex-wrap: wrap; gap: 6px; }
 .reaction-btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 14px; padding: 2px 9px; font-size: 0.95rem; cursor: pointer; line-height: 1.4; }
 .reaction-btn.active { border-color: var(--accent); background: var(--accent-soft); }

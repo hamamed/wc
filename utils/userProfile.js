@@ -6,6 +6,7 @@
  *   Returns null if the user does not exist.
  */
 const { one, many } = require("../config/db");
+const { computeAchievements } = require("./achievements");
 
 async function getUserProfile(userId, L = (n) => n) {
   const [user, rows] = await Promise.all([
@@ -51,7 +52,9 @@ async function getUserProfile(userId, L = (n) => n) {
   history.sort((x, y) => y.kickoff - x.kickoff);
   stats.hitRate = stats.scored > 0 ? Math.round(((stats.exact + stats.difference + stats.outcome) / stats.scored) * 100) : 0;
 
-  return { username: user.username, avatar: user.avatar || null, stats, history };
+  const pointsChron = history.slice().reverse().map((h) => h.points);
+  const achievements = computeAchievements(stats, pointsChron, false);
+  return { username: user.username, avatar: user.avatar || null, stats, history, achievements };
 }
 
 module.exports = { getUserProfile };
