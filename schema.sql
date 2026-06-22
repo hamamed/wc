@@ -122,3 +122,12 @@ CREATE TABLE IF NOT EXISTS post_reactions (
 
 -- Threaded replies: a comment may reply to another comment.
 ALTER TABLE post_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT REFERENCES post_comments(id) ON DELETE CASCADE;
+
+-- Push notification device tokens (FCM).
+CREATE TABLE IF NOT EXISTS device_tokens (
+  token      TEXT PRIMARY KEY,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform   TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS device_tokens_user_idx ON device_tokens (user_id);

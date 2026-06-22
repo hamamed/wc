@@ -3,6 +3,7 @@ const router = express.Router();
 const { one, query } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const forum = require("../utils/forum");
+const push = require("../utils/push");
 
 // Community feed.
 router.get("/", requireLogin, async (req, res, next) => {
@@ -41,6 +42,7 @@ router.post("/post", requireLogin, async (req, res) => {
 router.post("/post/:id/comment", requireLogin, async (req, res) => {
   try {
     await forum.addComment(req.session.user.id, req.params.id, req.body.body, req.body.parentId || null);
+    push.notifyNewComment(req.params.id, req.session.user.id);
     res.redirect("/community#post-" + req.params.id);
   } catch (err) { console.error(err); res.redirect("/community"); }
 });

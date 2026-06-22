@@ -18,6 +18,7 @@ const { rankPredictions } = require("../utils/matchPreds");
 const { getLiveBonus } = require("../utils/liveBonus");
 const { getChampionRace } = require("../utils/championRace");
 const forum = require("../utils/forum");
+const push = require("../utils/push");
 
 const LOCK = 30 * 60 * 1000;
 
@@ -543,7 +544,16 @@ router.post("/community/posts/:id/vote", apiAuth, async (req, res) => {
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts/:id/comment", apiAuth, async (req, res) => {
-  try { await forum.addComment(req.userId, req.params.id, req.body.body, req.body.parentId || null); res.json({ ok: true }); }
+  try {
+    await forum.addComment(req.userId, req.params.id, req.body.body, req.body.parentId || null);
+    push.notifyNewComment(req.params.id, req.userId);
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+
+// Register this device's FCM token for push notifications.
+router.post("/push/register", apiAuth, async (req, res) => {
+  try { await push.registerToken(req.userId, req.body.token, req.body.platform); res.json({ ok: true }); }
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts/:id/delete", apiAuth, async (req, res) => {
