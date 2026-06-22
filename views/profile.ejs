@@ -34,6 +34,10 @@
       <button type="button" id="themeToggle" class="btn btn-outline-secondary btn-sm" title="<%= t('profile.theme') %>">
         <i class="fa-solid fa-moon me-1"></i> <%= t('profile.theme') %>
       </button>
+      <button type="button" id="shareBtn" class="btn btn-accent btn-sm"
+              data-name="<%= currentUser.username %>" data-rank="<%= rank %>" data-points="<%= stats.totalPoints %>" data-hit="<%= stats.hitRate %>">
+        <i class="fa-solid fa-share-nodes me-1"></i> <%= t('profile.share') %>
+      </button>
       <a href="/logout" class="btn btn-outline-danger btn-sm">
         <i class="fa-solid fa-right-from-bracket me-1"></i> <%= t('profile.logout') %>
       </a>
@@ -310,6 +314,36 @@
 <% } %>
 
 <script>
+  // Share card (canvas → Web Share API or download).
+  function hamaShareCard(d) {
+    const c = document.createElement("canvas"); c.width = 1000; c.height = 560;
+    const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, 1000, 560); g.addColorStop(0, "#1f83ff"); g.addColorStop(1, "#0a6ae0");
+    x.fillStyle = g; x.fillRect(0, 0, 1000, 560);
+    x.fillStyle = "#fff"; x.textAlign = "center";
+    x.font = "bold 42px Nunito, sans-serif"; x.fillText("HAMA · World Cup 2026", 500, 90);
+    x.font = "bold 64px Nunito, sans-serif"; x.fillText(d.name, 500, 195);
+    x.font = "900 150px Nunito, sans-serif"; x.fillText("#" + d.rank, 500, 350);
+    x.font = "bold 38px Nunito, sans-serif"; x.fillText(d.points + " pts  ·  " + d.hit + "% hit rate", 500, 430);
+    x.font = "26px Nunito, sans-serif"; x.globalAlpha = 0.85; x.fillText("koydam.com", 500, 510);
+    return c;
+  }
+  (function () {
+    const sb = document.getElementById("shareBtn");
+    if (sb) sb.addEventListener("click", function () {
+      const d = { name: sb.dataset.name, rank: sb.dataset.rank, points: sb.dataset.points, hit: sb.dataset.hit };
+      hamaShareCard(d).toBlob(function (blob) {
+        const file = new File([blob], "hama-rank.png", { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: "My HAMA rank" }).catch(function () {});
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a"); a.href = url; a.download = "hama-rank.png"; a.click();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        }
+      });
+    });
+  })();
   (function () {
     const btn = document.getElementById("themeToggle");
     if (!btn) return;

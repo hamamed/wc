@@ -74,11 +74,14 @@ router.get("/", requireLogin, async (req, res, next) => {
     const pointsChron = history.slice().reverse().map((h) => h.pointsEarned);
     const championCorrect = actualChampion && u.championPick && u.championPick === actualChampion;
     const achievements = computeAchievements(stats, pointsChron, championCorrect);
+    const rankRow = await one("SELECT COUNT(*) + 1 AS rank FROM users WHERE total_points > $1", [u.totalPoints || 0]);
+    const rank = rankRow ? Number(rankRow.rank) : null;
 
     res.render("profile", {
       stats,
       history,
       achievements,
+      rank,
       avatar: u.avatar || null,
       flagOptions: flagOptions(),
       teams: teamsFromMatches(allMatches),

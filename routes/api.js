@@ -299,12 +299,14 @@ router.get("/profile", apiAuth, async (req, res) => {
     const { computeAchievements } = require("../utils/achievements");
     const championCorrect = actualChampion && req.userData.champion_pick && req.userData.champion_pick === actualChampion;
     const achievements = computeAchievements(stats, history.slice().reverse().map((h) => h.points), championCorrect);
+    const rankRow = await one("SELECT COUNT(*) + 1 AS rank FROM users WHERE total_points > $1", [req.userData.total_points || 0]);
+    const rank = rankRow ? Number(rankRow.rank) : null;
 
     res.json({
       username: req.userData.username,
       avatar: res.locals.avatarSrc(req.userData.avatar),
       flags: flagOptions(),
-      stats, history, achievements,
+      stats, history, achievements, rank,
       teams: teamsFromMatches(allMatches).map((t) => ({ value: t.name, label: L(t.name), flag: t.flag })),
       championPick: req.userData.champion_pick || null,
       championLabel: L(req.userData.champion_pick || ""),
