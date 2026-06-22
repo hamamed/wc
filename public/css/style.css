@@ -55,6 +55,7 @@ body {
 h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; }
 
 .text-accent { color: var(--accent) !important; }
+.bg-accent { background: var(--accent) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-gold { color: var(--gold); }
 .text-silver { color: var(--silver); }

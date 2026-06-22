@@ -4,16 +4,22 @@ const { many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { getUserProfile } = require("../utils/userProfile");
 const { getLiveBonus } = require("../utils/liveBonus");
+const { getChampionRace } = require("../utils/championRace");
 
 router.get("/", requireLogin, async (req, res, next) => {
   try {
-    const [rows, live] = await Promise.all([
+    const [rows, live, race] = await Promise.all([
       many(
         `SELECT id, username, avatar, total_points AS "totalPoints", last_rank AS "lastRank", last_points AS "lastPoints"
          FROM users`
       ),
       getLiveBonus(),
+      getChampionRace(),
     ]);
+    const championRace = {
+      total: race.total,
+      rows: race.rows.map((r) => ({ team: res.locals.tn(r.team), flag: r.flag, n: r.n })),
+    };
 
     const me = String(req.session.user.id);
     // Add provisional live points, then rank by the live-adjusted total.
@@ -41,7 +47,7 @@ router.get("/", requireLogin, async (req, res, next) => {
       };
     });
 
-    res.render("leaderboard", { users });
+    res.render("leaderboard", { users, championRace });
   } catch (err) {
     next(err);
   }

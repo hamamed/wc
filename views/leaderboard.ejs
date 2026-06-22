@@ -99,6 +99,23 @@
       <i class="fa-solid fa-user-slash me-1"></i> <%= t('lb.noMatch') %>
     </div>
   </div>
+
+  <% if (championRace && championRace.total > 0) { %>
+    <div class="card wc-card border-0 mt-4">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-crown text-accent me-2"></i><%= t('champ.race') %></h6>
+        <% championRace.rows.forEach(function (r) { var pct = Math.round(r.n / championRace.total * 100); %>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span><% if (r.flag) { %><img src="<%= r.flag %>" class="flag-mini me-1" alt="" /><% } %><%= r.team %></span>
+              <span class="text-secondary"><%= r.n %> · <%= pct %>%</span>
+            </div>
+            <div class="progress" style="height:8px;"><div class="progress-bar bg-accent" style="width:<%= pct %>%"></div></div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  <% } %>
 </div>
 
 <!-- User profile modal -->

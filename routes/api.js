@@ -16,6 +16,7 @@ const { options: flagOptions, isValidCode, flagUrl } = require("../utils/flagAva
 const { getUserProfile } = require("../utils/userProfile");
 const { rankPredictions } = require("../utils/matchPreds");
 const { getLiveBonus } = require("../utils/liveBonus");
+const { getChampionRace } = require("../utils/championRace");
 const forum = require("../utils/forum");
 
 const LOCK = 30 * 60 * 1000;
@@ -204,10 +205,13 @@ router.post("/predict", apiAuth, async (req, res) => {
 // ---- Leaderboard ----------------------------------------------------------
 router.get("/leaderboard", apiAuth, async (req, res) => {
   try {
-    const [rows, live] = await Promise.all([
+    const L = (n) => localizeTeam(n, req.query.lang || "en");
+    const [rows, live, race] = await Promise.all([
       many("SELECT id, username, avatar, total_points, last_rank, last_points FROM users"),
       getLiveBonus(),
+      getChampionRace(),
     ]);
+    const championRace = { total: race.total, rows: race.rows.map((r) => ({ team: L(r.team), flag: r.flag, n: r.n })) };
     const enriched = rows.map((u) => {
       const livePts = live[u.id] || 0;
       const base = u.total_points || 0;
@@ -224,7 +228,7 @@ router.get("/leaderboard", apiAuth, async (req, res) => {
         totalPoints: e.points, livePts: e.livePts, move, gained, me: u.id === req.userId,
       };
     });
-    res.json({ users });
+    res.json({ users, championRace });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "server" });

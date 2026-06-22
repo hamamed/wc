@@ -117,6 +117,7 @@ const en = {
   "champ.actual": "Actual champion:",
   "champ.correct": "Correct — bonus earned! 🏆",
   "champ.wrong": "Wrong pick this time.",
+  "champ.race": "Champion Race — who everyone picked",
 
   "stat.totalPoints": "Total Points",
   "stat.exact": "Exact Scores",
@@ -296,6 +297,7 @@ const fr = {
   "champ.actual": "Champion réel :",
   "champ.correct": "Correct — bonus gagné ! 🏆",
   "champ.wrong": "Mauvais choix cette fois.",
+  "champ.race": "Course au titre — les choix de tous",
 
   "stat.totalPoints": "Points totaux",
   "stat.exact": "Scores exacts",
@@ -475,6 +477,7 @@ const ar = {
   "champ.actual": "البطل الفعلي:",
   "champ.correct": "صحيح — حصلت على المكافأة! 🏆",
   "champ.wrong": "اختيار خاطئ هذه المرة.",
+  "champ.race": "سباق البطل — اختيارات الجميع",
 
   "stat.totalPoints": "مجموع النقاط",
   "stat.exact": "النتائج المضبوطة",
