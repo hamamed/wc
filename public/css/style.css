@@ -502,6 +502,26 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .medal-silver { background: radial-gradient(circle at 35% 28%, #ffffff, #b4bdca 72%); color: #555f6e; }
 .medal-bronze { background: radial-gradient(circle at 35% 28%, #f4c79a, #c5763a 72%); color: #67381a; }
 
+/* ---- Podium card: festive glow + confetti ---- */
+.podium-card {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 180, 0, 0.16), transparent 45%),
+    radial-gradient(circle at 10% 110%, rgba(31, 131, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 92% 115%, rgba(208, 138, 79, 0.12), transparent 40%),
+    var(--surface);
+}
+.podium-card::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.10;
+  background-image:
+    radial-gradient(circle, var(--gold) 2px, transparent 2.5px),
+    radial-gradient(circle, var(--accent) 2px, transparent 2.5px);
+  background-size: 44px 44px, 44px 44px;
+  background-position: 0 0, 22px 22px;
+}
+.podium-card > .card-body { position: relative; z-index: 1; }
+[data-bs-theme="dark"] .podium-card::before { opacity: 0.16; }
+
 /* ---- Top-3 podium (horizontal) ---- */
 .podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin-bottom: 1.75rem; }
 .podium-place { width: 33%; max-width: 150px; text-align: center; }
