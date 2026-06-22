@@ -75,27 +75,53 @@
               <button class="btn btn-accent btn-sm fw-semibold"><%= t('comm2.save') %></button>
             </form>
           <% } %>
+
+          <!-- Reactions -->
+          <div class="reaction-bar mb-2" data-id="<%= p.id %>">
+            <% reactionSet.forEach(function (em) {
+                 const r = (p.reactions || []).find(function (x) { return x.emoji === em; });
+                 const count = r ? r.count : 0; const mine = r && r.mine; %>
+              <button type="button" class="reaction-btn <%= mine ? 'active' : '' %>" data-emoji="<%= em %>"><%= em %><span class="rc"><%= count > 0 ? count : '' %></span></button>
+            <% }); %>
+          </div>
+
           <button class="btn btn-link btn-sm p-0 text-secondary text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#c-<%= p.id %>">
             <i class="fa-regular fa-comment me-1"></i><%= p.commentCount %> <%= t('comm2.comments') %>
           </button>
 
           <div class="collapse mt-2" id="c-<%= p.id %>">
-            <% p.comments.forEach(function (c) { %>
-              <div class="d-flex gap-2 py-2 border-top <%= c.isNew ? 'comment-new' : '' %>">
-                <div class="flex-grow-1 min-w-0">
-                  <div class="small text-secondary">
-                    <% if (c.avatar) { %><img src="<%= avatarSrc(c.avatar) %>" class="avatar-mini me-1" alt="" /><% } %>
-                    <span class="fw-semibold text-body"><%= c.username %></span> · <%= ago(c.createdAt) %>
+            <%
+              const replies = {};
+              p.comments.forEach(function (c) { if (c.parentId) { (replies[c.parentId] = replies[c.parentId] || []).push(c); } });
+              function commentRow(c, isReply) { %>
+                <div class="d-flex gap-2 py-2 border-top <%= c.isNew ? 'comment-new' : '' %> <%= isReply ? 'ms-4' : '' %>">
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="small text-secondary">
+                      <% if (c.avatar) { %><img src="<%= avatarSrc(c.avatar) %>" class="avatar-mini me-1" alt="" /><% } %>
+                      <span class="fw-semibold text-body"><%= c.username %></span> · <%= ago(c.createdAt) %>
+                    </div>
+                    <div class="pre-line small" dir="auto"><%= c.body %></div>
+                    <% if (!isReply) { %>
+                      <button class="btn btn-link btn-sm p-0 text-secondary text-decoration-none reply-toggle" type="button" data-id="<%= c.id %>"><i class="fa-solid fa-reply me-1"></i><%= t('comm2.reply') %></button>
+                      <form action="/community/post/<%= p.id %>/comment" method="POST" class="collapse mt-1 d-flex gap-2" id="reply-<%= c.id %>">
+                        <input type="hidden" name="parentId" value="<%= c.id %>" />
+                        <input name="body" class="form-control form-control-sm" maxlength="1000" dir="auto" placeholder="<%= t('comm2.addComment') %>" required />
+                        <button class="btn btn-accent btn-sm"><i class="fa-solid fa-paper-plane"></i></button>
+                      </form>
+                    <% } %>
                   </div>
-                  <div class="pre-line small" dir="auto"><%= c.body %></div>
+                  <% if (c.username === currentUser.username || isAdmin) { %>
+                    <form action="/community/comment/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Delete this comment?');">
+                      <button class="btn btn-link btn-sm text-danger p-0" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                  <% } %>
                 </div>
-                <% if (c.username === currentUser.username || isAdmin) { %>
-                  <form action="/community/comment/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Delete this comment?');">
-                    <button class="btn btn-link btn-sm text-danger p-0" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                  </form>
-                <% } %>
-              </div>
-            <% }); %>
+            <% }
+              p.comments.filter(function (c) { return !c.parentId; }).forEach(function (c) {
+                commentRow(c, false);
+                (replies[c.id] || []).forEach(function (r) { commentRow(r, true); });
+              });
+            %>
             <form action="/community/post/<%= p.id %>/comment" method="POST" class="d-flex gap-2 mt-2">
               <input name="body" class="form-control form-control-sm" maxlength="1000" dir="auto" placeholder="<%= t('comm2.addComment') %>" required />
               <button class="btn btn-accent btn-sm fw-semibold"><i class="fa-solid fa-paper-plane"></i></button>
@@ -124,6 +150,33 @@
         .then(function (r) { return r.json(); })
         .then(function (j) { if (j.ok) { b.disabled = true; b.innerHTML = '<i class="fa-solid fa-flag"></i> Reported'; } })
         .catch(function () {});
+    });
+  });
+
+  // Reply toggles.
+  document.querySelectorAll(".reply-toggle").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var f = document.getElementById("reply-" + b.dataset.id);
+      if (f) f.classList.toggle("show");
+    });
+  });
+  // Emoji reactions.
+  document.querySelectorAll(".reaction-bar").forEach(function (bar) {
+    var id = bar.dataset.id;
+    bar.querySelectorAll(".reaction-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        fetch("/community/post/" + id + "/react", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emoji: btn.dataset.emoji }),
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (!j.ok) return;
+          bar.querySelectorAll(".reaction-btn").forEach(function (b2) {
+            var r = j.reactions.find(function (x) { return x.emoji === b2.dataset.emoji; });
+            b2.classList.toggle("active", !!(r && r.mine));
+            b2.querySelector(".rc").textContent = r && r.count > 0 ? r.count : "";
+          });
+        }).catch(function () {});
+      });
     });
   });
 

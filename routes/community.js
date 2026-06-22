@@ -18,13 +18,14 @@ router.get("/", requireLogin, async (req, res, next) => {
     for (const p of posts) {
       p.comments = await forum.listComments(p.id);
       p.comments.forEach((c) => { c.isNew = new Date(c.createdAt).getTime() > prevSeen && String(c.userId) !== me; });
+      p.reactions = await forum.listReactions(p.id, userId);
       p.isNew = new Date(p.createdAt).getTime() > prevSeen && String(p.userId) !== me;
       p.hasNewComments = p.comments.some((c) => c.isNew);
     }
     // Mark the feed as seen so the badge clears.
     try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [userId]); } catch (_) {}
     res.locals.communityNew = 0;
-    res.render("community", { posts, sort });
+    res.render("community", { posts, sort, reactionSet: forum.REACTIONS });
   } catch (err) {
     next(err);
   }
@@ -39,9 +40,17 @@ router.post("/post", requireLogin, async (req, res) => {
 
 router.post("/post/:id/comment", requireLogin, async (req, res) => {
   try {
-    await forum.addComment(req.session.user.id, req.params.id, req.body.body);
+    await forum.addComment(req.session.user.id, req.params.id, req.body.body, req.body.parentId || null);
     res.redirect("/community#post-" + req.params.id);
   } catch (err) { console.error(err); res.redirect("/community"); }
+});
+
+router.post("/post/:id/react", requireLogin, async (req, res) => {
+  try {
+    await forum.toggleReaction(req.session.user.id, req.params.id, req.body.emoji);
+    const reactions = await forum.listReactions(req.params.id, req.session.user.id);
+    res.json({ ok: true, reactions });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 
 router.post("/post/:id/edit", requireLogin, async (req, res) => {

@@ -112,3 +112,13 @@ CREATE TABLE IF NOT EXISTS post_reports (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (post_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS post_reactions (
+  post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  emoji   TEXT NOT NULL,
+  PRIMARY KEY (post_id, user_id, emoji)
+);
+
+-- Threaded replies: a comment may reply to another comment.
+ALTER TABLE post_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT REFERENCES post_comments(id) ON DELETE CASCADE;

@@ -4,6 +4,23 @@
  */
 const { one, many, query } = require("../config/db");
 
+const REACTIONS = ["👍", "❤️", "😂", "🔥", "😮"];
+
+async function listReactions(postId, userId) {
+  return many(
+    `SELECT emoji, COUNT(*)::int AS count, BOOL_OR(user_id = $2) AS mine
+     FROM post_reactions WHERE post_id = $1 GROUP BY emoji`,
+    [postId, userId]
+  );
+}
+
+async function toggleReaction(userId, postId, emoji) {
+  if (!REACTIONS.includes(emoji)) return;
+  const ex = await one("SELECT 1 FROM post_reactions WHERE post_id = $1 AND user_id = $2 AND emoji = $3", [postId, userId, emoji]);
+  if (ex) await query("DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2 AND emoji = $3", [postId, userId, emoji]);
+  else await query("INSERT INTO post_reactions (post_id, user_id, emoji) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", [postId, userId, emoji]);
+}
+
 // Posts with the caller's vote, comment count and report info.
 // sort: "new" = newest first, otherwise "top" = highest score first.
 async function listPosts(userId, sort) {
@@ -42,7 +59,7 @@ async function reportPost(userId, postId) {
 
 async function listComments(postId) {
   return many(
-    `SELECT c.id, c.body, c.created_at AS "createdAt", c.user_id AS "userId", u.username, u.avatar
+    `SELECT c.id, c.body, c.created_at AS "createdAt", c.user_id AS "userId", c.parent_id AS "parentId", u.username, u.avatar
      FROM post_comments c JOIN users u ON u.id = c.user_id
      WHERE c.post_id = $1 ORDER BY c.created_at ASC`,
     [postId]
@@ -55,10 +72,13 @@ async function createPost(userId, body) {
   return one("INSERT INTO posts (user_id, body) VALUES ($1, $2) RETURNING id", [userId, b]);
 }
 
-async function addComment(userId, postId, body) {
+async function addComment(userId, postId, body, parentId) {
   const b = (body || "").trim().slice(0, 1000);
   if (!b) return null;
-  return one("INSERT INTO post_comments (post_id, user_id, body) VALUES ($1, $2, $3) RETURNING id", [postId, userId, b]);
+  return one(
+    "INSERT INTO post_comments (post_id, user_id, body, parent_id) VALUES ($1, $2, $3, $4) RETURNING id",
+    [postId, userId, b, parentId || null]
+  );
 }
 
 // value: 1 (up), -1 (down) or 0 (clear). Returns the post's new score.
@@ -94,4 +114,4 @@ async function deleteComment(userId, commentId, isAdmin) {
   return true;
 }
 
-module.exports = { listPosts, listComments, createPost, editPost, addComment, votePost, reportPost, deletePost, deleteComment };
+module.exports = { REACTIONS, listReactions, toggleReaction, listPosts, listComments, createPost, editPost, addComment, votePost, reportPost, deletePost, deleteComment };

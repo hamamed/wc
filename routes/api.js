@@ -490,14 +490,16 @@ router.get("/community/posts", apiAuth, async (req, res) => {
         return {
           id: String(c.id), username: c.username, avatar: res.locals.avatarSrc(c.avatar),
           body: c.body, createdAt: ts, mine: String(c.userId) === me,
+          parentId: c.parentId ? String(c.parentId) : null,
           isNew: ts > prevSeen && String(c.userId) !== me,
         };
       });
+      const reactions = await forum.listReactions(p.id, req.userId);
       const ts = new Date(p.createdAt).getTime();
       out.push({
         id: String(p.id), username: p.username, avatar: res.locals.avatarSrc(p.avatar),
         body: p.body, score: p.score, myVote: p.myVote, commentCount: p.commentCount,
-        reportCount: p.reportCount, myReport: !!p.myReport,
+        reportCount: p.reportCount, myReport: !!p.myReport, reactions,
         createdAt: ts, mine: String(p.userId) === me,
         isNew: ts > prevSeen && String(p.userId) !== me,
         hasNewComments: comments.some((c) => c.isNew),
@@ -505,7 +507,14 @@ router.get("/community/posts", apiAuth, async (req, res) => {
       });
     }
     try { await query("UPDATE users SET community_seen_at = now() WHERE id = $1", [req.userId]); } catch (_) {}
-    res.json({ posts: out, isAdmin: !!req.userData.is_admin });
+    res.json({ posts: out, isAdmin: !!req.userData.is_admin, reactionSet: forum.REACTIONS });
+  } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
+});
+router.post("/community/posts/:id/react", apiAuth, async (req, res) => {
+  try {
+    await forum.toggleReaction(req.userId, req.params.id, req.body.emoji);
+    const reactions = await forum.listReactions(req.params.id, req.userId);
+    res.json({ ok: true, reactions });
   } catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts", apiAuth, async (req, res) => {
@@ -525,7 +534,7 @@ router.post("/community/posts/:id/vote", apiAuth, async (req, res) => {
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts/:id/comment", apiAuth, async (req, res) => {
-  try { await forum.addComment(req.userId, req.params.id, req.body.body); res.json({ ok: true }); }
+  try { await forum.addComment(req.userId, req.params.id, req.body.body, req.body.parentId || null); res.json({ ok: true }); }
   catch (err) { console.error(err); res.status(500).json({ error: "server" }); }
 });
 router.post("/community/posts/:id/delete", apiAuth, async (req, res) => {
