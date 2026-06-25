@@ -502,6 +502,15 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .medal-silver { background: radial-gradient(circle at 35% 28%, #ffffff, #b4bdca 72%); color: #555f6e; }
 .medal-bronze { background: radial-gradient(circle at 35% 28%, #f4c79a, #c5763a 72%); color: #67381a; }
 
+/* ---- Knockout bracket ---- */
+.bracket { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+.bracket-col { min-width: 210px; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: space-around; gap: 12px; }
+.bracket-round { font-weight: 800; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; text-align: center; }
+.bracket-match { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.bm-team { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; font-weight: 600; font-size: 0.9rem; }
+.bm-team + .bm-team { border-top: 1px solid var(--line); }
+.bm-team b { color: var(--accent); }
+
 /* ---- Podium card: faint Font Awesome trophy/medal pattern ---- */
 .podium-card { position: relative; overflow: hidden; }
 .podium-card > .card-body { position: relative; z-index: 1; }

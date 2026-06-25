@@ -17,6 +17,7 @@ const { getUserProfile } = require("../utils/userProfile");
 const { rankPredictions } = require("../utils/matchPreds");
 const { getLiveBonus } = require("../utils/liveBonus");
 const { getChampionRace } = require("../utils/championRace");
+const { getBracket } = require("../utils/bracket");
 const forum = require("../utils/forum");
 const push = require("../utils/push");
 
@@ -230,6 +231,18 @@ router.get("/leaderboard", apiAuth, async (req, res) => {
       };
     });
     res.json({ users, championRace });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "server" });
+  }
+});
+
+// ---- Knockout bracket -----------------------------------------------------
+router.get("/knockout", apiAuth, async (req, res) => {
+  try {
+    const L = (n) => localizeTeam(n, req.query.lang || "en");
+    const bracket = await getBracket(L);
+    res.json(bracket);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "server" });

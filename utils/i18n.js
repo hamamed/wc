@@ -167,6 +167,7 @@ const en = {
   "st.qualifies": "Qualifies",
   "st.third": "3rd place (best-thirds race)",
   "st.computed": "Computed from results",
+  "ko.tab": "Knockout", "ko.empty": "The knockout bracket appears once the group stage is decided.", "ko.provisional": "Provisional — based on current group standings (1st vs 2nd, cross-group).",
   "st.p": "P", "st.w": "W", "st.d": "D", "st.l": "L", "st.gd": "GD", "st.pts": "Pts",
 
   "home.signInBtn": "Sign In",
@@ -350,6 +351,7 @@ const fr = {
   "st.qualifies": "Qualifié",
   "st.third": "3e place (course des troisièmes)",
   "st.computed": "Calculé d'après les résultats",
+  "ko.tab": "Phase finale", "ko.empty": "Le tableau final apparaît une fois la phase de groupes terminée.", "ko.provisional": "Provisoire — d'après le classement actuel des groupes (1er contre 2e).",
   "st.p": "J", "st.w": "G", "st.d": "N", "st.l": "P", "st.gd": "Diff", "st.pts": "Pts",
 
   "home.signInBtn": "Se connecter",
@@ -533,6 +535,7 @@ const ar = {
   "st.qualifies": "متأهل",
   "st.third": "المركز الثالث (سباق الثوالث)",
   "st.computed": "محسوب من النتائج",
+  "ko.tab": "الأدوار الإقصائية", "ko.empty": "يظهر جدول الأدوار الإقصائية بعد انتهاء دور المجموعات.", "ko.provisional": "مبدئي — بناءً على ترتيب المجموعات الحالي (الأول ضد الثاني).",
   "st.p": "لعب", "st.w": "فوز", "st.d": "تعادل", "st.l": "خسارة", "st.gd": "الفارق", "st.pts": "نقاط",
 
   "home.signInBtn": "تسجيل الدخول",

@@ -4,6 +4,7 @@ const { many } = require("../config/db");
 const { requireLogin } = require("../utils/middleware");
 const { fetchStandings } = require("../utils/footballApi");
 const { computeStandings, bestThirds } = require("../utils/standings");
+const { getBracket } = require("../utils/bracket");
 
 router.get("/", requireLogin, async (req, res, next) => {
   try {
@@ -25,7 +26,8 @@ router.get("/", requireLogin, async (req, res, next) => {
     }
 
     const thirds = bestThirds(groups);
-    res.render("standings", { groups, thirds, source });
+    const bracket = await getBracket((n) => res.locals.tn(n));
+    res.render("standings", { groups, thirds, source, bracket });
   } catch (err) {
     next(err);
   }

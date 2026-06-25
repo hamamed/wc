@@ -13,6 +13,14 @@
     <p class="text-secondary mb-0"><%= t('st.subtitle') %></p>
   </div>
 
+  <ul class="nav nav-pills mb-4" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-groups" type="button"><i class="fa-solid fa-layer-group me-1"></i><%= t('st.title') %></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ko" type="button"><i class="fa-solid fa-sitemap me-1"></i><%= t('ko.tab') %></button></li>
+  </ul>
+
+  <div class="tab-content">
+  <div class="tab-pane fade show active" id="tab-groups" role="tabpanel">
+
   <% if (!groups || groups.length === 0 || groups.every(function(g){return g.rows.length===0})) { %>
     <div class="card wc-card border-0">
       <div class="card-body text-center text-secondary py-5">
@@ -117,6 +125,36 @@
   </div>
 
   <% } %>
+
+  </div><!-- /tab-groups -->
+
+  <div class="tab-pane fade" id="tab-ko" role="tabpanel">
+    <% if (!bracket || !bracket.rounds || !bracket.rounds.length || !bracket.rounds.some(function(r){return r.matches.length;})) { %>
+      <div class="card wc-card border-0"><div class="card-body text-center text-secondary py-5"><i class="fa-solid fa-sitemap fa-2x mb-3 d-block"></i><%= t('ko.empty') %></div></div>
+    <% } else { %>
+      <% if (bracket.provisional) { %><p class="text-secondary small mb-3"><i class="fa-solid fa-circle-info me-1"></i><%= t('ko.provisional') %></p><% } %>
+      <div class="bracket">
+        <% bracket.rounds.forEach(function (rd) { %>
+          <div class="bracket-col">
+            <div class="bracket-round"><%= rd.name %></div>
+            <% rd.matches.forEach(function (m) { %>
+              <div class="bracket-match">
+                <div class="bm-team">
+                  <span><% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamA || m.labelA %></span>
+                  <% if (m.scoreA != null) { %><b><%= m.scoreA %></b><% } %>
+                </div>
+                <div class="bm-team">
+                  <span><% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamB || m.labelB %></span>
+                  <% if (m.scoreB != null) { %><b><%= m.scoreB %></b><% } %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div><!-- /tab-ko -->
+  </div><!-- /tab-content -->
 </div>
 
 <%- include("partials/footer") %>
