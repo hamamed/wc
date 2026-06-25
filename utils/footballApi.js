@@ -39,6 +39,11 @@ async function fetchFromApiFootball() {
     .filter((f) => f.teams && f.teams.home && f.teams.away && f.teams.home.name && f.teams.away.name)
     .map((f) => {
       const short = f.fixture.status && f.fixture.status.short;
+      const elapsed = f.fixture.status && f.fixture.status.elapsed;
+      let liveLabel = null;
+      if (FINISHED.has(short)) liveLabel = "FT";
+      else if (short === "HT" || short === "BT") liveLabel = "HT";
+      else if (LIVE.has(short)) liveLabel = elapsed != null ? elapsed + "'" : "LIVE";
       return {
         externalId: "apf-" + f.fixture.id,
         teamA: f.teams.home.name,
@@ -48,6 +53,7 @@ async function fetchFromApiFootball() {
         kickoff: new Date(f.fixture.date),
         finished: FINISHED.has(short),
         inPlay: LIVE.has(short),
+        liveLabel,
         scoreA: f.goals ? f.goals.home : null,
         scoreB: f.goals ? f.goals.away : null,
         group: (f.league && f.league.round) || null,
@@ -68,19 +74,26 @@ async function fetchFromFootballData() {
   const data = await res.json();
   return (data.matches || [])
     .filter((m) => m.homeTeam && m.awayTeam && m.homeTeam.name && m.awayTeam.name)
-    .map((m) => ({
-      externalId: "fd-" + m.id,
-      teamA: m.homeTeam.name,
-      teamB: m.awayTeam.name,
-      flagA: m.homeTeam.crest || null,
-      flagB: m.awayTeam.crest || null,
-      kickoff: new Date(m.utcDate),
-      finished: m.status === "FINISHED",
-      inPlay: m.status === "IN_PLAY" || m.status === "PAUSED",
-      scoreA: m.score && m.score.fullTime ? m.score.fullTime.home : null,
-      scoreB: m.score && m.score.fullTime ? m.score.fullTime.away : null,
-      group: m.group ? m.group.replace("GROUP_", "Group ") : null,
-    }));
+    .map((m) => {
+      let liveLabel = null;
+      if (m.status === "FINISHED") liveLabel = "FT";
+      else if (m.status === "PAUSED") liveLabel = "HT";
+      else if (m.status === "IN_PLAY") liveLabel = m.minute != null ? m.minute + "'" : "LIVE";
+      return {
+        externalId: "fd-" + m.id,
+        teamA: m.homeTeam.name,
+        teamB: m.awayTeam.name,
+        flagA: m.homeTeam.crest || null,
+        flagB: m.awayTeam.crest || null,
+        kickoff: new Date(m.utcDate),
+        finished: m.status === "FINISHED",
+        inPlay: m.status === "IN_PLAY" || m.status === "PAUSED",
+        liveLabel,
+        scoreA: m.score && m.score.fullTime ? m.score.fullTime.home : null,
+        scoreB: m.score && m.score.fullTime ? m.score.fullTime.away : null,
+        group: m.group ? m.group.replace("GROUP_", "Group ") : null,
+      };
+    });
 }
 
 // ---- Standings (group tables) --------------------------------------------

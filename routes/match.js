@@ -25,7 +25,7 @@ router.get("/:id/predictions", requireLogin, async (req, res, next) => {
       `SELECT id, team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB",
               kickoff_time AS "kickoffTime", status,
               actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
-              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB"
+              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB", live_status AS "liveStatus"
        FROM matches WHERE id = $1`,
       [req.params.id]
     );
@@ -73,7 +73,7 @@ router.get("/:id/predictions.json", requireLogin, async (req, res) => {
     const m = await one(
       `SELECT team_a, team_b, kickoff_time, status,
               actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
-              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB"
+              live_score_a AS "liveScoreA", live_score_b AS "liveScoreB", live_status AS "liveStatus"
        FROM matches WHERE id = $1`,
       [req.params.id]
     );
@@ -100,6 +100,7 @@ router.get("/:id/predictions.json", requireLogin, async (req, res) => {
       teamB: res.locals.tn(m.team_b),
       completed: m.status === "completed",
       live: ss.live,
+      liveStatus: m.liveStatus || null,
       scored: ss.scored,
       scoreA: ss.scoreA,
       scoreB: ss.scoreB,

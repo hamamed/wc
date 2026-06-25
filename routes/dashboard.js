@@ -19,7 +19,7 @@ router.get("/", requireLogin, async (req, res, next) => {
         `SELECT id, team_a AS "teamA", team_b AS "teamB", flag_a AS "flagA", flag_b AS "flagB",
                 kickoff_time AS "kickoffTime", status,
                 actual_score_a AS "actualScoreA", actual_score_b AS "actualScoreB",
-                live_score_a AS "liveScoreA", live_score_b AS "liveScoreB"
+                live_score_a AS "liveScoreA", live_score_b AS "liveScoreB", live_status AS "liveStatus"
          FROM matches ORDER BY kickoff_time ASC`
       ),
       many(
@@ -74,6 +74,7 @@ router.get("/", requireLogin, async (req, res, next) => {
         actualScoreB: m.actualScoreB,
         liveScoreA: m.liveScoreA != null ? m.liveScoreA : null,
         liveScoreB: m.liveScoreB != null ? m.liveScoreB : null,
+        liveStatus: m.liveStatus || null,
         locked,
         live: isLive,
         livePts,

@@ -65,6 +65,7 @@
             <span class="final-score"><%= match.actualScoreA %>&nbsp;-&nbsp;<%= match.actualScoreB %></span>
           <% } else if (match.started) { %>
             <span class="live-score"><%= match.liveScoreA != null ? match.liveScoreA : 0 %>&nbsp;-&nbsp;<%= match.liveScoreB != null ? match.liveScoreB : 0 %></span>
+            <% if (match.liveStatus) { %><div class="small text-danger fw-bold mt-1"><span class="live-dot"></span> <%= match.liveStatus %></div><% } %>
           <% } else { %>
             <span class="text-secondary fw-bold"><%= t('common.vs') %></span>
           <% } %>

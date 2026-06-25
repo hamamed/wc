@@ -33,11 +33,15 @@ async function syncWorldCup() {
 
     if (m.finished && row.status !== "completed" && m.scoreA != null && m.scoreB != null) {
       await applyMatchResult(row.id, m.scoreA, m.scoreB);
+      await query("UPDATE matches SET live_status = 'FT' WHERE id = $1", [row.id]);
       scored++;
-    } else if (m.inPlay && row.status !== "completed" && m.scoreA != null) {
+    } else if (m.inPlay && row.status !== "completed") {
       await query(
-        "UPDATE matches SET live_score_a = $1, live_score_b = $2 WHERE id = $3 AND status <> 'completed'",
-        [m.scoreA, m.scoreB, row.id]
+        `UPDATE matches SET live_score_a = COALESCE($1, live_score_a),
+                            live_score_b = COALESCE($2, live_score_b),
+                            live_status = $3
+         WHERE id = $4 AND status <> 'completed'`,
+        [m.scoreA, m.scoreB, m.liveLabel || "LIVE", row.id]
       );
       live++;
     }

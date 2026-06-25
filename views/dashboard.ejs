@@ -113,7 +113,7 @@
                 </span>
               <% } else if (m.badge.type === "live") { %>
                 <span class="badge wc-badge badge-live">
-                  <span class="live-dot"></span> <%= t('dash.badgeLive') %>
+                  <span class="live-dot"></span> <%= t('dash.badgeLive') %><% if (m.liveStatus && m.liveStatus !== 'LIVE') { %> · <%= m.liveStatus %><% } %>
                 </span>
               <% } else if (m.badge.type === "locked") { %>
                 <span class="badge wc-badge badge-locked">
@@ -522,7 +522,7 @@
               bodyEl.innerHTML = '<div class="text-center text-secondary py-4">' + esc(T.none) + "</div>";
               return;
             }
-            const liveTag = j.live ? '<div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> ' + esc(T.live) + "</div>" : "";
+            const liveTag = j.live ? '<div class="text-center small text-danger fw-bold mb-2"><span class="live-dot"></span> ' + esc(T.live) + (j.liveStatus && j.liveStatus !== "LIVE" ? " · " + esc(j.liveStatus) : "") + "</div>" : "";
             let h = liveTag + (j.scored ? mpPodium(j.preds) : "") +
               '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>' +
               '<th style="width:42px">#</th><th>' + esc(T.player) + '</th><th class="text-center">' + esc(T.pick) + "</th>" +

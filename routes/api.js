@@ -138,7 +138,7 @@ router.get("/matches", apiAuth, async (req, res) => {
     const [rows, preds] = await Promise.all([
       many(
         `SELECT id, team_a, team_b, flag_a, flag_b, kickoff_time, status,
-                actual_score_a, actual_score_b, live_score_a, live_score_b
+                actual_score_a, actual_score_b, live_score_a, live_score_b, live_status
          FROM matches ORDER BY kickoff_time ASC`
       ),
       many(
@@ -163,7 +163,7 @@ router.get("/matches", apiAuth, async (req, res) => {
         flagA: m.flag_a || null, flagB: m.flag_b || null,
         kickoff: k, badge,
         actualA: m.actual_score_a, actualB: m.actual_score_b,
-        liveA: m.live_score_a, liveB: m.live_score_b,
+        liveA: m.live_score_a, liveB: m.live_score_b, liveStatus: m.live_status || null,
         pred: predBy[m.id] || null,
       };
     });

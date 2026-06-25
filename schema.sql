@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS matches (
   grp             TEXT
 );
 CREATE INDEX IF NOT EXISTS matches_kickoff_idx ON matches (kickoff_time);
+-- Live status label from the football API: a minute ("67'"), "HT", or "FT".
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS live_status TEXT;
 
 CREATE TABLE IF NOT EXISTS predictions (
   id                BIGSERIAL PRIMARY KEY,
