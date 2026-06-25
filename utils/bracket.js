@@ -68,6 +68,20 @@ const TEMPLATE = [
 
 const norm = (s) => (s == null ? "" : String(s).trim().toLowerCase());
 
+// Split rounds into a two-sided tree: left[] (R32→SF), right[] (R32→SF), final, third.
+function splitTree(rounds) {
+  const left = [], right = [];
+  let fin = null, third = null;
+  rounds.forEach((rd) => {
+    if (/^final$/i.test(rd.name) && rd.matches.length <= 1) { fin = rd.matches[0] || null; return; }
+    if (/third/i.test(rd.name)) { third = rd.matches[0] || null; return; }
+    const h = Math.ceil(rd.matches.length / 2);
+    left.push({ name: rd.name, matches: rd.matches.slice(0, h) });
+    right.push({ name: rd.name, matches: rd.matches.slice(h) });
+  });
+  return { left, right, final: fin, third };
+}
+
 function toColumns(rounds) {
   const left = [], right = [], extras = [];
   let center = null;
@@ -178,7 +192,7 @@ async function getBracket(L) {
   });
   rounds.sort((a, b) => a.order - b.order);
 
-  return { hasReal: realCount > 0, provisional: realCount === 0, rounds, columns: toColumns(rounds) };
+  return { hasReal: realCount > 0, provisional: realCount === 0, rounds, columns: toColumns(rounds), tree: splitTree(rounds) };
 }
 
 module.exports = { getBracket };

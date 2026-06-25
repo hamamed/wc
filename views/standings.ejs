@@ -133,28 +133,61 @@
       <div class="card wc-card border-0"><div class="card-body text-center text-secondary py-5"><i class="fa-solid fa-sitemap fa-2x mb-3 d-block"></i><%= t('ko.empty') %></div></div>
     <% } else { %>
       <% if (bracket.provisional) { %><p class="text-secondary small mb-3"><i class="fa-solid fa-circle-info me-1"></i><%= t('ko.provisional') %></p><% } %>
-      <% bracket.rounds.forEach(function (rd) { %>
-        <div class="ko-round">
-          <div class="ko-round-head"><h6 class="fw-bold mb-0"><%= rd.name %></h6></div>
-          <div class="ko-grid">
-            <% rd.matches.forEach(function (m) { %>
-              <div class="ko-match">
-                <div class="ko-num">Match <%= m.n %></div>
-                <div class="ko-team <%= m.winA ? 'win' : '' %>">
-                  <% if (m.flagA) { %><img class="ko-flag" src="<%= m.flagA %>" alt="" /><% } %>
-                  <span class="nm"><%= m.teamA || m.labelA || '—' %></span>
-                  <% if (m.scoreA != null) { %><span class="sc"><%= m.scoreA %></span><% } %>
-                </div>
-                <div class="ko-team <%= m.winB ? 'win' : '' %>">
-                  <% if (m.flagB) { %><img class="ko-flag" src="<%= m.flagB %>" alt="" /><% } %>
-                  <span class="nm"><%= m.teamB || m.labelB || '—' %></span>
-                  <% if (m.scoreB != null) { %><span class="sc"><%= m.scoreB %></span><% } %>
-                </div>
-              </div>
-            <% }); %>
-          </div>
+
+      <%
+        // A single match-cell = two stacked flag dots (used by the desktop tree).
+        function dot(flag, win, label) {
+          return '<span class="kt-dot' + (flag ? '' : ' tbd') + (win ? ' win' : '') + '" title="' + (label || '') + '">' +
+            (flag ? '<img src="' + flag + '" alt="" />' : '') + '</span>';
+        }
+        function ktMatch(m) {
+          return '<div class="kt-m"><div class="kt-cell">' +
+            dot(m.flagA, m.winA, (m.teamA || m.labelA || '')) +
+            dot(m.flagB, m.winB, (m.teamB || m.labelB || '')) + '</div></div>';
+        }
+        function ktCol(rd) {
+          return '<div class="kt-col">' + rd.matches.map(ktMatch).join('') + '</div>';
+        }
+      %>
+
+      <!-- Desktop: bracket tree -->
+      <div class="kt d-none d-lg-flex">
+        <div class="kt-half kt-left">
+          <% bracket.tree.left.forEach(function (rd) { %><%- ktCol(rd) %><% }); %>
         </div>
-      <% }); %>
+        <div class="kt-col kt-center">
+          <% if (bracket.tree.final) { %><%- ktMatch(bracket.tree.final) %><% } %>
+        </div>
+        <div class="kt-half kt-right">
+          <% bracket.tree.right.slice().reverse().forEach(function (rd) { %><%- ktCol(rd) %><% }); %>
+        </div>
+      </div>
+
+      <!-- Mobile: stacked round-by-round cards -->
+      <div class="d-lg-none">
+        <% bracket.rounds.forEach(function (rd) { %>
+          <div class="ko-round">
+            <div class="ko-round-head"><h6 class="fw-bold mb-0"><%= rd.name %></h6></div>
+            <div class="ko-grid">
+              <% rd.matches.forEach(function (m) { %>
+                <div class="ko-match">
+                  <div class="ko-num">Match <%= m.n %></div>
+                  <div class="ko-team <%= m.winA ? 'win' : '' %>">
+                    <% if (m.flagA) { %><img class="ko-flag" src="<%= m.flagA %>" alt="" /><% } %>
+                    <span class="nm"><%= m.teamA || m.labelA || '—' %></span>
+                    <% if (m.scoreA != null) { %><span class="sc"><%= m.scoreA %></span><% } %>
+                  </div>
+                  <div class="ko-team <%= m.winB ? 'win' : '' %>">
+                    <% if (m.flagB) { %><img class="ko-flag" src="<%= m.flagB %>" alt="" /><% } %>
+                    <span class="nm"><%= m.teamB || m.labelB || '—' %></span>
+                    <% if (m.scoreB != null) { %><span class="sc"><%= m.scoreB %></span><% } %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
     <% } %>
   </div><!-- /tab-ko -->
   </div><!-- /tab-content -->
