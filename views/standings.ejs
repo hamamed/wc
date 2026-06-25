@@ -129,29 +129,32 @@
   </div><!-- /tab-groups -->
 
   <div class="tab-pane fade" id="tab-ko" role="tabpanel">
-    <% if (!bracket || !bracket.columns || !bracket.columns.length || !bracket.columns.some(function(c){return c.matches.length;})) { %>
+    <% if (!bracket || !bracket.rounds || !bracket.rounds.some(function(r){return r.matches.length;})) { %>
       <div class="card wc-card border-0"><div class="card-body text-center text-secondary py-5"><i class="fa-solid fa-sitemap fa-2x mb-3 d-block"></i><%= t('ko.empty') %></div></div>
     <% } else { %>
       <% if (bracket.provisional) { %><p class="text-secondary small mb-3"><i class="fa-solid fa-circle-info me-1"></i><%= t('ko.provisional') %></p><% } %>
-      <div class="bracket">
-        <% bracket.columns.forEach(function (rd) { %>
-          <div class="bracket-col">
-            <div class="bracket-round"><%= rd.title %></div>
+      <% bracket.rounds.forEach(function (rd) { %>
+        <div class="ko-round">
+          <div class="ko-round-head"><h6 class="fw-bold mb-0"><%= rd.name %></h6></div>
+          <div class="ko-grid">
             <% rd.matches.forEach(function (m) { %>
-              <div class="bracket-match">
-                <div class="bm-team <%= m.winA ? 'bm-win' : '' %>">
-                  <span><% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamA || m.labelA || '—' %></span>
-                  <% if (m.scoreA != null) { %><b><%= m.scoreA %></b><% } %>
+              <div class="ko-match">
+                <div class="ko-num">Match <%= m.n %></div>
+                <div class="ko-team <%= m.winA ? 'win' : '' %>">
+                  <% if (m.flagA) { %><img class="ko-flag" src="<%= m.flagA %>" alt="" /><% } %>
+                  <span class="nm"><%= m.teamA || m.labelA || '—' %></span>
+                  <% if (m.scoreA != null) { %><span class="sc"><%= m.scoreA %></span><% } %>
                 </div>
-                <div class="bm-team <%= m.winB ? 'bm-win' : '' %>">
-                  <span><% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamB || m.labelB || '—' %></span>
-                  <% if (m.scoreB != null) { %><b><%= m.scoreB %></b><% } %>
+                <div class="ko-team <%= m.winB ? 'win' : '' %>">
+                  <% if (m.flagB) { %><img class="ko-flag" src="<%= m.flagB %>" alt="" /><% } %>
+                  <span class="nm"><%= m.teamB || m.labelB || '—' %></span>
+                  <% if (m.scoreB != null) { %><span class="sc"><%= m.scoreB %></span><% } %>
                 </div>
               </div>
             <% }); %>
           </div>
-        <% }); %>
-      </div>
+        </div>
+      <% }); %>
     <% } %>
   </div><!-- /tab-ko -->
   </div><!-- /tab-content -->

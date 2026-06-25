@@ -502,16 +502,22 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .medal-silver { background: radial-gradient(circle at 35% 28%, #ffffff, #b4bdca 72%); color: #555f6e; }
 .medal-bronze { background: radial-gradient(circle at 35% 28%, #f4c79a, #c5763a 72%); color: #67381a; }
 
-/* ---- Knockout bracket ---- */
-.bracket { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
-.bracket-col { min-width: 210px; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: space-around; gap: 12px; }
-.bracket-round { font-weight: 800; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; text-align: center; }
-.bracket-match { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
-.bm-team { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; font-weight: 600; font-size: 0.9rem; }
-.bm-team + .bm-team { border-top: 1px solid var(--line); }
-.bm-team b { color: var(--accent); }
-.bm-win { font-weight: 800; color: var(--text); }
-.bm-win span::after { content: " ✓"; color: #2bb673; font-weight: 900; }
+/* ---- Knockout bracket (responsive round-by-round) ---- */
+.ko-round { margin-bottom: 1.75rem; }
+.ko-round-head { display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem; }
+.ko-round-head h6 { white-space: nowrap; }
+.ko-round-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.ko-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.ko-match { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+.ko-num { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.05em; color: var(--text-secondary); background: var(--surface-2); padding: 4px 11px; text-transform: uppercase; }
+.ko-team { display: flex; align-items: center; gap: 8px; padding: 9px 11px; font-weight: 600; font-size: 0.9rem; }
+.ko-team + .ko-team { border-top: 1px solid var(--line); }
+.ko-team .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ko-team .sc { font-weight: 800; color: var(--accent); min-width: 18px; text-align: center; }
+.ko-flag { width: 22px; height: 16px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
+.ko-team.win { background: rgba(43, 182, 115, 0.10); }
+.ko-team.win .nm { font-weight: 800; color: var(--text); }
+.ko-team.win .nm::after { content: " ✓"; color: #2bb673; }
 
 /* ---- Podium card: faint Font Awesome trophy/medal pattern ---- */
 .podium-card { position: relative; overflow: hidden; }
