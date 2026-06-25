@@ -140,11 +140,11 @@
             <% rd.matches.forEach(function (m) { %>
               <div class="bracket-match">
                 <div class="bm-team">
-                  <span><% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamA || m.labelA %></span>
+                  <span><% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamA || m.labelA || '—' %></span>
                   <% if (m.scoreA != null) { %><b><%= m.scoreA %></b><% } %>
                 </div>
                 <div class="bm-team">
-                  <span><% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamB || m.labelB %></span>
+                  <span><% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamB || m.labelB || '—' %></span>
                   <% if (m.scoreB != null) { %><b><%= m.scoreB %></b><% } %>
                 </div>
               </div>

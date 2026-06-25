@@ -22,10 +22,26 @@ function roundFor(grp) {
   return null;
 }
 
-// Classic 8-group Round of 16 crossing.
-const R16 = [
-  ["1A", "2B"], ["1C", "2D"], ["1E", "2F"], ["1G", "2H"],
-  ["1B", "2A"], ["1D", "2C"], ["1F", "2E"], ["1H", "2G"],
+// Official 2026 World Cup Round of 32 (48 teams, groups A–L). Matches 73–88.
+// W = group winner (seed 1), R = runner-up (seed 2), 3rd = a best third-placed
+// team from one of the listed groups (decided by the FIFA table once known).
+const R32 = [
+  { a: { seed: 2, g: "A" }, b: { seed: 2, g: "B" } },                 // 73
+  { a: { seed: 1, g: "E" }, b: { third: "A/B/C/D/F" } },             // 74
+  { a: { seed: 1, g: "F" }, b: { seed: 2, g: "C" } },                 // 75
+  { a: { seed: 1, g: "C" }, b: { seed: 2, g: "F" } },                 // 76
+  { a: { seed: 1, g: "I" }, b: { third: "C/D/F/G/H" } },             // 77
+  { a: { seed: 2, g: "E" }, b: { seed: 2, g: "I" } },                 // 78
+  { a: { seed: 1, g: "A" }, b: { third: "C/E/F/H/I" } },             // 79
+  { a: { seed: 1, g: "L" }, b: { third: "E/H/I/J/K" } },             // 80
+  { a: { seed: 1, g: "D" }, b: { third: "B/E/F/I/J" } },             // 81
+  { a: { seed: 1, g: "G" }, b: { third: "A/E/H/I/J" } },             // 82
+  { a: { seed: 2, g: "K" }, b: { seed: 2, g: "L" } },                 // 83
+  { a: { seed: 1, g: "H" }, b: { seed: 2, g: "J" } },                 // 84
+  { a: { seed: 1, g: "B" }, b: { third: "E/F/G/I/J" } },             // 85
+  { a: { seed: 1, g: "J" }, b: { seed: 2, g: "H" } },                 // 86
+  { a: { seed: 1, g: "K" }, b: { third: "D/E/I/J/L" } },             // 87
+  { a: { seed: 2, g: "D" }, b: { seed: 2, g: "G" } },                 // 88
 ];
 
 function fmtMatch(m, L) {
@@ -66,25 +82,37 @@ async function getBracket(L) {
     return { hasReal: true, rounds };
   }
 
-  // Provisional: derive Round of 16 from current standings.
+  // Provisional: derive the Round of 32 from current standings.
   const groups = computeStandings(matches);
   const byLetter = {};
   groups.forEach((g) => {
     const mm = (g.name || "").match(/([A-Z])\s*$/);
     if (mm) byLetter[mm[1].toUpperCase()] = g;
   });
-  const resolve = (label) => {
-    const seed = parseInt(label[0], 10);
-    const letter = label.slice(1).toUpperCase();
-    const g = byLetter[letter];
-    const row = g && g.rows.find((r) => r.rank === seed);
-    return row ? { name: L(row.team), flag: row.flag || null } : { name: null, flag: null };
+  const resolveSlot = (s) => {
+    if (s.third) return { name: null, flag: null, label: "3rd " + s.third };
+    const label = s.seed + s.g; // "1E", "2A"
+    const g = byLetter[s.g.toUpperCase()];
+    const row = g && g.rows.find((r) => r.rank === s.seed);
+    return { name: row ? L(row.team) : null, flag: row ? (row.flag || null) : null, label };
   };
-  const r16 = R16.map(([a, b]) => {
-    const A = resolve(a), B = resolve(b);
-    return { labelA: a, teamA: A.name, flagA: A.flag, labelB: b, teamB: B.name, flagB: B.flag, provisional: true };
+  const r32 = R32.map((x) => {
+    const A = resolveSlot(x.a), B = resolveSlot(x.b);
+    return { teamA: A.name, flagA: A.flag, labelA: A.label, teamB: B.name, flagB: B.flag, labelB: B.label, provisional: true };
   });
-  return { hasReal: false, provisional: true, rounds: [{ name: "Round of 16", order: 2, matches: r16 }] };
+  const empty = (name, order, count) => ({
+    name, order, matches: Array.from({ length: count }, () => ({ labelA: "", labelB: "", provisional: true })),
+  });
+  return {
+    hasReal: false, provisional: true,
+    rounds: [
+      { name: "Round of 32", order: 1, matches: r32 },
+      empty("Round of 16", 2, 8),
+      empty("Quarter-finals", 3, 4),
+      empty("Semi-finals", 4, 2),
+      empty("Final", 6, 1),
+    ],
+  };
 }
 
 module.exports = { getBracket };
