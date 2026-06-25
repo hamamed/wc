@@ -505,7 +505,6 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 /* ---- Knockout bracket TREE (desktop ≥ lg) ---- */
 .kt { display: flex; align-items: stretch; width: 100%; }
 .kt-half { display: flex; flex: 1 1 0; min-width: 0; }
-.kt-right { flex-direction: row-reverse; }
 .kt-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; }
 .kt-center { flex: 0 0 56px; justify-content: center; }
 .kt-m { flex: 1 1 0; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -519,11 +518,11 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .kt-left .kt-col:not(:last-child) .kt-m:nth-child(odd) { border-bottom: 2px solid var(--line); }
 .kt-left .kt-col:not(:last-child) .kt-m:nth-child(even) { border-top: 2px solid var(--line); }
 .kt-left .kt-col:not(:first-child) .kt-m::before { content: ""; position: absolute; right: 100%; top: 50%; width: 50%; border-top: 2px solid var(--line); }
-/* connector lines — right half (mirrored) */
-.kt-right .kt-col:not(:last-child) .kt-m { border-left: 2px solid var(--line); }
-.kt-right .kt-col:not(:last-child) .kt-m:nth-child(odd) { border-bottom: 2px solid var(--line); }
-.kt-right .kt-col:not(:last-child) .kt-m:nth-child(even) { border-top: 2px solid var(--line); }
-.kt-right .kt-col:not(:first-child) .kt-m::before { content: ""; position: absolute; left: 100%; top: 50%; width: 50%; border-top: 2px solid var(--line); }
+/* connector lines — right half (columns ordered SF→R32 left-to-right) */
+.kt-right .kt-col:not(:first-child) .kt-m { border-left: 2px solid var(--line); }
+.kt-right .kt-col:not(:first-child) .kt-m:nth-child(odd) { border-bottom: 2px solid var(--line); }
+.kt-right .kt-col:not(:first-child) .kt-m:nth-child(even) { border-top: 2px solid var(--line); }
+.kt-right .kt-col:not(:last-child) .kt-m::after { content: ""; position: absolute; left: 100%; top: 50%; width: 50%; border-top: 2px solid var(--line); }
 
 /* ---- Knockout bracket (responsive round-by-round) ---- */
 .ko-round { margin-bottom: 1.75rem; }
