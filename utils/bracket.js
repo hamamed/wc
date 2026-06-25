@@ -56,6 +56,25 @@ function fmtMatch(m, L) {
   };
 }
 
+// Turn ordered rounds into a left/right mirrored layout:
+//   L-R32, L-R16, L-QF, L-SF, FINAL, R-SF, R-QF, R-R16, R-R32
+function toColumns(rounds) {
+  const left = [], right = [], extras = [];
+  let center = null;
+  rounds.forEach((rd) => {
+    if (/^final$/i.test(rd.name) && rd.matches.length <= 1) { center = { title: rd.name, matches: rd.matches }; return; }
+    if (rd.matches.length <= 1) { extras.push({ title: rd.name, matches: rd.matches }); return; }
+    const half = Math.ceil(rd.matches.length / 2);
+    left.push({ title: rd.name, matches: rd.matches.slice(0, half) });
+    right.push({ title: rd.name, matches: rd.matches.slice(half) });
+  });
+  return [...left, ...(center ? [center] : []), ...right.reverse(), ...extras];
+}
+
+function finalize(hasReal, provisional, rounds) {
+  return { hasReal, provisional, rounds, columns: toColumns(rounds) };
+}
+
 async function getBracket(L) {
   L = L || ((x) => x);
   const matches = await many(
@@ -79,7 +98,7 @@ async function getBracket(L) {
       matches: byRound[name].matches.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff)).map((m) => fmtMatch(m, L)),
     }));
     rounds.sort((a, b) => a.order - b.order);
-    return { hasReal: true, rounds };
+    return finalize(true, false, rounds);
   }
 
   // Provisional: derive the Round of 32 from current standings.
@@ -103,16 +122,13 @@ async function getBracket(L) {
   const empty = (name, order, count) => ({
     name, order, matches: Array.from({ length: count }, () => ({ labelA: "", labelB: "", provisional: true })),
   });
-  return {
-    hasReal: false, provisional: true,
-    rounds: [
-      { name: "Round of 32", order: 1, matches: r32 },
-      empty("Round of 16", 2, 8),
-      empty("Quarter-finals", 3, 4),
-      empty("Semi-finals", 4, 2),
-      empty("Final", 6, 1),
-    ],
-  };
+  return finalize(false, true, [
+    { name: "Round of 32", order: 1, matches: r32 },
+    empty("Round of 16", 2, 8),
+    empty("Quarter-finals", 3, 4),
+    empty("Semi-finals", 4, 2),
+    empty("Final", 6, 1),
+  ]);
 }
 
 module.exports = { getBracket };
