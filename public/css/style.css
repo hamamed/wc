@@ -506,8 +506,35 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .kt { display: flex; align-items: stretch; width: 100%; }
 .kt-half { display: flex; flex: 1 1 0; min-width: 0; }
 .kt-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; }
-.kt-center { flex: 0 0 56px; justify-content: center; }
+.kt-center { flex: 0 0 188px; justify-content: center; gap: 18px; padding: 0 8px; }
 .kt-m { flex: 1 1 0; display: flex; align-items: center; justify-content: center; position: relative; }
+
+/* Final — gold showcase card */
+.kt-final { border-radius: 16px; padding: 12px 12px 10px; text-align: center;
+  background: linear-gradient(160deg, #fff6da 0%, #ffe9a8 55%, #f6cf6a 100%);
+  border: 1px solid #e6c468; box-shadow: 0 8px 22px rgba(193,150,30,0.28); position: relative; z-index: 2; }
+.kt-final-ttl { font-weight: 900; letter-spacing: .14em; font-size: .72rem; color: #7a5200; margin-bottom: 8px; }
+.kt-final-ttl .fa-trophy { color: #e0a800; }
+.kt-champ { margin-top: 8px; font-weight: 800; font-size: .82rem; color: #7a5200;
+  border-top: 1px dashed #e0bd5e; padding-top: 6px; }
+.kt-champ .fa-crown { color: #e0a800; }
+
+/* 3rd-place play-off — small card under the final */
+.kt-third { border-radius: 12px; padding: 8px 10px; text-align: center;
+  background: var(--surface-2); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.kt-third-ttl { font-weight: 700; font-size: .62rem; letter-spacing: .06em; text-transform: uppercase;
+  color: #8a8a8a; margin-bottom: 6px; }
+
+/* shared finalist / third rows */
+.kt-fr { display: flex; align-items: center; gap: 7px; padding: 3px 4px; border-radius: 8px; font-size: .82rem; }
+.kt-fr .nm { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-fr .sc { font-weight: 800; min-width: 16px; }
+.kt-fr.win { font-weight: 800; }
+.kt-fr.win .nm { color: #1f7a4d; }
+.kt-fr .kt-rk { font-size: .58rem; font-weight: 800; color: #fff; background: #b8862b;
+  border-radius: 5px; padding: 1px 4px; min-width: 22px; text-align: center; }
+.kt-fr .ko-flag.kt-noflag { background: var(--surface-2); border: 1px dashed var(--line); border-radius: 50%; }
+[dir="rtl"] .kt-fr .nm { text-align: right; }
 .kt-cell { display: flex; flex-direction: column; gap: 5px; background: var(--bg); padding: 3px; border-radius: 10px; z-index: 1; }
 .kt-dot { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.18); background: var(--surface-2); display: grid; place-items: center; }
 .kt-dot img { width: 100%; height: 100%; object-fit: cover; }

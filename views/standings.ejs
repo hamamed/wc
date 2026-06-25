@@ -148,6 +148,34 @@
         function ktCol(rd) {
           return '<div class="kt-col">' + rd.matches.map(ktMatch).join('') + '</div>';
         }
+        function ktRow(name, flag, score, win, rank) {
+          return '<div class="kt-fr' + (win ? ' win' : '') + '">' +
+            (rank ? '<span class="kt-rk">' + rank + '</span>' : '') +
+            (flag ? '<img class="ko-flag" src="' + flag + '" alt=""/>' : '<span class="ko-flag kt-noflag"></span>') +
+            '<span class="nm">' + (name || '—') + '</span>' +
+            (score != null ? '<span class="sc">' + score + '</span>' : '') + '</div>';
+        }
+        function finalCard(m) {
+          if (!m) return '';
+          var champ = m.winA ? (m.teamA || '') : (m.winB ? (m.teamB || '') : '');
+          return '<div class="kt-final">' +
+            '<div class="kt-final-ttl"><i class="fa-solid fa-trophy"></i> FINAL</div>' +
+            ktRow(m.teamA || m.labelA, m.flagA, m.scoreA, m.winA) +
+            ktRow(m.teamB || m.labelB, m.flagB, m.scoreB, m.winB) +
+            (champ ? '<div class="kt-champ"><i class="fa-solid fa-crown me-1"></i>' + champ + '</div>' : '') +
+            '</div>';
+        }
+        function thirdCard(m) {
+          if (!m) return '';
+          // winner = 3rd, loser = 4th (once played)
+          var aRank = m.winA ? '3rd' : (m.winB ? '4th' : '');
+          var bRank = m.winB ? '3rd' : (m.winA ? '4th' : '');
+          return '<div class="kt-third">' +
+            '<div class="kt-third-ttl">3rd place play-off</div>' +
+            ktRow(m.teamA || m.labelA, m.flagA, m.scoreA, m.winA, aRank) +
+            ktRow(m.teamB || m.labelB, m.flagB, m.scoreB, m.winB, bRank) +
+            '</div>';
+        }
       %>
 
       <!-- Desktop: bracket tree -->
@@ -156,7 +184,8 @@
           <% bracket.tree.left.forEach(function (rd) { %><%- ktCol(rd) %><% }); %>
         </div>
         <div class="kt-col kt-center">
-          <% if (bracket.tree.final) { %><%- ktMatch(bracket.tree.final) %><% } %>
+          <%- finalCard(bracket.tree.final) %>
+          <%- thirdCard(bracket.tree.third) %>
         </div>
         <div class="kt-half kt-right">
           <% bracket.tree.right.slice().reverse().forEach(function (rd) { %><%- ktCol(rd) %><% }); %>
