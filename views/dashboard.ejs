@@ -339,11 +339,14 @@
 
     bar.addEventListener("click", (e) => {
       const c = e.target.closest(".day-chip");
-      if (c) select(c.dataset.day);
+      if (c) { select(c.dataset.day); try { sessionStorage.setItem("dashDay", c.dataset.day); } catch (_) {} }
     });
 
-    // Default to Today if it has matches, otherwise show everything.
-    select(counts[todayKey] ? todayKey : "all", "auto");
+    // Restore the last-viewed day (survives the live auto-refresh); else default to Today.
+    let saved = null;
+    try { saved = sessionStorage.getItem("dashDay"); } catch (_) {}
+    const initial = (saved && (saved === "all" || counts[saved])) ? saved : (counts[todayKey] ? todayKey : "all");
+    select(initial, "auto");
   })();
 
   // If a match is LIVE, refresh periodically so the score stays current.
