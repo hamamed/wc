@@ -139,11 +139,11 @@
             <div class="bracket-round"><%= rd.title %></div>
             <% rd.matches.forEach(function (m) { %>
               <div class="bracket-match">
-                <div class="bm-team">
+                <div class="bm-team <%= m.winA ? 'bm-win' : '' %>">
                   <span><% if (m.flagA) { %><img src="<%= m.flagA %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamA || m.labelA || '—' %></span>
                   <% if (m.scoreA != null) { %><b><%= m.scoreA %></b><% } %>
                 </div>
-                <div class="bm-team">
+                <div class="bm-team <%= m.winB ? 'bm-win' : '' %>">
                   <span><% if (m.flagB) { %><img src="<%= m.flagB %>" class="flag-mini me-1" alt="" /><% } %><%= m.teamB || m.labelB || '—' %></span>
                   <% if (m.scoreB != null) { %><b><%= m.scoreB %></b><% } %>
                 </div>

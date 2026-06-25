@@ -510,6 +510,8 @@ h1, h2, h3, h4, h5, h6, .fw-bold { color: var(--text); letter-spacing: -0.01em; 
 .bm-team { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; font-weight: 600; font-size: 0.9rem; }
 .bm-team + .bm-team { border-top: 1px solid var(--line); }
 .bm-team b { color: var(--accent); }
+.bm-win { font-weight: 800; color: var(--text); }
+.bm-win span::after { content: " ✓"; color: #2bb673; font-weight: 900; }
 
 /* ---- Podium card: faint Font Awesome trophy/medal pattern ---- */
 .podium-card { position: relative; overflow: hidden; }
