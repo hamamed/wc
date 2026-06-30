@@ -347,13 +347,25 @@
               </td>
               <td class="text-end">
                 <% if (m.status === "completed") { %>
-                  <!-- Result is locked once finalized -->
-                  <span class="fw-bold me-1"><%= m.actualScoreA %> - <%= m.actualScoreB %></span>
-                  <i class="fa-solid fa-lock text-secondary" title="Result locked"></i>
+                  <!-- Completed: result is editable. Re-submitting re-scores every prediction. -->
+                  <form action="/admin/result/<%= m.id %>" method="POST"
+                        class="d-flex align-items-center justify-content-end gap-2 flex-wrap"
+                        onsubmit="return confirm('Update this final result? It re-scores all predictions for this match.');">
+                    <input type="number" name="actualScoreA" min="0" max="99"
+                           class="form-control score-input text-center"
+                           value="<%= m.actualScoreA %>" required />
+                    <span class="fw-bold text-secondary">-</span>
+                    <input type="number" name="actualScoreB" min="0" max="99"
+                           class="form-control score-input text-center"
+                           value="<%= m.actualScoreB %>" required />
+                    <button class="btn btn-outline-warning btn-sm fw-semibold" title="Edit & re-score this result">
+                      <i class="fa-solid fa-pen-to-square"></i> Update
+                    </button>
+                  </form>
                 <% } else { %>
                   <!-- Shared inputs; "Live" updates the on-air score, "Final" locks + scores -->
                   <form method="POST" class="d-flex align-items-center justify-content-end gap-2 flex-wrap"
-                        onsubmit="return this.__final ? confirm('Finalize this result? It locks the match and scores all predictions.') : true;">
+                        onsubmit="return this.__final ? confirm('Finalize this result? It scores all predictions for this match.') : true;">
                     <input type="number" name="actualScoreA" min="0" max="99"
                            class="form-control score-input text-center"
                            value="<%= m.liveScoreA != null ? m.liveScoreA : '' %>" placeholder="0" required />

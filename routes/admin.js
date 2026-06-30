@@ -120,12 +120,14 @@ router.post("/result/:matchId", requireAdmin, async (req, res) => {
       req.flash("error", "Match not found.");
       return res.redirect("/admin");
     }
-    if (match.status === "completed") {
-      req.flash("error", "This result is locked and can't be changed.");
-      return res.redirect("/admin");
-    }
+    // Editing an already-completed result is allowed: applyMatchResult adjusts
+    // every user's total by the DELTA, so re-scoring stays correct (idempotent).
+    const wasCompleted = match.status === "completed";
     const scored = await applyMatchResult(matchId, actualA, actualB);
-    req.flash("success", `Result saved (${actualA}-${actualB}). Scored ${scored} prediction(s).`);
+    req.flash(
+      "success",
+      `${wasCompleted ? "Result updated" : "Result saved"} (${actualA}-${actualB}). Re-scored ${scored} prediction(s).`
+    );
     res.redirect("/admin");
   } catch (err) {
     console.error(err);
